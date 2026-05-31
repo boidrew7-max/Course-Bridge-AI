@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+dist
+build
+coverage
+.env
+.env.local
+package-lock.json
+package-lock.json
+*.log
+

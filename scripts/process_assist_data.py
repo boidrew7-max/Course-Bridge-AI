@@ -26,3 +26,7 @@ print(vectors.shape)
 sample_courses.to_csv("processed/sample_courses.csv", index=False)
 
 print("Saved processed/sample_courses.csv")
+
+sample_courses = pd.DataFrame({
+    ...
+})

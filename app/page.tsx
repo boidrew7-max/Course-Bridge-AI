@@ -868,14 +868,14 @@ export default function Home() {
     <main className="min-h-screen bg-[#eee9df] text-[#2f3135]">
       <section className="mx-auto max-w-7xl px-5 py-6 md:px-8">
         <nav className="mb-12 flex items-center justify-between border-b border-[#d8d0c3] pb-5">
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-6">
             <img
               src="/coursebridge-logo.png"
               alt="CourseBridge logo"
               className="h-60 w-auto mix-blend-multiply"
             />
 
-            <p className="text-xl text-[#7b818b]">
+            <p className="text-xl leading-tight text-[#7b818b]">
               Transfer planning for community college students
             </p>
           </div>

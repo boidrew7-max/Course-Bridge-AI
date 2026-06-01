@@ -34,3 +34,9 @@ scripts/scrape_ccsf_ucberkeley_fixed.js
 scripts/scrape_ccsf_ucberkeley_ui_driven*.js
 scripts/scrape_ccsf_ucberkeley_v*.js
 scripts/scrape_ccsf_ucberkeley_working.js
+
+# Local environment file with secrets
+.env
+
+# Generated app data (do not commit large generated artifacts)
+app/data/

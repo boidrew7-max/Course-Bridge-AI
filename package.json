@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "test-spellcheck": "node scripts/test_spellcheck.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

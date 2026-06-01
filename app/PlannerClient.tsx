@@ -1,6 +1,7 @@
 "use client";
 
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+
 type Priority = "High" | "Medium" | "Low";
 
 type CourseRequirement = {
@@ -761,19 +762,63 @@ function buildRequirementOptions(database: RequirementDatabase) {
   return { colleges, targetsByCollege, majorsByCollegeAndTarget };
 }
 
-export default function PlannerClient({
-  requirements,
-  options,
-}: {
-  requirements: RequirementDatabase;
-  options: RequirementOptions;
-}) {
+export default function PlannerClient() {
+  const [assistOptions, setAssistOptions] = useState<RequirementOptions>({
+    colleges: [],
+    targetsByCollege: {},
+    majorsByCollegeAndTarget: {},
+  });
+  const [assistRequirements, setAssistRequirements] = useState<RequirementDatabase>(
+    defaultRequirements
+  );
+
   const [communityCollege, setCommunityCollege] = useState("");
   const [targetSchool, setTargetSchool] = useState("");
   const [targetMajor, setTargetMajor] = useState("");
   const [completedCourses, setCompletedCourses] = useState("");
   const [result, setResult] = useState<TransferResult | null>(null);
 
+  useEffect(() => {
+    fetch('/data/assist_articulations.json')
+      .then((res) => res.json())
+      .then((data) => {
+        const options = data.assistOptions ?? {
+          colleges: [],
+          targetsByCollege: {},
+          majorsByCollegeAndTarget: {},
+        };
+        const requirements = data.assistRequirements ?? defaultRequirements;
+        const defaultCollege = options.colleges[0] ?? "";
+        const defaultTargetSchool =
+          defaultCollege && options.targetsByCollege[defaultCollege]
+            ? options.targetsByCollege[defaultCollege][0] ?? ""
+            : "";
+        const defaultTargetMajor =
+          defaultCollege && defaultTargetSchool
+            ? options.majorsByCollegeAndTarget[defaultCollege]?.[
+                defaultTargetSchool
+              ]?.[0] ?? ""
+            : "";
+
+        setAssistOptions(options);
+        setAssistRequirements(requirements);
+        setCommunityCollege(defaultCollege);
+        setTargetSchool(defaultTargetSchool);
+        setTargetMajor(defaultTargetMajor);
+      })
+      .catch((error) => {
+        console.error('Failed to load articulation options:', error);
+        const fallbackOptions = buildRequirementOptions(defaultRequirements);
+        setAssistOptions(fallbackOptions);
+        setAssistRequirements(defaultRequirements);
+        setCommunityCollege('CCSF');
+        setTargetSchool('UC Berkeley');
+        setTargetMajor('Economics');
+      });
+  }, []);
+
+  const requirements = assistRequirements;
+  const options = assistOptions;
   const activeRequirements =
     Object.keys(requirements).length > 0 ? requirements : defaultRequirements;
   const fallbackOptions = useMemo(
@@ -1066,9 +1111,15 @@ export default function PlannerClient({
                 value={communityCollege}
                 options={collegeOptions}
                 onChange={(value) => {
+                  const nextSchool =
+                    activeOptions.targetsByCollege[value]?.[0] ?? "";
+                  const nextMajor =
+                    activeOptions.majorsByCollegeAndTarget[value]?.[nextSchool]?.[0] ??
+                    "";
+
                   setCommunityCollege(value);
-                  setTargetSchool("");
-                  setTargetMajor("");
+                  setTargetSchool(nextSchool);
+                  setTargetMajor(nextMajor);
                   resetResults();
                 }}
               />
@@ -1078,8 +1129,13 @@ export default function PlannerClient({
                 value={targetSchool}
                 options={schoolOptions}
                 onChange={(value) => {
+                  const nextMajor =
+                    activeOptions.majorsByCollegeAndTarget[communityCollege]?.[
+                      value
+                    ]?.[0] ?? "";
+
                   setTargetSchool(value);
-                  setTargetMajor("");
+                  setTargetMajor(nextMajor);
                   resetResults();
                 }}
               />

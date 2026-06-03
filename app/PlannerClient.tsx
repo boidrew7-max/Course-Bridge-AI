@@ -998,9 +998,9 @@ export default function PlannerClient() {
 
         setAssistOptions(options);
         setAssistRequirements(requirements);
-        setCommunityCollege(defaultCollege);
-        setTargetSchool(defaultTargetSchool);
-        setTargetMajor(defaultTargetMajor);
+        setCommunityCollege("");
+        setTargetSchool("");
+        setTargetMajor("");
       })
       .catch((error) => {
         console.error('Failed to load articulation options:', error);

@@ -732,32 +732,61 @@ function getSubjectDistribution(term: CourseRequirement[]): Record<string, numbe
   return dist;
 }
 
-// Check if adding a course creates too much subject concentration
+// Check if adding a course creates too much subject concentration (prevent 2+ of same subject)
 function wouldCreateSubjectConcentration(term: CourseRequirement[], newCourse: CourseRequirement): boolean {
   const dist = getSubjectDistribution(term);
   const newSubject = getSubject(newCourse.code);
   const newCount = (dist[newSubject] || 0) + 1;
   
-  // Avoid 3+ of same subject in one term
-  return newCount >= 3;
+  // Avoid 2+ of same subject in one term (aggressive diversity)
+  return newCount >= 2;
+}
+
+// Calculate how many unique subjects are in a term
+function getUniqueSubjectCount(term: CourseRequirement[]): number {
+  const subjects = new Set(term.map(c => getSubject(c.code)));
+  return subjects.size;
 }
 
 // Score a candidate for a term (lower is better - more balanced)
-function scoreTermCandidateBalance(term: CourseRequirement[], candidate: CourseRequirement): number {
+function scoreTermCandidateBalance(term: CourseRequirement[], candidate: CourseRequirement, availableCourses: CourseRequirement[]): number {
   let score = 0;
+  const candidateSubject = getSubject(candidate.code);
+  const currentSubjects = getSubjectDistribution(term);
+  const subjectCount = Object.keys(currentSubjects).length;
   
-  // Penalty for adding hard course if already have 2
-  if (getCourseDifficulty(candidate) === 'hard' && countHardCoursesInTerm(term) >= 2) {
-    score += 100;
+  // PRIMARY: Hard constraint - enforce prerequisites (already filtered, but reflected in scoring)
+  // If we're here, prerequisites are met
+  
+  // SECONDARY: Subject diversity is paramount - large bonus for new subjects
+  if (!currentSubjects[candidateSubject]) {
+    // Brand new subject - big bonus (negative score = better)
+    score -= 1000;
+  } else {
+    // Repeated subject - big penalty
+    score += 500;
   }
   
-  // Penalty for subject concentration
-  if (wouldCreateSubjectConcentration(term, candidate)) {
-    score += 50;
+  // TERTIARY: Balance difficulty
+  const difficulty = getCourseDifficulty(candidate);
+  const hardCount = countHardCoursesInTerm(term);
+  
+  if (difficulty === 'hard' && hardCount >= 2) {
+    score += 300; // Strong penalty for too many hard courses
+  } else if (difficulty === 'hard') {
+    score -= 50; // Slight bonus for hard courses if we have room
+  } else if (difficulty === 'medium') {
+    score -= 30; // Small bonus for balance
   }
   
-  // Bonus for course priority
-  score -= priorityValue(candidate.priority) * 10;
+  // QUATERNARY: Course priority
+  score -= priorityValue(candidate.priority) * 5;
+  
+  // Tiebreaker: prefer courses that appear earlier in available list (stable)
+  const positionInAvailable = availableCourses.findIndex(c => c.code === candidate.code);
+  if (positionInAvailable >= 0) {
+    score += positionInAvailable * 0.1;
+  }
   
   return score;
 }
@@ -787,33 +816,54 @@ function buildSequence(
     while (currentTerm.length < maxCourses && available.length > 0) {
       let bestIdx = -1;
       let bestScore = Infinity;
+      const currentSubjects = getSubjectDistribution(currentTerm);
 
-      // Find the best candidate to balance this term
+      // Phase 1: Try to add courses from NEW subjects first (hard requirement)
       for (let i = 0; i < available.length; i++) {
         const course = available[i];
+        const courseSubject = getSubject(course.code);
         
-        // Skip if would exceed hard course limit
+        // Skip hard courses if we're already at limit
         if (getCourseDifficulty(course) === 'hard' && 
             countHardCoursesInTerm(currentTerm) >= MAX_HARD_COURSES_PER_TERM &&
-            remaining.length > currentTerm.length + 1) {
-          continue;
-        }
-        
-        // Skip if would create severe subject concentration (unless no other option)
-        if (wouldCreateSubjectConcentration(currentTerm, course) && available.length > 1) {
+            available.length > 1) {
           continue;
         }
 
-        const score = scoreTermCandidateBalance(currentTerm, course);
-        
-        if (score < bestScore) {
-          bestScore = score;
-          bestIdx = i;
+        // Prioritize: NEW subject (not yet in term)
+        if (!currentSubjects[courseSubject]) {
+          const score = scoreTermCandidateBalance(currentTerm, course, available);
+          if (score < bestScore) {
+            bestScore = score;
+            bestIdx = i;
+          }
         }
       }
 
+      // Phase 2: If no new subjects, take from least-represented subjects
       if (bestIdx === -1) {
-        // No ideal candidates - take highest priority available
+        for (let i = 0; i < available.length; i++) {
+          const course = available[i];
+          const courseSubject = getSubject(course.code);
+          
+          // Skip hard courses if we're already at limit
+          if (getCourseDifficulty(course) === 'hard' && 
+              countHardCoursesInTerm(currentTerm) >= MAX_HARD_COURSES_PER_TERM &&
+              available.length > 1) {
+            continue;
+          }
+
+          const score = scoreTermCandidateBalance(currentTerm, course, available);
+          
+          if (score < bestScore) {
+            bestScore = score;
+            bestIdx = i;
+          }
+        }
+      }
+
+      // Phase 3: Last resort - just take highest priority
+      if (bestIdx === -1) {
         bestIdx = available.findIndex(c => c.priority === 'High') ?? 0;
         if (bestIdx === -1) bestIdx = 0;
       }

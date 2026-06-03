@@ -1325,15 +1325,9 @@ export default function PlannerClient() {
                 value={communityCollege}
                 options={collegeOptions}
                 onChange={(value) => {
-                  const nextSchool =
-                    activeOptions.targetsByCollege[value]?.[0] ?? "";
-                  const nextMajor =
-                    activeOptions.majorsByCollegeAndTarget[value]?.[nextSchool]?.[0] ??
-                    "";
-
                   setCommunityCollege(value);
-                  setTargetSchool(nextSchool);
-                  setTargetMajor(nextMajor);
+                  setTargetSchool("");
+                  setTargetMajor("");
                   resetResults();
                 }}
               />
@@ -1343,13 +1337,8 @@ export default function PlannerClient() {
                 value={targetSchool}
                 options={schoolOptions}
                 onChange={(value) => {
-                  const nextMajor =
-                    activeOptions.majorsByCollegeAndTarget[communityCollege]?.[
-                      value
-                    ]?.[0] ?? "";
-
                   setTargetSchool(value);
-                  setTargetMajor(nextMajor);
+                  setTargetMajor("");
                   resetResults();
                 }}
               />

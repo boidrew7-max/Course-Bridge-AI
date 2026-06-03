@@ -897,6 +897,8 @@ function formatCourseDisplay(course: CourseRequirement): string {
   // Otherwise show both
   return `${course.code} — ${course.name}`;
 }
+
+function getCompetitiveness(score: number, note: string) {
   if (score >= 80) {
     return `Strong — most listed requirements are complete. ${note}`;
   }

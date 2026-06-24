@@ -9,8 +9,11 @@ courses_path = os.path.join(
     "all_transferable_courses.json"
 )
 
-with open(courses_path, "r", encoding="utf-8") as f:
-    courses = json.load(f)
+try:
+    with open(courses_path, "r", encoding="utf-8") as f:
+        courses = json.load(f)
+except (FileNotFoundError, OSError):
+    courses = []
 
 
 def search_courses(query):

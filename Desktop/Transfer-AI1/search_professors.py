@@ -3,8 +3,11 @@ import json, os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 professors_path = os.path.join(BASE_DIR, "data", "professors.json")
 
-with open(professors_path, "r", encoding="utf-8") as f:
-    _professors = json.load(f)
+try:
+    with open(professors_path, "r", encoding="utf-8") as f:
+        _professors = json.load(f)
+except (FileNotFoundError, OSError):
+    _professors = []
 
 # professors.json is a flat list of professor objects
 if isinstance(_professors, dict):

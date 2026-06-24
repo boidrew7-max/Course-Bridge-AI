@@ -1,0 +1,35 @@
+# Secrets and local data
+.env
+data/
+
+# Scraper output
+agreements/
+failures_raw/
+failed_agreements*.json
+failed_majors.json
+completed_majors.json
+completed_agreements.json
+scraper*.log
+api_scraper.log
+api_key_urls.txt
+test_run.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

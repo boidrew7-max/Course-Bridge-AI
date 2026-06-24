@@ -1,0 +1,2265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transfer AI</title>
+  <!-- Apply theme before render to prevent flash -->
+  <script>
+    (function() {
+      const saved = localStorage.getItem('trai_theme');
+      const sys   = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', saved || sys);
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* ── CSS Variables ── both themes ─────────────────────── */
+
+    :root {
+      /* Dark — midnight navy */
+      --bg:            #0d1520;
+      --bg-sidebar:    #091218;
+      --bg-surface:    #132030;
+      --bg-input:      #182840;
+      --bg-hover:      #1e2e48;
+      --border:        #263a55;
+      --border-subtle: #182838;
+      --text:          #d8e8f8;
+      --text-2:        #7090b8;
+      --text-3:        #405870;
+      --accent:        #f0a83a;
+      --accent-hover:  #d49030;
+      --accent-fg:     #0d1520;
+      --user-bg:       #1a4db8;
+      --user-fg:       #e8f0ff;
+      --ai-bg:         #132030;
+      --ai-border:     #263a55;
+      --shadow:        rgba(0,0,0,0.5);
+      --shadow-sm:     rgba(0,0,0,0.25);
+      --radius-msg:    18px;
+    }
+
+    [data-theme="light"] {
+      --bg:            #eef3ff;
+      --bg-sidebar:    #f4f7ff;
+      --bg-surface:    #ffffff;
+      --bg-input:      #e2ecff;
+      --bg-hover:      #d4e4f8;
+      --border:        #b0c8e8;
+      --border-subtle: #c8dcf4;
+      --text:          #0d1828;
+      --text-2:        #3a5880;
+      --text-3:        #7898b8;
+      --accent:        #e09030;
+      --accent-hover:  #c07820;
+      --accent-fg:     #fff;
+      --user-bg:       #1a4db8;
+      --user-fg:       #ffffff;
+      --ai-bg:         #f6f9ff;
+      --ai-border:     #b0c8e8;
+      --shadow:        rgba(0,20,60,0.1);
+      --shadow-sm:     rgba(0,20,60,0.05);
+    }
+
+    /* ── Reset ────────────────────────────────────────────── */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────── */
+
+    .sidebar {
+      width: 256px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-brand {
+      padding: 18px 16px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: linear-gradient(160deg, var(--bg-hover) 0%, var(--bg-sidebar) 100%);
+      flex-shrink: 0;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-fg);
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(240,168,58,0.3);
+    }
+
+    .brand-name {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .brand-name span { color: var(--accent); }
+
+    .brand-sub {
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .sidebar-top {
+      padding: 10px 10px 10px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .new-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .new-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(240,168,58,0.08);
+    }
+
+    .session-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 8px;
+    }
+
+    .date-group { margin-top: 8px; }
+
+    .date-label {
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 500;
+      padding: 6px 8px 3px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .sess-item {
+      padding: 7px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-2);
+      transition: background 0.1s, color 0.1s;
+      margin-bottom: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sess-item:hover { background: var(--bg-hover); color: var(--text); }
+    .sess-item.active { background: var(--bg-surface); color: var(--text); border-left: 2px solid var(--accent); padding-left: 8px; box-shadow: 0 1px 3px var(--shadow-sm); }
+
+    .sess-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .sess-del {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      padding: 1px 4px;
+      font-size: 15px;
+      line-height: 1;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .sess-item:hover .sess-del { display: block; }
+    .sess-del:hover { color: #c44; }
+
+    .sidebar-footer {
+      padding: 10px;
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .theme-btn {
+      width: 100%;
+      background: none;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-3);
+      font-size: 12px;
+      padding: 7px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.12s;
+      font-family: inherit;
+    }
+    .theme-btn:hover { background: var(--bg-hover); color: var(--text-2); border-color: var(--border); }
+
+    /* ── Main ─────────────────────────────────────────────── */
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+      position: relative;
+    }
+
+    /* ── Welcome overlay ──────────────────────────────────── */
+
+    #welcomeOverlay {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 24px 20px 80px;
+    }
+
+    .tagline {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+
+    .greeting {
+      font-size: 30px;
+      font-weight: 300;
+      color: var(--text-2);
+      margin-bottom: 36px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    .welcome-input-wrap {
+      width: 100%;
+      max-width: 680px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px 12px 18px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-bottom: 22px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 12px var(--shadow-sm);
+    }
+    .welcome-input-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(240,168,58,0.15), 0 2px 12px var(--shadow-sm);
+    }
+
+    #wMsg {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.5;
+      max-height: 120px;
+    }
+    #wMsg::placeholder { color: var(--text-3); }
+
+    .w-send-btn {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: none;
+      padding: 9px 20px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      align-self: flex-end;
+      transition: background 0.15s;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    .w-send-btn:hover { background: var(--accent-hover); }
+
+    .welcome-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 680px;
+    }
+
+    .chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-size: 12px;
+      padding: 7px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-family: inherit;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); background: var(--bg-hover); }
+
+    /* ── Chat header ──────────────────────────────────────── */
+
+    .main-header {
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+    }
+
+    .menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 4px;
+      flex-shrink: 0;
+    }
+
+    #sessionTitle {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-3);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Messages ─────────────────────────────────────────── */
+
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .msg {
+      max-width: 76%;
+      padding: 12px 16px;
+      border-radius: var(--radius-msg);
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+      position: relative;
+    }
+
+    .user {
+      background: var(--user-bg);
+      color: var(--user-fg);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      white-space: pre-wrap;
+    }
+
+    .ai-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      align-self: flex-start;
+      max-width: 88%;
+    }
+
+    .ai-avatar-sm {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: var(--accent-fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 4px;
+      box-shadow: 0 2px 6px rgba(240,168,58,0.25);
+    }
+
+    .ai-row .msg.ai { max-width: 100%; }
+
+    .ai {
+      background: var(--ai-bg);
+      border: 1px solid var(--ai-border);
+      border-left: 3px solid var(--accent);
+      color: var(--text);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 10px var(--shadow-sm);
+    }
+
+    .ai.streaming { white-space: pre-wrap; }
+
+    /* Copy button */
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      color: var(--text-3);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s;
+    }
+    .ai:hover .copy-btn { display: flex; }
+    .copy-btn:hover { color: var(--text); background: var(--bg-surface); border-color: var(--border); }
+    .copy-btn.copied { color: #5aab72; border-color: #5aab72; }
+
+    /* Error state */
+    .ai.error { border-color: #a04040; }
+
+    .retry-btn {
+      margin-top: 10px;
+      display: inline-block;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-size: 12px;
+      padding: 5px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    .retry-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Markdown */
+    .ai p { margin-bottom: 10px; }
+    .ai p:last-child { margin-bottom: 0; }
+    .ai ul, .ai ol { padding-left: 22px; margin-bottom: 10px; }
+    .ai li { margin-bottom: 5px; }
+    .ai li:last-child { margin-bottom: 0; }
+    .ai strong { color: var(--text); font-weight: 600; }
+    .ai em { color: var(--text-2); }
+    .ai h1, .ai h2, .ai h3 { font-size: 14.5px; font-weight: 600; color: var(--text); margin: 16px 0 6px; }
+    .ai h1:first-child, .ai h2:first-child, .ai h3:first-child { margin-top: 0; }
+    .ai code { background: var(--bg-hover); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-family: "SF Mono","Fira Code","Cascadia Code",monospace; font-size: 12.5px; }
+    .ai pre { background: var(--bg-hover); border: 1px solid var(--border); padding: 12px 14px; border-radius: 10px; overflow-x: auto; margin: 8px 0; }
+    .ai pre code { background: none; border: none; padding: 0; font-size: 13px; }
+    .ai blockquote { border-left: 3px solid var(--border); padding-left: 12px; color: var(--text-2); margin: 8px 0; }
+    .ai hr { border: none; border-top: 1px solid var(--border-subtle); margin: 12px 0; }
+    .ai table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+    .ai th, .ai td { padding: 7px 12px; border: 1px solid var(--border); text-align: left; }
+    .ai th { background: var(--bg-hover); font-weight: 600; }
+    .ai a { color: var(--accent); text-decoration: none; }
+    .ai a:hover { text-decoration: underline; }
+
+    /* Typing indicator */
+    .typing-dots { display: inline-flex; gap: 5px; align-items: center; padding: 2px 0; }
+    .typing-dots span { width: 7px; height: 7px; background: var(--text-3); border-radius: 50%; animation: bounce 1.2s infinite; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-5px); }
+    }
+
+    /* Jump to bottom */
+    #jumpBtn {
+      position: absolute;
+      bottom: 80px;
+      right: 24px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px var(--shadow);
+      z-index: 5;
+      transition: all 0.15s;
+    }
+    #jumpBtn.show { display: flex; }
+    #jumpBtn:hover { background: var(--bg-hover); color: var(--text); }
+
+    /* ── Footer ───────────────────────────────────────────── */
+
+    #footer {
+      padding: 10px 16px 16px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    #row { display: flex; gap: 10px; max-width: 820px; margin: 0 auto; }
+
+    #msg {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      padding: 11px 16px;
+      border-radius: 10px;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.5;
+      max-height: 120px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    #msg:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(240,168,58,0.15);
+    }
+    #msg::placeholder { color: var(--text-3); }
+    #msg:disabled { opacity: 0.4; }
+
+    #btn {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: none;
+      padding: 11px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      align-self: flex-end;
+      transition: background 0.15s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    #btn:hover { background: var(--accent-hover); }
+    #btn:disabled { background: var(--bg-hover); color: var(--text-3); cursor: default; }
+
+    /* ── Scrollbar ────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── GPA Calculator Modal ─────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; color: var(--text); }
+    .modal-close {
+      background: none; border: none; color: var(--text-3);
+      font-size: 20px; cursor: pointer; line-height: 1; padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .modal-close:hover { color: var(--text); background: var(--bg-hover); }
+
+    .gpa-result {
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      text-align: center;
+    }
+    .gpa-number { font-size: 36px; font-weight: 700; color: var(--accent); line-height: 1; }
+    .gpa-label { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+    .gpa-sub { font-size: 13px; color: var(--text-2); margin-top: 6px; }
+
+    .course-row {
+      display: grid;
+      grid-template-columns: 1fr 80px 90px 32px;
+      gap: 8px;
+      align-items: center;
+    }
+    .course-row input, .course-row select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      outline: none;
+      font-family: inherit;
+      width: 100%;
+    }
+    .course-row input:focus, .course-row select:focus { border-color: var(--accent); }
+    .course-row select { appearance: none; }
+    .del-row {
+      background: none; border: none; color: var(--text-3);
+      cursor: pointer; font-size: 16px; line-height: 1;
+      padding: 4px; border-radius: 4px;
+    }
+    .del-row:hover { color: #c44; background: var(--bg-hover); }
+
+    .course-header {
+      display: grid;
+      grid-template-columns: 1fr 80px 90px 32px;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 0 2px;
+    }
+
+    .add-course-btn {
+      background: none;
+      border: 1px dashed var(--border);
+      color: var(--text-3);
+      font-size: 13px;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    .add-course-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .gpa-note {
+      font-size: 11px;
+      color: var(--text-3);
+      line-height: 1.5;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+    }
+
+    /* ── Auth overlay ────────────────────────────────────── */
+
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 36px 32px 28px;
+      width: 360px;
+      max-width: calc(100vw - 32px);
+      box-shadow: 0 12px 40px var(--shadow);
+    }
+
+    .auth-logo {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .auth-logo span { color: var(--accent); }
+
+    .auth-tagline {
+      font-size: 12px;
+      color: var(--text-3);
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 3px;
+      background: var(--bg-input);
+      border-radius: 10px;
+      padding: 3px;
+      margin-bottom: 20px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 7px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--text-3);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.12s;
+      font-family: inherit;
+    }
+    .auth-tab.active {
+      background: var(--bg-surface);
+      color: var(--text);
+      box-shadow: 0 1px 4px var(--shadow-sm);
+    }
+
+    .auth-field { margin-bottom: 12px; }
+    .auth-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      margin-bottom: 5px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .auth-field input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 9px;
+      padding: 10px 13px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .auth-field input:focus { border-color: var(--accent); }
+    .auth-field input::placeholder { color: var(--text-3); }
+
+    .auth-skip-row {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 5px;
+    }
+    .auth-skip-link {
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .auth-skip-link:hover { color: var(--accent-hover); }
+
+    .auth-btn {
+      width: 100%;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: none;
+      border-radius: 10px;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.12s, opacity 0.12s;
+      font-family: inherit;
+      letter-spacing: 0.1px;
+    }
+    .auth-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .auth-btn:disabled { opacity: 0.55; cursor: default; }
+
+    .auth-error {
+      font-size: 12px;
+      color: #d44;
+      text-align: center;
+      margin-top: 10px;
+      min-height: 18px;
+      line-height: 1.4;
+    }
+
+    /* ── User row (sidebar footer) ───────────────────────── */
+
+    .user-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 9px;
+      border-radius: 9px;
+      cursor: pointer;
+      margin-top: 6px;
+      border: 1px solid var(--border-subtle);
+      transition: background 0.12s;
+    }
+    .user-row:hover { background: var(--bg-hover); }
+
+    .user-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      letter-spacing: 0.3px;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+    .user-name-display {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-email-display {
+      font-size: 11px;
+      color: var(--text-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-chevron {
+      color: var(--text-3);
+      font-size: 12px;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .user-row.open .user-chevron { transform: rotate(180deg); }
+
+    .settings-popup {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0; right: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      box-shadow: 0 6px 20px var(--shadow);
+      overflow: hidden;
+      z-index: 200;
+      animation: fadeUp 0.12s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .settings-header {
+      padding: 12px 14px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .settings-header-name  { font-size: 13px; font-weight: 600; color: var(--text); }
+    .settings-header-email { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+    .settings-item {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-2);
+      font-size: 13px;
+      padding: 10px 14px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      transition: background 0.1s;
+    }
+    .settings-item:hover { background: var(--bg-hover); color: var(--text); }
+    .settings-item.danger:hover { color: #d44; }
+
+    /* ── Settings modal ──────────────────────────────────── */
+
+    .settings-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 600; display: none; align-items: center; justify-content: center;
+    }
+    .settings-modal-backdrop.open { display: flex; }
+
+    .settings-modal {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 16px; width: 440px; max-width: calc(100vw - 32px);
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 20px 60px var(--shadow);
+      animation: fadeUp 0.15s ease;
+    }
+
+    .settings-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px 14px; border-bottom: 1px solid var(--border-subtle);
+    }
+    .settings-modal-title { font-size: 16px; font-weight: 600; color: var(--text); }
+    .settings-modal-close {
+      background: none; border: none; color: var(--text-3); font-size: 20px;
+      cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 6px;
+    }
+    .settings-modal-close:hover { background: var(--bg-hover); color: var(--text); }
+
+    .settings-section {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .settings-section:last-child { border-bottom: none; }
+    .settings-section-title {
+      font-size: 11px; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+    }
+
+    .settings-field { margin-bottom: 10px; }
+    .settings-field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 4px; font-weight: 500; }
+    .settings-field input {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border-subtle);
+      border-radius: 8px; padding: 9px 12px; font-size: 14px; color: var(--text);
+      font-family: inherit; outline: none; transition: border-color 0.15s;
+    }
+    .settings-field input:focus { border-color: var(--accent); }
+    .settings-field input::placeholder { color: var(--text-3); }
+    .settings-field input:disabled { opacity: 0.5; }
+
+    .uc-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px;
+    }
+    .uc-chip-sel {
+      padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px;
+      font-size: 12px; color: var(--text-2); cursor: pointer;
+      text-align: center; transition: all 0.12s; user-select: none;
+      background: var(--bg-input);
+    }
+    .uc-chip-sel.selected { border-color: var(--accent); color: var(--accent); background: rgba(240,168,58,0.1); }
+
+    .settings-save-btn {
+      width: 100%; background: var(--accent); color: var(--accent-fg);
+      border: none; border-radius: 8px; padding: 10px; font-size: 14px;
+      font-weight: 600; cursor: pointer; margin-top: 4px; font-family: inherit;
+      transition: background 0.12s;
+    }
+    .settings-save-btn:hover { background: var(--accent-hover); }
+    .settings-save-btn:disabled { opacity: 0.55; cursor: default; }
+
+    .settings-pwd-row { display: flex; gap: 8px; }
+    .settings-msg { font-size: 12px; text-align: center; min-height: 16px; margin-top: 8px; }
+    .settings-msg.ok  { color: #5a9; }
+    .settings-msg.err { color: #d44; }
+
+    /* ── Onboarding modal ─────────────────────────────────── */
+
+    .onboarding-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 700; display: none; align-items: center; justify-content: center;
+    }
+    .onboarding-backdrop.open { display: flex; }
+
+    .onboarding-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 18px; width: 480px; max-width: calc(100vw - 32px);
+      box-shadow: 0 24px 80px var(--shadow); animation: fadeUp 0.2s ease;
+      padding: 36px 32px 28px;
+    }
+
+    .onboarding-header { text-align: center; margin-bottom: 24px; }
+    .onboarding-icon {
+      width: 52px; height: 52px; background: var(--accent); border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent-fg); margin: 0 auto 14px; font-size: 26px;
+      box-shadow: 0 4px 12px rgba(240,168,58,0.3);
+    }
+    .onboarding-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .onboarding-sub { font-size: 13px; color: var(--text-2); }
+
+    .onboarding-footer { display: flex; gap: 10px; margin-top: 22px; }
+    .onboarding-skip {
+      flex: 1; background: none; border: 1px solid var(--border); color: var(--text-2);
+      border-radius: 9px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit;
+      transition: all 0.12s;
+    }
+    .onboarding-skip:hover { border-color: var(--text-2); color: var(--text); }
+    .onboarding-go {
+      flex: 2; background: var(--accent); color: var(--accent-fg);
+      border: none; border-radius: 9px; padding: 11px; font-size: 14px;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.12s;
+    }
+    .onboarding-go:hover { background: var(--accent-hover); }
+
+    /* ── Feedback buttons ─────────────────────────────────── */
+
+    .feedback-row {
+      display: flex; gap: 4px; margin-top: 8px; opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .ai:hover .feedback-row,
+    .feedback-row.has-vote { opacity: 1; }
+
+    .feedback-btn {
+      background: none; border: 1px solid var(--border); color: var(--text-3);
+      width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; transition: all 0.12s; flex-shrink: 0;
+    }
+    .feedback-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .feedback-btn.up.active   { border-color: #5a9; color: #5a9; background: rgba(80,180,120,0.1); }
+    .feedback-btn.down.active { border-color: #d44; color: #d44; background: rgba(220,80,80,0.1); }
+
+    /* ── Forgot password / reset form ─────────────────────── */
+
+    .auth-back-link {
+      font-size: 12px; color: var(--accent); cursor: pointer;
+      text-align: center; margin-top: 10px; display: block;
+    }
+    .auth-back-link:hover { color: var(--accent-hover); }
+
+    .reset-token-box {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px; font-size: 12px;
+      color: var(--text-2); font-family: monospace; word-break: break-all;
+      margin: 8px 0; user-select: all;
+    }
+
+    /* ── Mobile ───────────────────────────────────────────── */
+    @media (max-width: 680px) {
+      .sidebar {
+        position: fixed;
+        left: -260px; top: 0; bottom: 0;
+        z-index: 100;
+        transition: left 0.2s ease;
+        box-shadow: 4px 0 24px var(--shadow);
+      }
+      .sidebar.open { left: 0; }
+      .menu-btn { display: block; }
+      .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+      .overlay.show { display: block; }
+      #chat { padding: 16px 14px; }
+      .msg { max-width: 90%; }
+      .greeting { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Auth overlay ──────────────────────────────────── -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-logo" style="display:flex;align-items:center;justify-content:center;gap:10px">
+        <div style="width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--accent-fg);box-shadow:0 2px 8px rgba(240,168,58,0.3);flex-shrink:0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M16 8l-3.2 6.8-6.8 1.2 3.2-6.8L16 8z" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="var(--bg-surface)"/></svg>
+        </div>
+        <span>Transfer<span>AI</span></span>
+      </div>
+      <div class="auth-tagline">Your UC transfer advisor — sign in to get started</div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn"  onclick="switchAuthTab('signin')">Sign in</button>
+        <button class="auth-tab"        id="tabSignUp"  onclick="switchAuthTab('signup')">Create account</button>
+      </div>
+
+      <!-- Sign in form -->
+      <div id="formSignIn">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="siEmail" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="siPassword" placeholder="Your password" autocomplete="current-password">
+        </div>
+        <button class="auth-btn" id="siBtn" onclick="doLogin()">Sign in</button>
+        <span class="auth-back-link" onclick="showForgotPassword()">Forgot password?</span>
+      </div>
+
+      <!-- Forgot password form -->
+      <div id="formForgot" style="display:none">
+        <div class="auth-field">
+          <label>Your email</label>
+          <input type="email" id="fpEmail" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <button class="auth-btn" id="fpBtn" onclick="doForgotPassword()">Send reset token</button>
+        <div id="fpResult" style="display:none;margin-top:12px">
+          <div style="font-size:12px;color:var(--text-2);margin-bottom:6px">Copy this token, then click "Enter token below":</div>
+          <div class="reset-token-box" id="fpToken"></div>
+          <button class="auth-btn" style="margin-top:8px" onclick="showResetPassword()">Enter token below →</button>
+        </div>
+        <span class="auth-back-link" onclick="showSignIn()">← Back to sign in</span>
+      </div>
+
+      <!-- Reset password form -->
+      <div id="formReset" style="display:none">
+        <div class="auth-field">
+          <label>Reset token</label>
+          <input type="text" id="rpToken" placeholder="Paste your reset token" autocomplete="off">
+        </div>
+        <div class="auth-field">
+          <label>New password</label>
+          <input type="password" id="rpPassword" placeholder="At least 6 characters" autocomplete="new-password">
+        </div>
+        <button class="auth-btn" id="rpBtn" onclick="doResetPassword()">Set new password</button>
+        <span class="auth-back-link" onclick="showSignIn()">← Back to sign in</span>
+      </div>
+
+      <!-- Create account form -->
+      <div id="formSignUp" style="display:none">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="suEmail" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="suPassword" placeholder="At least 6 characters" autocomplete="new-password">
+        </div>
+        <div class="auth-field" id="usernameField">
+          <label>Username</label>
+          <input type="text" id="suUsername" placeholder="e.g. TransferHawk" maxlength="32" autocomplete="username">
+          <div class="auth-skip-row">
+            Optional — <span class="auth-skip-link" onclick="skipUsername()">skip and generate one for me</span>
+          </div>
+        </div>
+        <button class="auth-btn" id="suBtn" onclick="doRegister()">Create account</button>
+      </div>
+
+      <div class="auth-error" id="authError"></div>
+    </div>
+  </div>
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M16 8l-3.2 6.8-6.8 1.2 3.2-6.8L16 8z" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.5" fill="var(--bg-sidebar)"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Transfer<span>AI</span></div>
+        <div class="brand-sub">UC Transfer Advisor</div>
+      </div>
+    </div>
+    <div class="sidebar-top">
+      <button class="new-btn" onclick="newChat()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M6.5 1v11M1 6.5h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        New chat
+      </button>
+    </div>
+    <div class="session-list" id="sessionList"></div>
+    <div class="sidebar-footer">
+      <button class="theme-btn" style="margin-bottom:6px" onclick="openGpaCalc()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        GPA Calculator
+      </button>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">
+        <span id="themeIcon"></span>
+        <span id="themeLabel"></span>
+      </button>
+
+      <!-- User row -->
+      <div class="user-row" id="userRow" onclick="toggleSettings(event)">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name-display"  id="userNameDisplay">—</div>
+          <div class="user-email-display" id="userEmailDisplay">—</div>
+        </div>
+        <span class="user-chevron">&#8964;</span>
+
+        <!-- Settings popup (inside user-row for positioning) -->
+        <div class="settings-popup" id="settingsPopup" style="display:none" onclick="event.stopPropagation()">
+          <div class="settings-header">
+            <div class="settings-header-name"  id="settingsName">—</div>
+            <div class="settings-header-email" id="settingsEmail">—</div>
+          </div>
+          <button class="settings-item" onclick="openSettingsModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="1.5"/></svg>
+            Settings &amp; Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- ── Main ───────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Welcome -->
+    <div id="welcomeOverlay">
+      <div class="tagline">Dream campus. Real plan.</div>
+      <h1 class="greeting">How can I help you today?</h1>
+      <div class="welcome-input-wrap">
+        <textarea id="wMsg" rows="1"
+          placeholder="Ask about courses, TAG, transferring to UCLA..."
+          onkeydown="wKeydown(event)" oninput="wResize(this)"></textarea>
+        <button class="w-send-btn" onclick="sendFromWelcome()">Send</button>
+      </div>
+      <div class="welcome-chips">
+        <div class="chip" onclick="chipSend(this)">📚 De Anza → Berkeley CS — which courses transfer?</div>
+        <div class="chip" onclick="chipSend(this)">🎯 Am I eligible for TAG to UC Davis?</div>
+        <div class="chip" onclick="chipSend(this)">💰 How much does UCLA cost for a CA resident?</div>
+        <div class="chip" onclick="chipSend(this)">⭐ Best math professors at Mt SAC?</div>
+        <div class="chip" onclick="chipSend(this)">✍️ Help me write my PIQ essay</div>
+        <div class="chip" onclick="chipSend(this)">📊 Transfer admit rate at UCSD?</div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="main-header" id="mainHeader" style="display:none">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <span id="sessionTitle">Transfer AI</span>
+    </div>
+
+    <!-- Chat -->
+    <div id="chat" style="display:none"></div>
+
+    <!-- Jump to bottom -->
+    <button id="jumpBtn" onclick="scrollBottom()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M2 5l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <!-- Footer input -->
+    <div id="footer" style="display:none">
+      <div id="row">
+        <textarea id="msg" rows="1" placeholder="Ask a follow-up..."></textarea>
+        <button id="btn" onclick="send()">Send</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- GPA Calculator Modal -->
+  <div class="modal-backdrop" id="gpaModal" onclick="gpaBackdropClick(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">UC Transfer GPA Calculator</span>
+        <button class="modal-close" onclick="closeGpaCalc()">×</button>
+      </div>
+
+      <div class="gpa-result">
+        <div class="gpa-number" id="gpaDisplay">—</div>
+        <div class="gpa-label">UC Transfer GPA</div>
+        <div class="gpa-sub" id="gpaSub">Add courses below to calculate</div>
+      </div>
+
+      <div>
+        <div class="course-header">
+          <span>Course name</span><span>Units</span><span>Grade</span><span></span>
+        </div>
+        <div id="courseRows" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+        <button class="add-course-btn" style="margin-top:8px" onclick="addCourseRow()">+ Add course</button>
+      </div>
+
+      <div class="gpa-note">
+        <strong>UC transfer GPA rules:</strong> Includes only UC-transferable courses (grade of D or above).
+        Uses 4.0 scale: A=4, B=3, C=2, D=1, F=0. No +/− grades. Pass/No Pass courses excluded.
+        Repeated courses: both attempts count unless a petition for grade replacement was approved.
+        The UC systemwide minimum is 2.4 GPA; competitive campuses require 3.5+.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Onboarding Modal ────────────────────────────────── -->
+  <div class="onboarding-backdrop" id="onboardingBackdrop">
+    <div class="onboarding-card">
+      <div class="onboarding-header">
+        <div class="onboarding-icon">🎓</div>
+        <div class="onboarding-title">Welcome to TransferAI!</div>
+        <div class="onboarding-sub">Tell us about yourself for personalized advice (takes 30 seconds)</div>
+      </div>
+      <div class="settings-field">
+        <label>Your community college</label>
+        <input type="text" id="obCollege" placeholder="e.g. De Anza College, Mt. SAC, Santa Monica CC">
+      </div>
+      <div class="settings-field">
+        <label>Intended major</label>
+        <input type="text" id="obMajor" placeholder="e.g. Computer Science, Psychology, Nursing">
+      </div>
+      <div class="settings-field">
+        <label>Target UC campuses</label>
+        <div class="uc-grid" id="obUCGrid">
+          <div class="uc-chip-sel" data-uc="UCLA" onclick="toggleUCChip(this)">UCLA</div>
+          <div class="uc-chip-sel" data-uc="UC Berkeley" onclick="toggleUCChip(this)">UC Berkeley</div>
+          <div class="uc-chip-sel" data-uc="UC San Diego" onclick="toggleUCChip(this)">UC San Diego</div>
+          <div class="uc-chip-sel" data-uc="UC Irvine" onclick="toggleUCChip(this)">UC Irvine</div>
+          <div class="uc-chip-sel" data-uc="UC Santa Barbara" onclick="toggleUCChip(this)">UC Santa Barbara</div>
+          <div class="uc-chip-sel" data-uc="UC Davis" onclick="toggleUCChip(this)">UC Davis</div>
+          <div class="uc-chip-sel" data-uc="UC Santa Cruz" onclick="toggleUCChip(this)">UC Santa Cruz</div>
+          <div class="uc-chip-sel" data-uc="UC Riverside" onclick="toggleUCChip(this)">UC Riverside</div>
+          <div class="uc-chip-sel" data-uc="UC Merced" onclick="toggleUCChip(this)">UC Merced</div>
+        </div>
+      </div>
+      <div class="onboarding-footer">
+        <button class="onboarding-skip" onclick="skipOnboarding()">Skip for now</button>
+        <button class="onboarding-go" id="obGoBtn" onclick="saveOnboarding()">Save &amp; Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Settings Modal ─────────────────────────────────── -->
+  <div class="settings-modal-backdrop" id="settingsModalBackdrop" onclick="closeSettingsModal(event)">
+    <div class="settings-modal" onclick="event.stopPropagation()">
+      <div class="settings-modal-header">
+        <span class="settings-modal-title">Settings</span>
+        <button class="settings-modal-close" onclick="closeSettingsModal()">×</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Account</div>
+        <div class="settings-field">
+          <label>Username</label>
+          <input type="text" id="smUsername" placeholder="Username" maxlength="32">
+        </div>
+        <div class="settings-field">
+          <label>Email</label>
+          <input type="text" id="smEmail" disabled>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Your Profile</div>
+        <div class="settings-field">
+          <label>Community college</label>
+          <input type="text" id="smCollege" placeholder="e.g. De Anza College">
+        </div>
+        <div class="settings-field">
+          <label>Intended major</label>
+          <input type="text" id="smMajor" placeholder="e.g. Computer Science">
+        </div>
+        <div class="settings-field">
+          <label>Target UC campuses</label>
+          <div class="uc-grid" id="smUCGrid">
+            <div class="uc-chip-sel" data-uc="UCLA" onclick="toggleUCChip(this)">UCLA</div>
+            <div class="uc-chip-sel" data-uc="UC Berkeley" onclick="toggleUCChip(this)">UC Berkeley</div>
+            <div class="uc-chip-sel" data-uc="UC San Diego" onclick="toggleUCChip(this)">UC San Diego</div>
+            <div class="uc-chip-sel" data-uc="UC Irvine" onclick="toggleUCChip(this)">UC Irvine</div>
+            <div class="uc-chip-sel" data-uc="UC Santa Barbara" onclick="toggleUCChip(this)">UC Santa Barbara</div>
+            <div class="uc-chip-sel" data-uc="UC Davis" onclick="toggleUCChip(this)">UC Davis</div>
+            <div class="uc-chip-sel" data-uc="UC Santa Cruz" onclick="toggleUCChip(this)">UC Santa Cruz</div>
+            <div class="uc-chip-sel" data-uc="UC Riverside" onclick="toggleUCChip(this)">UC Riverside</div>
+            <div class="uc-chip-sel" data-uc="UC Merced" onclick="toggleUCChip(this)">UC Merced</div>
+          </div>
+        </div>
+        <button class="settings-save-btn" id="smSaveBtn" onclick="saveProfileSettings()">Save Changes</button>
+        <div class="settings-msg" id="smMsg"></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Change Password</div>
+        <div class="settings-field">
+          <label>Current password</label>
+          <input type="password" id="smCurPwd" placeholder="Current password" autocomplete="current-password">
+        </div>
+        <div class="settings-field">
+          <label>New password</label>
+          <input type="password" id="smNewPwd" placeholder="At least 6 characters" autocomplete="new-password">
+        </div>
+        <button class="settings-save-btn" id="smPwdBtn" onclick="savePasswordSettings()">Change Password</button>
+        <div class="settings-msg" id="smPwdMsg"></div>
+      </div>
+
+      <div class="settings-section">
+        <button class="settings-item danger" style="width:100%;border-radius:8px;border:1px solid rgba(220,80,80,0.3)" onclick="doLogout()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><polyline points="16 17 21 12 16 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Log out
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    marked.setOptions({ breaks: true, gfm: true });
+
+    // ── SVG icons ─────────────────────────────────────────────
+    const SVG = {
+      sun:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+      moon:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      copy:  `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="5" y="1" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M3 4H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+      check: `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2.5 8.5l4 4 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      cap:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M22 9L12 4 2 9l10 5 10-5z" fill="currentColor" opacity="0.9"/><path d="M6 11.5v3.5c0 1.38 2.69 2.5 6 2.5s6-1.12 6-2.5v-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`,
+    };
+
+    // ── Theme ─────────────────────────────────────────────────
+
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('themeIcon').innerHTML  = t === 'dark' ? SVG.sun  : SVG.moon;
+      document.getElementById('themeLabel').textContent = t === 'dark' ? 'Light mode' : 'Dark mode';
+    }
+
+    function toggleTheme() {
+      const cur  = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = cur === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('trai_theme', next);
+      applyTheme(next);
+    }
+
+    // Sync toggle UI with whatever theme was already applied by the <head> script
+    applyTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+
+    // ── State ─────────────────────────────────────────────────
+    let sessions   = [];   // [{id, title, updated_at}, ...]  — server-assigned integer IDs
+    let currentId  = null; // integer session ID, or null
+    let messages   = [];   // [{role, content}]
+    let isStreaming = false;
+
+    function makeTitle(t) { return t.length > 44 ? t.slice(0,41)+'…' : t; }
+    function esc(s)       { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    // ── Layout state ──────────────────────────────────────────
+
+    function enterChat() {
+      const ov = document.getElementById('welcomeOverlay');
+      if (ov) ov.remove();
+      document.getElementById('mainHeader').style.display = '';
+      document.getElementById('chat').style.display       = '';
+      document.getElementById('footer').style.display     = '';
+    }
+
+    function showWelcome() {
+      if (!document.getElementById('welcomeOverlay')) {
+        const main = document.querySelector('.main');
+        const ov   = document.createElement('div');
+        ov.id = 'welcomeOverlay';
+        ov.innerHTML = `
+          <div class="tagline">Dream campus. Real plan.</div>
+          <h1 class="greeting">How can I help you today?</h1>
+          <div class="welcome-input-wrap">
+            <textarea id="wMsg" rows="1"
+              placeholder="Ask about courses, TAG, transferring to UCLA..."
+              onkeydown="wKeydown(event)" oninput="wResize(this)"></textarea>
+            <button class="w-send-btn" onclick="sendFromWelcome()">Send</button>
+          </div>
+          <div class="welcome-chips">
+            <div class="chip" onclick="chipSend(this)">📚 De Anza → Berkeley CS — which courses transfer?</div>
+            <div class="chip" onclick="chipSend(this)">🎯 Am I eligible for TAG to UC Davis?</div>
+            <div class="chip" onclick="chipSend(this)">💰 How much does UCLA cost for a CA resident?</div>
+            <div class="chip" onclick="chipSend(this)">⭐ Best math professors at Mt SAC?</div>
+            <div class="chip" onclick="chipSend(this)">✍️ Help me write my PIQ essay</div>
+            <div class="chip" onclick="chipSend(this)">📊 Transfer admit rate at UCSD?</div>
+          </div>`;
+        main.insertBefore(ov, main.firstChild);
+      }
+      document.getElementById('mainHeader').style.display = 'none';
+      document.getElementById('chat').style.display       = 'none';
+      document.getElementById('footer').style.display     = 'none';
+    }
+
+    // ── Server-backed sessions ────────────────────────────────
+
+    async function loadSessionsFromServer() {
+      try {
+        const res = await fetch('/api/sessions');
+        sessions = res.ok ? await res.json() : [];
+      } catch { sessions = []; }
+    }
+
+    function newChat() {
+      currentId = null;
+      messages  = [];
+      chatEl.innerHTML = '';
+      renderSidebar();
+      showWelcome();
+      closeSidebar();
+      setTimeout(() => { const w = document.getElementById('wMsg'); if (w) w.focus(); }, 50);
+    }
+
+    async function switchSession(id) {
+      if (id === currentId) { closeSidebar(); return; }
+      currentId = id;
+      localStorage.setItem('trai_last', id);
+      try {
+        const res = await fetch(`/api/sessions/${id}/messages`);
+        messages  = res.ok ? await res.json() : [];
+      } catch { messages = []; }
+      renderSidebar();
+      if (messages.length === 0) showWelcome();
+      else { enterChat(); renderMessages(); }
+      closeSidebar();
+    }
+
+    async function deleteSession(id, e) {
+      e.stopPropagation();
+      fetch(`/api/sessions/${id}`, { method: 'DELETE' }).catch(() => {});
+      sessions = sessions.filter(s => s.id !== id);
+      if (id === currentId) {
+        currentId = null;
+        messages  = [];
+        showWelcome();
+      }
+      renderSidebar();
+    }
+
+    // ── Sidebar ───────────────────────────────────────────────
+
+    function groupSessions(list) {
+      const now = Date.now(), DAY = 86400000;
+      const g = [
+        { label: 'Today',           items: [] },
+        { label: 'Yesterday',       items: [] },
+        { label: 'Previous 7 days', items: [] },
+        { label: 'Older',           items: [] },
+      ];
+      for (const s of list) {
+        const age = now - new Date(s.updated_at).getTime();
+        if      (age < DAY)   g[0].items.push(s);
+        else if (age < 2*DAY) g[1].items.push(s);
+        else if (age < 7*DAY) g[2].items.push(s);
+        else                  g[3].items.push(s);
+      }
+      return g;
+    }
+
+    function renderSidebar() {
+      const el     = document.getElementById('sessionList');
+      const groups = groupSessions(sessions);
+      let html = '';
+      for (const g of groups) {
+        if (!g.items.length) continue;
+        html += `<div class="date-group"><div class="date-label">${g.label}</div>`;
+        for (const s of g.items) {
+          const active = s.id === currentId ? ' active' : '';
+          html += `
+            <div class="sess-item${active}" onclick="switchSession('${esc(s.id)}')">
+              <span class="sess-title">${esc(s.title)}</span>
+              <button class="sess-del" onclick="deleteSession('${esc(s.id)}',event)">×</button>
+            </div>`;
+        }
+        html += '</div>';
+      }
+      el.innerHTML = html || `<div style="padding:14px 10px;font-size:12px;color:var(--text-3)">No previous chats</div>`;
+
+      const cur = sessions.find(s => s.id === currentId);
+      const titleEl = document.getElementById('sessionTitle');
+      if (titleEl) titleEl.textContent = (cur && cur.title !== 'New chat') ? cur.title : 'Transfer AI';
+    }
+
+    // ── Chat ──────────────────────────────────────────────────
+
+    const chatEl  = document.getElementById('chat');
+    const jumpBtn = document.getElementById('jumpBtn');
+
+    chatEl.addEventListener('scroll', () => {
+      const near = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 120;
+      jumpBtn.classList.toggle('show', !near && messages.length > 0);
+    });
+
+    function renderMessages() {
+      chatEl.innerHTML = '';
+      for (const m of messages) addBubble(m.role, m.content);
+      scrollBottom();
+    }
+
+    function makeCopyBtn(getText) {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.title     = 'Copy';
+      btn.innerHTML = SVG.copy;
+      btn.onclick   = () => {
+        navigator.clipboard.writeText(getText()).then(() => {
+          btn.innerHTML = SVG.check;
+          btn.classList.add('copied');
+          setTimeout(() => { btn.innerHTML = SVG.copy; btn.classList.remove('copied'); }, 2000);
+        });
+      };
+      return btn;
+    }
+
+    function addBubble(role, content, streaming = false) {
+      if (role === 'assistant' || streaming) {
+        const row = document.createElement('div');
+        row.className = 'ai-row';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'ai-avatar-sm';
+        avatar.innerHTML = SVG.cap;
+
+        const bubble = document.createElement('div');
+        if (streaming) {
+          bubble.className = 'msg ai streaming';
+          bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+        } else {
+          bubble.className = 'msg ai';
+          bubble.innerHTML = marked.parse(content);
+          bubble.appendChild(makeCopyBtn(() => content));
+        }
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        chatEl.appendChild(row);
+        scrollBottom();
+        return bubble;
+      }
+
+      const div = document.createElement('div');
+      div.className = 'msg user';
+      div.textContent = content;
+      chatEl.appendChild(div);
+      scrollBottom();
+      return div;
+    }
+
+    function makeFeedbackRow() {
+      const row = document.createElement('div');
+      row.className = 'feedback-row';
+      const up   = document.createElement('button');
+      const down = document.createElement('button');
+      up.className   = 'feedback-btn up';   up.title   = 'Good response'; up.innerHTML   = '👍';
+      down.className = 'feedback-btn down'; down.title = 'Bad response';  down.innerHTML = '👎';
+      up.onclick   = () => castFeedback(up, down, 1);
+      down.onclick = () => castFeedback(down, up, -1);
+      row.appendChild(up); row.appendChild(down);
+      return row;
+    }
+
+    function castFeedback(clicked, other, rating) {
+      if (clicked.classList.contains('active')) return;
+      clicked.classList.add('active');
+      other.classList.remove('active');
+      clicked.closest('.feedback-row').classList.add('has-vote');
+      if (currentId) {
+        fetch('/api/feedback', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({session_id: currentId, rating})
+        }).catch(() => {});
+      }
+    }
+
+    function scrollBottom() { chatEl.scrollTop = chatEl.scrollHeight; }
+
+    function setLocked(v) {
+      isStreaming = v;
+      const btn = document.getElementById('btn');
+      const inp = document.getElementById('msg');
+      if (btn) btn.disabled = v;
+      if (inp) inp.disabled = v;
+    }
+
+    // ── Send ──────────────────────────────────────────────────
+
+    function sendFromWelcome() {
+      const wMsg = document.getElementById('wMsg');
+      const text = wMsg ? wMsg.value.trim() : '';
+      if (!text) return;
+      enterChat();
+      doSend(text);
+    }
+
+    function send() {
+      const inp  = document.getElementById('msg');
+      const text = inp ? inp.value.trim() : '';
+      if (!text || isStreaming) return;
+      inp.value = '';
+      inp.style.height = 'auto';
+      doSend(text);
+    }
+
+    async function doSend(text) {
+      setLocked(true);
+
+      // Create server session on first message
+      if (!currentId) {
+        try {
+          const res = await fetch('/api/sessions', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: makeTitle(text)})
+          });
+          const sess = await res.json();
+          currentId = sess.id;
+          sessions.unshift(sess);
+          localStorage.setItem('trai_last', currentId);
+          renderSidebar();
+        } catch { /* session save failed, continue anyway */ }
+      } else {
+        const sess = sessions.find(s => s.id === currentId);
+        if (sess && sess.title === 'New chat') {
+          const title = makeTitle(text);
+          sess.title = title;
+          renderSidebar();
+          fetch(`/api/sessions/${currentId}`, {
+            method: 'PATCH', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title})
+          }).catch(() => {});
+        }
+      }
+
+      messages.push({ role: 'user', content: text });
+      addBubble('user', text);
+
+      const aiBubble = addBubble('assistant', '', true);
+      let fullText = '';
+      let errored  = false;
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, history: messages })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '', done = false;
+
+        while (!done) {
+          const { done: sd, value } = await reader.read();
+          if (sd) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6);
+            if (payload === '[DONE]') { done = true; break; }
+            try {
+              fullText += JSON.parse(payload);
+              aiBubble.textContent = fullText;
+              scrollBottom();
+            } catch {}
+          }
+        }
+      } catch { errored = true; }
+
+      if (errored && !fullText) {
+        aiBubble.className = 'msg ai error';
+        aiBubble.innerHTML = `<span style="color:var(--text-2)">Something went wrong. Check your connection and try again.</span>`;
+        const retryBtn = document.createElement('button');
+        retryBtn.className   = 'retry-btn';
+        retryBtn.textContent = 'Retry';
+        retryBtn.onclick     = () => {
+          (aiBubble.closest('.ai-row') || aiBubble).remove();
+          messages.pop(); // remove the user message we already pushed
+          setLocked(false);
+          doSend(text);
+        };
+        aiBubble.appendChild(document.createElement('br'));
+        aiBubble.appendChild(retryBtn);
+        setLocked(false);
+        return;
+      }
+
+      aiBubble.classList.remove('streaming');
+      aiBubble.innerHTML = marked.parse(fullText);
+      aiBubble.appendChild(makeCopyBtn(() => fullText));
+      aiBubble.appendChild(makeFeedbackRow());
+      scrollBottom();
+
+      messages.push({ role: 'assistant', content: fullText });
+
+      // Persist to server (fire-and-forget)
+      if (currentId) {
+        fetch(`/api/sessions/${currentId}/messages`, {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({messages: [
+            {role:'user', content:text},
+            {role:'assistant', content:fullText}
+          ]})
+        }).catch(() => {});
+      }
+
+      setLocked(false);
+
+      const inp = document.getElementById('msg');
+      if (inp) inp.focus();
+    }
+
+    function chipSend(el) {
+      const wMsg = document.getElementById('wMsg');
+      if (wMsg) {
+        const t = el.textContent.trim();
+        wMsg.value = t.includes(' ') ? t.slice(t.indexOf(' ') + 1) : t;
+      }
+      sendFromWelcome();
+    }
+
+    function wKeydown(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFromWelcome(); } }
+    function wResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+    const footerMsg = document.getElementById('msg');
+    if (footerMsg) {
+      footerMsg.addEventListener('input', () => {
+        footerMsg.style.height = 'auto';
+        footerMsg.style.height = Math.min(footerMsg.scrollHeight, 120) + 'px';
+      });
+      footerMsg.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+      });
+    }
+
+    // ── Mobile ────────────────────────────────────────────────
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('overlay').classList.toggle('show');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('overlay').classList.remove('show');
+    }
+
+
+    // ── Auth ──────────────────────────────────────────────────
+
+    let currentUser = null;
+
+    function showAuthOverlay() { document.getElementById('authOverlay').style.display = 'flex'; }
+    function hideAuthOverlay() { document.getElementById('authOverlay').style.display = 'none'; }
+
+    function showSignIn() {
+      ['formForgot','formReset','formSignUp'].forEach(id => document.getElementById(id).style.display = 'none');
+      document.getElementById('formSignIn').style.display = '';
+      document.getElementById('tabSignIn').classList.add('active');
+      document.getElementById('tabSignUp').classList.remove('active');
+      document.getElementById('authError').textContent = '';
+    }
+
+    function switchAuthTab(tab) {
+      const isSignIn = tab === 'signin';
+      document.getElementById('tabSignIn').classList.toggle('active',  isSignIn);
+      document.getElementById('tabSignUp').classList.toggle('active', !isSignIn);
+      document.getElementById('formSignIn').style.display   = isSignIn ? '' : 'none';
+      document.getElementById('formSignUp').style.display   = isSignIn ? 'none' : '';
+      document.getElementById('formForgot').style.display   = 'none';
+      document.getElementById('formReset').style.display    = 'none';
+      document.getElementById('authError').textContent = '';
+    }
+
+    function skipUsername() {
+      const el = document.getElementById('suUsername');
+      el.value = ''; el.placeholder = 'Will be auto-generated'; el.disabled = true;
+    }
+
+    function setAuthError(msg) { document.getElementById('authError').textContent = msg; }
+
+    function updateUserDisplay(user) {
+      currentUser = user;
+      const initials = user.username
+        ? user.username.slice(0, 2).toUpperCase()
+        : (user.email || '?').slice(0, 2).toUpperCase();
+      document.getElementById('userAvatar').textContent       = initials;
+      document.getElementById('userNameDisplay').textContent  = user.username || user.email;
+      document.getElementById('userEmailDisplay').textContent = user.email;
+      document.getElementById('settingsName').textContent     = user.username || user.email;
+      document.getElementById('settingsEmail').textContent    = user.email;
+    }
+
+    async function afterLogin(user) {
+      updateUserDisplay(user);
+      hideAuthOverlay();
+      await loadSessionsFromServer();
+      renderSidebar();
+      const lastId = parseInt(localStorage.getItem('trai_last') || '0');
+      if (lastId && sessions.find(s => s.id === lastId)) {
+        await switchSession(lastId);
+      } else if (sessions.length > 0) {
+        await switchSession(sessions[0].id);
+      } else {
+        showWelcome();
+      }
+      if (!user.onboarded) showOnboarding();
+    }
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/auth/me');
+        if (res.ok) {
+          await afterLogin(await res.json());
+        } else {
+          showAuthOverlay();
+        }
+      } catch { showAuthOverlay(); }
+    }
+
+    async function doLogin() {
+      const email = document.getElementById('siEmail').value.trim();
+      const password = document.getElementById('siPassword').value;
+      const btn = document.getElementById('siBtn');
+      setAuthError('');
+      if (!email || !password) { setAuthError('Please enter your email and password.'); return; }
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      try {
+        const res  = await fetch('/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password})});
+        const data = await res.json();
+        if (!res.ok) { setAuthError(data.error || 'Sign in failed.'); return; }
+        await afterLogin(data);
+      } catch { setAuthError('Connection error. Please try again.'); }
+      finally { btn.disabled = false; btn.textContent = 'Sign in'; }
+    }
+
+    async function doRegister() {
+      const email = document.getElementById('suEmail').value.trim();
+      const password = document.getElementById('suPassword').value;
+      const usernameEl = document.getElementById('suUsername');
+      const username = usernameEl.disabled ? '' : usernameEl.value.trim();
+      const btn = document.getElementById('suBtn');
+      setAuthError('');
+      if (!email || !password) { setAuthError('Please enter your email and password.'); return; }
+      btn.disabled = true; btn.textContent = 'Creating account…';
+      try {
+        const res  = await fetch('/auth/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password, username})});
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = data.error || 'Registration failed.';
+          if (res.status === 409) {
+            document.getElementById('authError').innerHTML = msg + ' <span class="auth-skip-link" onclick="switchAuthTab(\'signin\')">Sign in instead?</span>';
+          } else { setAuthError(msg); }
+          return;
+        }
+        await afterLogin(data);
+      } catch { setAuthError('Connection error. Please try again.'); }
+      finally { btn.disabled = false; btn.textContent = 'Create account'; }
+    }
+
+    async function doLogout() {
+      closeSettings(); closeSettingsModal();
+      await fetch('/auth/logout', { method: 'POST' });
+      currentUser = null; sessions = []; currentId = null; messages = [];
+      chatEl.innerHTML = '';
+      renderSidebar();
+      showAuthOverlay();
+      switchAuthTab('signin');
+      document.getElementById('siEmail').value = '';
+      document.getElementById('siPassword').value = '';
+    }
+
+    // ── Forgot / Reset password ───────────────────────────────
+
+    function showForgotPassword() {
+      ['formSignIn','formSignUp','formReset'].forEach(id => document.getElementById(id).style.display = 'none');
+      document.getElementById('formForgot').style.display = '';
+      document.getElementById('fpResult').style.display   = 'none';
+      document.getElementById('fpEmail').value = '';
+      document.getElementById('authError').textContent = '';
+    }
+
+    async function doForgotPassword() {
+      const email = document.getElementById('fpEmail').value.trim();
+      const btn   = document.getElementById('fpBtn');
+      setAuthError('');
+      if (!email) { setAuthError('Enter your email address.'); return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        const res  = await fetch('/auth/forgot-password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email})});
+        const data = await res.json();
+        if (data.token) {
+          document.getElementById('fpToken').textContent = data.token;
+          document.getElementById('fpResult').style.display = '';
+        } else {
+          setAuthError('If that email has an account, check your inbox for a reset link.');
+        }
+      } catch { setAuthError('Connection error. Please try again.'); }
+      finally { btn.disabled = false; btn.textContent = 'Send reset token'; }
+    }
+
+    function showResetPassword() {
+      document.getElementById('formForgot').style.display = 'none';
+      document.getElementById('formReset').style.display  = '';
+      const tok = document.getElementById('fpToken').textContent;
+      if (tok) document.getElementById('rpToken').value = tok;
+    }
+
+    async function doResetPassword() {
+      const token    = document.getElementById('rpToken').value.trim();
+      const password = document.getElementById('rpPassword').value;
+      const btn      = document.getElementById('rpBtn');
+      setAuthError('');
+      if (!token) { setAuthError('Paste your reset token.'); return; }
+      if (password.length < 6) { setAuthError('Password must be at least 6 characters.'); return; }
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const res  = await fetch('/auth/reset-password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({token, password})});
+        const data = await res.json();
+        if (!res.ok) { setAuthError(data.error || 'Reset failed.'); return; }
+        setAuthError('Password updated! Sign in with your new password.');
+        setTimeout(() => showSignIn(), 1500);
+      } catch { setAuthError('Connection error. Please try again.'); }
+      finally { btn.disabled = false; btn.textContent = 'Set new password'; }
+    }
+
+    // ── Settings popup ────────────────────────────────────────
+
+    function toggleSettings(e) {
+      e.stopPropagation();
+      const popup = document.getElementById('settingsPopup');
+      const row   = document.getElementById('userRow');
+      const open  = popup.style.display === 'none';
+      popup.style.display = open ? '' : 'none';
+      row.classList.toggle('open', open);
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsPopup').style.display = 'none';
+      document.getElementById('userRow').classList.remove('open');
+    }
+
+    // ── Settings modal ────────────────────────────────────────
+
+    function openSettingsModal() {
+      closeSettings();
+      if (currentUser) {
+        document.getElementById('smUsername').value = currentUser.username || '';
+        document.getElementById('smEmail').value    = currentUser.email || '';
+        document.getElementById('smCollege').value  = currentUser.college || '';
+        document.getElementById('smMajor').value    = currentUser.major || '';
+        setUCGrid('smUCGrid', currentUser.target_schools || '');
+      }
+      document.getElementById('smMsg').textContent    = '';
+      document.getElementById('smPwdMsg').textContent = '';
+      document.getElementById('smCurPwd').value       = '';
+      document.getElementById('smNewPwd').value       = '';
+      document.getElementById('settingsModalBackdrop').classList.add('open');
+    }
+
+    function closeSettingsModal(e) {
+      if (e && e.target !== document.getElementById('settingsModalBackdrop')) return;
+      document.getElementById('settingsModalBackdrop').classList.remove('open');
+    }
+
+    function setUCGrid(gridId, targetStr) {
+      const selected = targetStr.split(',').map(s => s.trim()).filter(Boolean);
+      document.querySelectorAll(`#${gridId} .uc-chip-sel`).forEach(chip => {
+        chip.classList.toggle('selected', selected.includes(chip.dataset.uc));
+      });
+    }
+
+    function getUCGrid(gridId) {
+      return Array.from(document.querySelectorAll(`#${gridId} .uc-chip-sel.selected`))
+        .map(c => c.dataset.uc).join(', ');
+    }
+
+    function toggleUCChip(el) { el.classList.toggle('selected'); }
+
+    async function saveProfileSettings() {
+      const btn = document.getElementById('smSaveBtn');
+      const msg = document.getElementById('smMsg');
+      btn.disabled = true; btn.textContent = 'Saving…'; msg.textContent = '';
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'PUT', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            username:       document.getElementById('smUsername').value.trim(),
+            college:        document.getElementById('smCollege').value.trim(),
+            major:          document.getElementById('smMajor').value.trim(),
+            target_schools: getUCGrid('smUCGrid'),
+            onboarded: 1,
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) { msg.className='settings-msg err'; msg.textContent = data.error || 'Save failed.'; return; }
+        updateUserDisplay(data);
+        currentUser = data;
+        msg.className = 'settings-msg ok'; msg.textContent = 'Saved!';
+        setTimeout(() => { msg.textContent = ''; }, 2000);
+      } catch { msg.className='settings-msg err'; msg.textContent = 'Connection error.'; }
+      finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
+    }
+
+    async function savePasswordSettings() {
+      const curPwd = document.getElementById('smCurPwd').value;
+      const newPwd = document.getElementById('smNewPwd').value;
+      const btn    = document.getElementById('smPwdBtn');
+      const msg    = document.getElementById('smPwdMsg');
+      btn.disabled = true; btn.textContent = 'Saving…'; msg.textContent = '';
+      if (!curPwd || !newPwd) { msg.className='settings-msg err'; msg.textContent = 'Fill in both fields.'; btn.disabled=false; btn.textContent='Change Password'; return; }
+      if (newPwd.length < 6) { msg.className='settings-msg err'; msg.textContent = 'New password must be at least 6 characters.'; btn.disabled=false; btn.textContent='Change Password'; return; }
+      try {
+        // Verify current password by attempting login
+        const checkRes = await fetch('/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email: currentUser.email, password: curPwd})});
+        if (!checkRes.ok) { msg.className='settings-msg err'; msg.textContent = 'Current password is incorrect.'; return; }
+        // Reset via forgot-password flow (reuse token)
+        const tokRes = await fetch('/auth/forgot-password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email: currentUser.email})});
+        const tokData = await tokRes.json();
+        if (!tokData.token) throw new Error('no token');
+        await fetch('/auth/reset-password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({token: tokData.token, password: newPwd})});
+        msg.className='settings-msg ok'; msg.textContent = 'Password changed!';
+        document.getElementById('smCurPwd').value = '';
+        document.getElementById('smNewPwd').value = '';
+        setTimeout(() => { msg.textContent = ''; }, 2000);
+      } catch { msg.className='settings-msg err'; msg.textContent = 'Something went wrong.'; }
+      finally { btn.disabled = false; btn.textContent = 'Change Password'; }
+    }
+
+    // ── Onboarding ────────────────────────────────────────────
+
+    function showOnboarding() {
+      document.getElementById('onboardingBackdrop').classList.add('open');
+    }
+
+    function skipOnboarding() {
+      document.getElementById('onboardingBackdrop').classList.remove('open');
+      fetch('/api/profile', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({onboarded:1})}).catch(()=>{});
+      if (currentUser) currentUser.onboarded = true;
+    }
+
+    async function saveOnboarding() {
+      const btn = document.getElementById('obGoBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const res = await fetch('/api/profile', {
+          method: 'PUT', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            college:        document.getElementById('obCollege').value.trim(),
+            major:          document.getElementById('obMajor').value.trim(),
+            target_schools: getUCGrid('obUCGrid'),
+            onboarded: 1,
+          })
+        });
+        const data = await res.json();
+        if (res.ok) { updateUserDisplay(data); currentUser = data; }
+        document.getElementById('onboardingBackdrop').classList.remove('open');
+      } catch { document.getElementById('onboardingBackdrop').classList.remove('open'); }
+      finally { btn.disabled = false; btn.textContent = 'Save & Continue →'; }
+    }
+
+    document.addEventListener('click', () => closeSettings());
+
+    ['siEmail','siPassword'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    });
+    ['suEmail','suPassword','suUsername'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+    });
+    ['fpEmail'].forEach(id => {
+      document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') doForgotPassword(); });
+    });
+
+    // ── Init ─────────────────────────────────────────────────
+
+    renderSidebar();
+    checkAuth();
+
+    // ── GPA Calculator ────────────────────────────────────────
+
+    const GRADES = { A: 4, B: 3, C: 2, D: 1, F: 0 };
+    const GRADE_OPTIONS = ['A', 'B', 'C', 'D', 'F', 'P', 'NP', 'W'];
+    let courseIdCounter = 0;
+
+    function openGpaCalc() {
+      document.getElementById('gpaModal').classList.add('open');
+      closeSidebar();
+      if (document.getElementById('courseRows').children.length === 0) {
+        addCourseRow(); addCourseRow(); addCourseRow();
+      }
+    }
+    function closeGpaCalc() { document.getElementById('gpaModal').classList.remove('open'); }
+    function gpaBackdropClick(e) { if (e.target === e.currentTarget) closeGpaCalc(); }
+
+    function addCourseRow(name, units, grade) {
+      name  = name  ?? '';
+      units = units ?? '3';
+      grade = grade ?? 'A';
+      const id = ++courseIdCounter;
+      const row = document.createElement('div');
+      row.className = 'course-row';
+      row.id = `crow-${id}`;
+      const gradeOpts = GRADE_OPTIONS.map(g => `<option${g===grade?' selected':''}>${g}</option>`).join('');
+      row.innerHTML = `
+        <input type="text" placeholder="e.g. Calculus II" value="${esc(name)}" oninput="calcGpa()">
+        <input type="number" min="0.5" max="8" step="0.5" value="${units}" oninput="calcGpa()">
+        <select onchange="calcGpa()">${gradeOpts}</select>
+        <button class="del-row" onclick="removeCourseRow(${id})" title="Remove">×</button>`;
+      document.getElementById('courseRows').appendChild(row);
+      calcGpa();
+    }
+
+    function removeCourseRow(id) {
+      const el = document.getElementById(`crow-${id}`);
+      if (el) { el.remove(); calcGpa(); }
+    }
+
+    function calcGpa() {
+      const rows = document.querySelectorAll('#courseRows .course-row');
+      let totalPoints = 0, totalUnits = 0, skipped = 0;
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll('input');
+        const sel    = row.querySelector('select');
+        const units  = parseFloat(inputs[1]?.value) || 0;
+        const grade  = sel?.value || 'A';
+        if (grade === 'P' || grade === 'NP' || grade === 'W' || units <= 0) { skipped++; return; }
+        const points = GRADES[grade] ?? 0;
+        totalUnits  += units;
+        totalPoints += points * units;
+      });
+      const gpa    = totalUnits > 0 ? (totalPoints / totalUnits) : null;
+      const dispEl = document.getElementById('gpaDisplay');
+      const subEl  = document.getElementById('gpaSub');
+      if (gpa === null) {
+        dispEl.textContent = '—';
+        subEl.textContent  = 'Add graded courses below to calculate';
+      } else {
+        dispEl.textContent = gpa.toFixed(3);
+        const label = gpa >= 3.9 ? 'Excellent — competitive at any UC' :
+                      gpa >= 3.5 ? 'Strong — competitive at most UCs' :
+                      gpa >= 3.0 ? 'Solid — meets requirements; aim higher for selective campuses' :
+                      gpa >= 2.4 ? 'Meets UC minimum (2.4) — consider less selective campuses first' :
+                                   'Below UC minimum (2.4) — focus on improving GPA before applying';
+        subEl.textContent = `${totalUnits} transferable units · ${label}`
+          + (skipped ? ` · ${skipped} course(s) excluded (P/NP/W)` : '');
+      }
+    }
+  </script>
+</body>
+</html>

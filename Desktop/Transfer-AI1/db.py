@@ -6,7 +6,7 @@ import sqlite3, os, random, secrets
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'users.db')
+DB_PATH = os.environ.get('DB_PATH') or os.path.join(os.path.dirname(__file__), 'data', 'users.db')
 
 _ADJS  = ['Swift','Bright','Bold','Calm','Sharp','Ready','Keen','Smart','Sage','Brisk']
 _NOUNS = ['Hawk','Scout','Spark','Path','Aim','Trek','Plan','Rise','Step','Goal']

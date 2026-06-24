@@ -1,0 +1,9 @@
+agreements/
+data/
+__pycache__/
+*.py[cod]
+.env
+.git
+*.zip
+*.log
+node_modules/

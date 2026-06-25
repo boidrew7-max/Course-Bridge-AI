@@ -313,11 +313,12 @@ def plan():
         return Response(stream_with_context(rate_msg()), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache"})
 
-    data      = request.json or {}
-    college   = data.get("college", "").strip()
-    school    = data.get("school", "").strip()
-    major     = data.get("major", "").strip()
-    completed = data.get("completedCourses", "").strip()
+    data         = request.json or {}
+    college      = data.get("college", "").strip()
+    school       = data.get("school", "").strip()
+    major        = data.get("major", "").strip()
+    completed    = data.get("completedCourses", "").strip()
+    accept_honors = data.get("acceptHonors", True)
 
     if not college or not school or not major:
         def err():
@@ -329,11 +330,12 @@ def plan():
     # Pre-extract the exact courses from the ASSIST agreement file
     major_prep_block = _extract_major_prep(college, school, major)
     completed_str    = completed if completed else "none"
+    honors_rule      = "" if accept_honors else "\n9. HONORS: The student does NOT want honors courses. Do NOT include any course with 'H', 'Honors', or 'HONORS' in the title or course number."
 
     if major_prep_block:
         data_section = major_prep_block
     else:
-        data_section = (f"No exact agreement file found for {college} → {school} {major}. "
+        data_section = (f"No exact agreement file found for {college} -> {school} {major}. "
                         f"Use your ASSIST knowledge to suggest likely articulation courses, "
                         f"and mark each as '(verify on ASSIST.org)'.")
 
@@ -349,9 +351,9 @@ RULES (any violation is an error):
 3. COURSE TITLES: Use the exact course number and title from the articulation data above. No substitutions.
 4. CC ONLY: Every course must be taken at {college}. Never list {school} course numbers.
 5. COMPLETED: Do not include any already-completed course anywhere in the schedule.
-6. LOAD: 4–5 courses per term, 13–17 units max.
+6. LOAD: 4-5 courses per term, 13-17 units max.
 7. FILL: After placing all major prep courses, fill remaining slots with IGETC/GE courses from {college}.
-8. NO PREAMBLE: Begin your response directly with ## Term 1 (Fall).
+8. NO PREAMBLE: Begin your response directly with ## Term 1 (Fall).{honors_rule}
 
 Output format:
 ## Term 1 (Fall)

@@ -407,12 +407,32 @@ def ask_plan_stream(prompt: str):
 
 
 def ask_plan_stream_fallback(prompt: str):
+    """First fallback: llama-3.1-8b-instant (6K TPM limit — keep total under 6K)."""
     messages = [
         {"role": "system", "content": _PLAN_SYSTEM_PROMPT},
         {"role": "user", "content": prompt},
     ]
     stream = _get_client().chat.completions.create(
         model="llama-3.1-8b-instant",
+        messages=messages,
+        max_tokens=2800,
+        temperature=0.1,
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
+
+
+def ask_plan_stream_fallback2(prompt: str):
+    """Second fallback: Llama 4 Scout (separate quota from llama-3.3-70b)."""
+    messages = [
+        {"role": "system", "content": _PLAN_SYSTEM_PROMPT},
+        {"role": "user", "content": prompt},
+    ]
+    stream = _get_client().chat.completions.create(
+        model="meta-llama/llama-4-scout-17b-16e-instruct",
         messages=messages,
         max_tokens=4096,
         temperature=0.1,

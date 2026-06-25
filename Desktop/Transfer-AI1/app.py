@@ -3,7 +3,7 @@ import os
 import time
 from collections import defaultdict
 from flask import Flask, request, Response, stream_with_context, session, jsonify
-from advisor import ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream, ask_plan_stream, ask_plan_stream_fallback
+from advisor import ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream, ask_plan_stream, ask_plan_stream_fallback, ask_plan_stream_fallback2
 from db import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     verify_password, email_exists, update_profile,
@@ -587,12 +587,16 @@ Start directly with ## Term 1 (Fall). No preamble.
                 yield f"data: {json.dumps(chunk)}\n\n"
         except Exception as e:
             err_str = str(e).lower()
-            if any(kw in err_str for kw in ["rate_limit", "429", "quota", "tokens per"]):
+            if any(kw in err_str for kw in ["rate_limit", "429", "quota", "tokens per", "too large", "413"]):
                 try:
                     for chunk in ask_plan_stream_fallback(prompt):
                         yield f"data: {json.dumps(chunk)}\n\n"
                 except Exception:
-                    yield f"data: {json.dumps('Something went wrong generating your plan. Please try again.')}\n\n"
+                    try:
+                        for chunk in ask_plan_stream_fallback2(prompt):
+                            yield f"data: {json.dumps(chunk)}\n\n"
+                    except Exception:
+                        yield f"data: {json.dumps('Something went wrong generating your plan. Please try again.')}\n\n"
             else:
                 yield f"data: {json.dumps('Something went wrong generating your plan. Please try again.')}\n\n"
         yield "data: [DONE]\n\n"

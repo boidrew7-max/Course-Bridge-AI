@@ -165,6 +165,97 @@ def reset():
 
 # ── Plan generation ────────────────────────────────────────────────────────
 
+# IGETC data loaded once on first use
+_IGETC_DATA = None
+
+def _load_igetc():
+    import gzip as _gz
+    global _IGETC_DATA
+    if _IGETC_DATA is not None:
+        return _IGETC_DATA
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "igetc_map.json")
+    for path in (base + ".gz", base):
+        if not os.path.exists(path):
+            continue
+        try:
+            opener = _gz.open if path.endswith(".gz") else open
+            with opener(path, "rt", encoding="utf-8") as f:
+                _IGETC_DATA = json.load(f)
+            return _IGETC_DATA
+        except Exception:
+            break
+    _IGETC_DATA = {}
+    return _IGETC_DATA
+
+
+# Required IGETC areas for the UC Transfer Curriculum (most majors)
+_IGETC_REQUIRED = [
+    ("1A", "English Composition",                     1),
+    ("1B", "Critical Thinking / English Composition", 1),
+    ("2A", "Mathematical Concepts",                   1),
+    ("3A", "Arts",                                    1),
+    ("3B", "Humanities",                              1),
+    ("4",  "Social & Behavioral Sciences",            3),
+    ("5A", "Physical Sciences",                       1),
+    ("5B", "Biological Sciences",                     1),
+]
+
+
+def _extract_igetc_courses(college: str) -> str:
+    """
+    Return a block listing 3-5 real IGETC-approved courses per required area
+    for the given community college, so the AI picks actual catalog courses.
+    """
+    data = _load_igetc()
+    if not data:
+        return ""
+
+    by_school = data.get("bySchool", {})
+    # Case-insensitive college match
+    school_key = next((k for k in by_school if k.lower() == college.lower()), None)
+    if not school_key:
+        # Partial match fallback
+        school_key = next((k for k in by_school if college.lower() in k.lower()), None)
+    if not school_key:
+        return ""
+
+    by_area = by_school[school_key].get("byArea", {})
+    if not by_area:
+        return ""
+
+    lines = [
+        f"=== IGETC COURSES AVAILABLE AT {college} ===",
+        "The schedule MUST include courses covering ALL required IGETC areas below.",
+        "Use ONLY courses listed here for IGETC slots — do not invent course numbers.",
+        "",
+    ]
+
+    for area_code, area_name, needed in _IGETC_REQUIRED:
+        courses = by_area.get(area_code, [])
+        if not courses:
+            continue
+        seen_nums = set()
+        unique = []
+        for c in courses:
+            key = (c.get("prefix",""), c.get("number",""))
+            if key not in seen_nums:
+                seen_nums.add(key)
+                unique.append(c)
+        sample = unique[:5]
+        course_strs = [
+            f"{c.get('prefix','')} {c.get('number','')} - {c.get('title','')} ({c.get('units','?')} units)"
+            for c in sample
+        ]
+        lines.append(f"Area {area_code} — {area_name} (need {needed} course{'s' if needed > 1 else ''}):")
+        for cs in course_strs:
+            lines.append(f"  • {cs}")
+        if len(courses) > 5:
+            lines.append(f"  (+ {len(courses)-5} more options)")
+        lines.append("")
+
+    lines.append("=== END IGETC DATA ===")
+    return "\n".join(lines)
+
 _UC_NAME_MAP = {
     "ucla":          "los angeles",
     "uc la":         "los angeles",
@@ -327,33 +418,36 @@ def plan():
         return Response(stream_with_context(err()), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache"})
 
-    # Pre-extract the exact courses from the ASSIST agreement file
+    # Pre-extract articulation data and IGETC courses for this CC
     major_prep_block = _extract_major_prep(college, school, major)
+    igetc_block      = _extract_igetc_courses(college)
     completed_str    = completed if completed else "none"
-    honors_rule      = "" if accept_honors else "\n9. HONORS: The student does NOT want honors courses. Do NOT include any course with 'H', 'Honors', or 'HONORS' in the title or course number."
+    honors_rule      = "" if accept_honors else "\n10. HONORS: Student declined honors. NEVER include any course with 'H', 'Honors', or 'HONORS' in its title or number."
 
     if major_prep_block:
-        data_section = major_prep_block
+        articulation_section = major_prep_block
     else:
-        data_section = (f"No exact agreement file found for {college} -> {school} {major}. "
-                        f"Use your ASSIST knowledge to suggest likely articulation courses, "
-                        f"and mark each as '(verify on ASSIST.org)'.")
+        articulation_section = (f"No exact agreement found for {college} -> {school} {major}. "
+                                f"Use your ASSIST knowledge — mark each suggestion '(verify on ASSIST.org)'.")
 
-    prompt = f"""Build a 4-term semester schedule for a student at {college} transferring to {school} for {major}.
+    igetc_section = f"\n\n{igetc_block}" if igetc_block else ""
 
-{data_section}
+    prompt = f"""Build a complete 4-term transfer schedule for a student at {college} transferring to {school} for {major}.
 
-Already completed — EXCLUDE ENTIRELY from schedule: {completed_str}
+{articulation_section}{igetc_section}
 
-RULES (any violation is an error):
-1. MAJOR PREP FIRST: Schedule all courses from the articulation list above. These are required. Do not omit them.
-2. PREREQUISITES: Never put a course and its prerequisite in the same term. Sequence them across terms.
-3. COURSE TITLES: Use the exact course number and title from the articulation data above. No substitutions.
-4. CC ONLY: Every course must be taken at {college}. Never list {school} course numbers.
-5. COMPLETED: Do not include any already-completed course anywhere in the schedule.
-6. LOAD: 4-5 courses per term, 13-17 units max.
-7. FILL: After placing all major prep courses, fill remaining slots with IGETC/GE courses from {college}.
-8. NO PREAMBLE: Begin your response directly with ## Term 1 (Fall).{honors_rule}
+Already completed — EXCLUDE ENTIRELY: {completed_str}
+
+RULES (every rule is mandatory):
+1. MAJOR PREP: Include EVERY course from the articulation list. These are non-negotiable requirements. Do not skip any.
+2. IGETC: The schedule must cover all required IGETC areas (1A, 1B, 2A, 3A, 3B, 4, 5A or 5B). Use only courses from the IGETC list above for these slots.
+3. PREREQUISITES: Never place a course and its prerequisite in the same term — sequence them across terms.
+4. COURSE TITLES: Use exact course numbers and titles from the data above. No invented courses.
+5. CC ONLY: Every course must be from {college}. Never list {school} course numbers.
+6. COMPLETED: Never include any already-completed course.
+7. LOAD: 4-5 courses per term, 13-17 units max.
+8. IGETC NOTE: A course that satisfies major prep may also count toward IGETC (e.g., ECON courses count for Area 4). Do not double-count — list it once.
+9. NO PREAMBLE: Start directly with ## Term 1 (Fall).{honors_rule}
 
 Output format:
 ## Term 1 (Fall)

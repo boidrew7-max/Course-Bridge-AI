@@ -332,31 +332,34 @@ Run all checks. If ANY check fails, output "INVALID PLAN — REGENERATING" and f
 7. Total units = 60–70. If under 60, add electives. If over 70, trim.
 8. Area 6 must be present. If missing → flag: "IGETC INCOMPLETE: AREA 6 MISSING"
 
-=== PLANNING PRIORITY ORDER ===
-Priority 1 — Required courses (place these first, every term):
-- Required major-preparation courses from ASSIST
-- Required English (Area 1A) and Math (Area 2A)
-- Any admission requirement for the target major
+=== COURSE SELECTION PRIORITY MODEL (MAJOR-FIRST) ===
 
-Priority 2 — Strongly recommended major prep (fill remaining slots before IGETC):
-- Stats, Linear Algebra, Calc III, programming, accounting, or other courses
-  explicitly listed as "recommended" for the major — even if not on ASSIST
-- Examples for Economics: Statistics, Calculus III
+Tier 1 — REQUIRED (place before anything else):
+- All ASSIST-verified major preparation courses (Micro, Macro, Calc I, Calc II for Economics)
+- English Composition (Area 1A)
+- Any other course explicitly required for admission to the major
 
-Priority 3 — Remaining IGETC requirements (after required + recommended major prep):
-- Area 1B after 1A; sciences early if they have prereqs; Arts, Humanities, Social Science
-- Area 6 (Foreign Language)
+Tier 2 — STRONGLY RECOMMENDED MAJOR PREP (place before any GE filler):
+These are NOT electives. They are high-value courses that strengthen the application and
+are expected preparation for upper-division major coursework. Include all that are available.
+- Economics: Statistics (STAT C1000 or equivalent), Calculus III, Linear Algebra
+- Statistics is ALWAYS Tier 2 for Economics — it is never a filler or a GE convenience pick
+- GE area credit Statistics may also earn (e.g. Area 2A) is a bonus, NOT its reason for inclusion
+- A schedule is INVALID if Statistics is omitted while the student has room for it
 
-Priority 4 — Transferable electives ONLY when:
-- All required major prep is placed
-- All available strongly recommended major prep is placed or unavailable
-- IGETC requirements are complete or cannot be completed further
+Tier 3 — IGETC / GE REQUIREMENTS (after Tiers 1 and 2 are placed):
+- Area 1B Critical Thinking, Arts (3A), Humanities (3B)
+- Social Science Area 4 ×3 — verified via ASSIST only, no subject-matter inference
+- Lab sciences (5A, 5B)
+- Area 6 Foreign Language
 
-LABELING — every course line must be labeled:
+Tier 4 — TRANSFERABLE ELECTIVES (last resort):
+Only use when Tiers 1–3 are fully covered or no Tier 1–3 courses remain available.
+NEVER substitute an elective for a Tier 2 course that is available at the college.
+
+LABELING — every course line must carry its tier label:
 [Required Major Prep] | [Strongly Recommended Major Prep] | [IGETC Area Xn] | [Transferable Elective]
-
-NEVER add a generic elective if a strongly recommended major-prep course is still available.
-NEVER skip strongly recommended major prep to fill elective units.
+A course satisfying multiple tiers (e.g. Calc I = Required Major Prep + IGETC 2A) lists both labels.
 
 === IGETC AREA 1 — ABSOLUTE RULES (most common failure point) ===
 Area 1A and 1B are ALWAYS two separate, independent requirements. They can NEVER be combined.
@@ -398,10 +401,12 @@ Required (must appear in the schedule):
 - Macroeconomics (ECON 2 or equivalent): REQUIRED
 - Calculus I: REQUIRED
 - Calculus II: REQUIRED
-- Calculus III: STRONGLY RECOMMENDED — include in the schedule. It strengthens the application and is expected for upper-division Econ work. Only omit if the student already completed it or units are exhausted.
-- Statistics (STAT C1000, PSYC 15, or equivalent intro stats): STRONGLY RECOMMENDED — always include. This is one of the most important courses for Economics competitiveness. Label it [Strongly Recommended Major Prep]. If it also satisfies an IGETC area, label both (e.g. [Strongly Recommended Major Prep, IGETC 2A]).
+Tier 2 strongly recommended — include ALL that are available at the college:
+- Statistics (STAT C1000, PSYC 15, or equivalent): ALWAYS include. Most important Tier 2 course for Economics. Label [Strongly Recommended Major Prep]. If it also satisfies IGETC 2A, label both — but it is in the plan because of major prep, not because of GE.
+- Calculus III (MATH 1C or equivalent): include unless already completed or no room after Tiers 1–2.
+- Linear Algebra (MATH 2B or equivalent): include if available and room permits.
 
-IMPORTANT: Area 2A being satisfied by Calculus I does NOT mean Statistics can be skipped. Include Statistics as a separate course even after Calc I is placed. Statistics is major prep, not just a GE filler.
+CRITICAL: Area 2A being satisfied by Calculus I does NOT mean Statistics can be skipped. Statistics is a separate course that must appear in the schedule regardless of which course fills Area 2A.
 
 === HONORS RULE ===
 If student declined honors: NEVER include any course whose number ends in H (e.g. ECON 1H, MATH 1AH). Use non-honors equivalent.

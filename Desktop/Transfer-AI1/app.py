@@ -242,10 +242,33 @@ def _extract_igetc_courses(college: str) -> str:
         "",
     ]
 
+    # Track whether a ★LAB course was presented in 5A or 5B so we can suppress 5C standalone listing
+    lab_already_presented = False
+
     for area_code, area_name, needed in _IGETC_REQUIRED:
         courses = by_area.get(area_code, [])
-        if not courses:
+        if not courses and area_code != "5C":
             continue
+
+        # Area 5C: if a ★LAB was already listed in 5A or 5B, 5C is satisfied — tell AI not to add another course
+        if area_code == "5C":
+            if lab_already_presented:
+                lines.append("Area 5C — Laboratory Science:")
+                lines.append("  ✅ ALREADY SATISFIED by the ★LAB course listed in 5A or 5B above.")
+                lines.append("  DO NOT add any separate lab course for 5C. That would create a second lab, which is wrong.")
+                lines.append("  The ★LAB course above counts for both its science area AND 5C simultaneously.")
+                lines.append("")
+            else:
+                # No ★LAB in 5A or 5B — list standalone lab courses for 5C
+                lab_only = [c for c in courses if (c.get("prefix",""), c.get("number","")) in lab_keys]
+                if lab_only:
+                    lines.append("Area 5C — Laboratory Science (need 1 course):")
+                    lines.append("  NOTE: 5A and 5B above have no ★LAB course. Use one of these standalone labs for 5C:")
+                    for c in lab_only[:3]:
+                        lines.append(f"  • {c.get('prefix','')} {c.get('number','')} - {c.get('title','')} ({c.get('units','?')} units) ★LAB")
+                    lines.append("")
+            continue
+
         seen_nums = set()
         unique = []
         for c in courses:
@@ -274,6 +297,8 @@ def _extract_igetc_courses(college: str) -> str:
         for c in sample:
             key = (c.get("prefix",""), c.get("number",""))
             lab_tag = " ★LAB" if key in lab_keys else ""
+            if lab_tag and area_code in ("5A", "5B"):
+                lab_already_presented = True
             course_strs.append(
                 f"{c.get('prefix','')} {c.get('number','')} - {c.get('title','')} ({c.get('units','?')} units){lab_tag}"
             )

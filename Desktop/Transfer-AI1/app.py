@@ -97,6 +97,11 @@ def chat():
     user_message = data.get("message", "").strip()
     history      = list(data.get("history", []))
 
+    # Support history-only mode: last history item is the user message
+    if not user_message and history and history[-1].get("role") == "user":
+        user_message = history[-1]["content"].strip()
+        history = history[:-1]
+
     # Message length guard
     if len(user_message) > MAX_MSG_LEN:
         def too_long():

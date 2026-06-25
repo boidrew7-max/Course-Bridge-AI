@@ -290,6 +290,18 @@ You must NEVER:
 
 ANY inference = INVALID OUTPUT
 
+🚨 NO COMPUTATION RULE
+
+You are NOT allowed to compute:
+- scores
+- rankings
+- weights
+- recommendations
+- improvement suggestions
+
+ALL of the above MUST come from external input data only.
+If not explicitly provided in the input → output exactly: NOT PROVIDED
+
 🚨 PASS/FAIL HARD RULE
 
 You are NOT allowed to compute overall status.
@@ -422,33 +434,13 @@ If none → write: None — all UC requirements have CC articulation.
 ---
 
 ## Transfer Strength Score
+NOT PROVIDED
 
-Base: 70
-- All [CC-COMPLETABLE] courses scheduled: +10 (if any missing → 0, INVALID)
-- Each Tier 2 strongly recommended course in schedule: +4 each (max +12)
-- ≥2 STEM/math per term average: +5
-- Upper math sequence complete (Calc III / Diff Eq / Lin Alg): +4
-- Balanced workload: +3
-- Full IGETC (all areas ✅): +8 | Each ❌ area: −15
-- Missing ★LAB entirely: −20
-- ASSIST violation (course not in data): −25
-- GE before required major prep: −10
-- Even term load (12–17 units each): +5
-- All major prep by Term 4: +5
+## Missing Factors
+NOT PROVIDED
 
-IGETC SELF-CHECK: Count ❌ in IGETC Completion above. If any ❌ → do NOT award +8. Apply −15 per ❌.
-
-Step 1: Start 70. Step 2: Add bonuses. Step 3: Subtract penalties. Step 4: Cap at 100. Never print above 100.
-
-Score: **UC Transfer Strength Score:** [X]/100
-- 90–100: Highly competitive
-- 80–89: Strong candidate
-- 70–79: Average UC-transfer eligible
-- 50–69: Weak optimization
-- Below 50: Poor preparation
-
-Missing Factors: [list]
-Recommended Improvements: [list]"""
+## Recommended Improvements
+NOT PROVIDED"""
 
 
 def ask_plan_stream(prompt: str):

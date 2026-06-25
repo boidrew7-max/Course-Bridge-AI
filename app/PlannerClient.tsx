@@ -1487,13 +1487,13 @@ export default function PlannerClient() {
   return (
     <main className="min-h-screen bg-[#eee9df] text-[#2f3135]">
       <section className="mx-auto max-w-7xl px-5 py-6 md:px-8">
-        <nav className="mb-8 flex items-center justify-between border-b border-[#d8d0c3] pb-4 gap-4 flex-wrap">
+        <nav className="mb-8 flex items-center justify-between border-b border-[#d8d0c3] pb-4 gap-4 flex-wrap bg-[#eee9df]">
           <div className="flex items-center gap-3 min-w-0">
             <img
               src="/coursebridge-logo.png"
               alt="CourseBridge logo"
-              className="h-[50px] w-auto shrink-0"
-              style={{mixBlendMode:"multiply",background:"transparent"}}
+              className="h-[80px] w-auto shrink-0"
+              style={{mixBlendMode:"multiply"}}
             />
             <p className="text-sm leading-tight text-[#7b818b] sm:text-base md:text-xl">
               Transfer planning for community college students

@@ -384,6 +384,14 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
             best_key   = key
 
     if not best_key or best_score < 2.0:
+        # Local shard has no match — try live ASSIST scraper
+        try:
+            from scrape_assist import live_scrape
+            live_arts = live_scrape(college, uc, major)
+            if live_arts:
+                return _format_arts_block(live_arts, college, uc, major, source="ASSIST.org (live)")
+        except Exception:
+            pass
         return ""
 
     arts = shard[best_key]
@@ -409,6 +417,32 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
                 parts_cc.append(
                     f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
                 )
+            conj = grp[0].get("j", "Or") if grp else "Or"
+            lines.append(f"  -> Enroll in: {f' {conj} '.join(parts_cc)}")
+    lines.append("")
+    lines.append("=== END ARTICULATION DATA ===")
+    return "\n".join(lines)
+
+
+def _format_arts_block(arts: list, college: str, uc: str, major: str, source: str = "ASSIST.org") -> str:
+    """Format a list of articulation entries (shard format) into a prompt block."""
+    lines = [
+        f"=== VERIFIED ARTICULATION DATA: {college} -> {uc} | {major} ===",
+        f"Source: {source} (authoritative - do not deviate from this list)",
+        "",
+        "The student MUST complete the following courses at their community college.",
+        "Use ONLY these exact course numbers and titles. Do not substitute.",
+        "",
+    ]
+    for art in arts:
+        uc_c   = art.get("uc", {})
+        uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+        lines.append(f"UC requires: {uc_str}")
+        for grp in art.get("cc", []):
+            parts_cc = [
+                f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
+                for c in grp
+            ]
             conj = grp[0].get("j", "Or") if grp else "Or"
             lines.append(f"  -> Enroll in: {f' {conj} '.join(parts_cc)}")
     lines.append("")

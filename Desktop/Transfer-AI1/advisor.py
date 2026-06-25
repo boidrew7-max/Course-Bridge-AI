@@ -382,17 +382,24 @@ INVALID combinations the plan must NEVER produce:
 - 1B placed in an earlier term than 1A
 
 === IGETC RULES ===
+Each IGETC area slot is filled by EXACTLY ONE course. Once a course fills a slot, no other
+course may also claim that same IGETC area label.
+- Area 2A is ONE slot. If Calculus I fills it, Statistics cannot also be labeled [IGETC 2A].
+  Statistics is in the plan as [Strongly Recommended Major Prep] — not as a second Area 2A.
+- Area 3B is ONE slot. If PHIL 8 fills it, no other course gets an [IGETC 3B] label.
+- Area 4 requires EXACTLY 3 courses total — STOP at 3, never 4 or 5.
+
 All 9 slots must be covered by courses actually in the term schedule:
-- Area 1A: first-year English Composition — NOT ESL, NOT "Advanced Composition" (see Area 1 rules above)
-- Area 1B: Critical Thinking — scheduled AFTER Area 1A (see Area 1 rules above)
-- Area 2A: Math (Calculus qualifies)
-- Area 3A: Arts
-- Area 3B: Humanities
-- Area 4: exactly 3 Social/Behavioral Science courses (Econ, Psych, Hist, Socio, Poli Sci) — STOP at 3, do NOT add a 4th or 5th Area 4 course
-- Area 5A: Physical Science
-- Area 5B: Biological Science
+- Area 1A: first-year English Composition — NOT ESL, NOT "Advanced Composition"
+- Area 1B: Critical Thinking — scheduled AFTER Area 1A
+- Area 2A: Math (Calculus qualifies) — ONE course only
+- Area 3A: Arts — ONE course only
+- Area 3B: Humanities — ONE course only
+- Area 4: exactly 3 Social/Behavioral Science courses — STOP at 3
+- Area 5A: Physical Science — ONE course only
+- Area 5B: Biological Science — ONE course only
 - Area 6: Foreign Language. If no course available: "satisfy with 2+ years same HS foreign language (C or better) — verify with counselor"
-A major prep course that also satisfies an IGETC area counts for both — listed once, checked off for both.
+A major prep course that also satisfies an IGETC area counts for both — listed once, labeled with both.
 The IGETC checklist may only show ✅ for a course that physically appears in a term above.
 
 === MAJOR REQUIREMENTS (from injected data) ===
@@ -487,7 +494,7 @@ Calculate the score step by step before printing the final number.
 ---
 
 **Validity:** PASS or FAIL (FAIL = required major prep missing or ASSIST violation)
-**UC Transfer Strength Score:** [total]/100
+**UC Transfer Strength Score:** [total]/100 — HARD CAP: if calculated total exceeds 100, report 100.
 
 **Score interpretation:**
 - 90–100: 🔥 Highly competitive

@@ -202,23 +202,30 @@ _ART_INDEX = None
 _ART_INDEX_ENTRIES = []  # list of (cc_l, uc_l, major_l, key) for scoring
 
 def _load_art_index():
+    import gzip as _gzip
     global _ART_INDEX, _ART_INDEX_ENTRIES
     if _ART_INDEX is not None:
         return
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "data", "articulations_index.json")
-    try:
-        with open(path, encoding="utf-8") as f:
-            _ART_INDEX = json.load(f)
-        for key in _ART_INDEX:
-            parts = key.split("__")
-            if len(parts) >= 3:
-                cc_l    = parts[0].replace("_", " ").lower()
-                uc_l    = parts[1].replace("_", " ").lower()
-                major_l = "__".join(parts[2:]).replace("_", " ").lower()
-                _ART_INDEX_ENTRIES.append((cc_l, uc_l, major_l, key))
-    except Exception:
-        _ART_INDEX = {}
+    for path in (base + ".gz", base):
+        if not os.path.exists(path):
+            continue
+        try:
+            opener = _gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt", encoding="utf-8") as f:
+                _ART_INDEX = json.load(f)
+            for key in _ART_INDEX:
+                parts = key.split("__")
+                if len(parts) >= 3:
+                    cc_l    = parts[0].replace("_", " ").lower()
+                    uc_l    = parts[1].replace("_", " ").lower()
+                    major_l = "__".join(parts[2:]).replace("_", " ").lower()
+                    _ART_INDEX_ENTRIES.append((cc_l, uc_l, major_l, key))
+            return
+        except Exception:
+            continue
+    _ART_INDEX = {}
 
 
 def _extract_major_prep(college: str, uc: str, major: str) -> str:

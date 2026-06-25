@@ -7,6 +7,7 @@ data/uc_tag_matrix.pdf
 data/all_transferable_courses.json
 data/professors.json
 data/igetc_map.json
+data/articulations_index.json
 
 # Scraper output
 agreements/

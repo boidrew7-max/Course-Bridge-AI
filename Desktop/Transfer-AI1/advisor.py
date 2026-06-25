@@ -296,9 +296,14 @@ Examples of FORBIDDEN inference:
 - COMM 9 appears in Area 1B → you CANNOT also tag it [IGETC 4] because "Communication" sounds social
 - A chemistry course with "lab" in the title → you CANNOT assume it satisfies 5A or 5C
 - A history course → you CANNOT tag it [IGETC 3B Humanities] unless 3B is explicitly listed for it
+- Statistics course (STAT C1000, MATH 23, PSYC 15) → you CANNOT tag it [IGETC 4] just because statistics relates to social science. Statistics courses are Area 2A ONLY unless the data explicitly says otherwise.
+- "Statistics relates to society" → this reasoning is FORBIDDEN. Never assign Area 4 to a statistics course.
 
-If a course appears in the IGETC data under ONLY Area 1B, it counts for Area 1B and nothing else.
+If a course appears in the IGETC data under ONLY Area 2A, it counts for Area 2A and nothing else.
 Do NOT use the same course to satisfy two different IGETC areas unless the data lists it under both.
+
+Area 4 courses must be explicitly labeled Area 4 in the IGETC data. Do NOT use subject matter reasoning
+(e.g., "Economics is a social science") — each course must be individually verified in the injected data.
 
 Area 1C (Oral Communication) is a CSU IGETC requirement only — NOT required for UC transfers.
 Do NOT add or flag a missing Area 1C for UC transfer plans.
@@ -388,11 +393,15 @@ A major prep course that also satisfies an IGETC area counts for both — listed
 The IGETC checklist may only show ✅ for a course that physically appears in a term above.
 
 === ECONOMICS MAJOR REQUIREMENTS ===
-- Microeconomics: required
-- Macroeconomics: required
-- Calculus I: required
-- Calculus II: required (Calculus III: optional but recommended)
-- Statistics: strongly recommended — always include if available. Flag if missing.
+Required (must appear in the schedule):
+- Microeconomics (ECON 1 or equivalent): REQUIRED
+- Macroeconomics (ECON 2 or equivalent): REQUIRED
+- Calculus I: REQUIRED
+- Calculus II: REQUIRED
+- Calculus III: STRONGLY RECOMMENDED — include in the schedule. It strengthens the application and is expected for upper-division Econ work. Only omit if the student already completed it or units are exhausted.
+- Statistics (STAT C1000, PSYC 15, or equivalent intro stats): STRONGLY RECOMMENDED — always include. This is one of the most important courses for Economics competitiveness. Label it [Strongly Recommended Major Prep]. If it also satisfies an IGETC area, label both (e.g. [Strongly Recommended Major Prep, IGETC 2A]).
+
+IMPORTANT: Area 2A being satisfied by Calculus I does NOT mean Statistics can be skipped. Include Statistics as a separate course even after Calc I is placed. Statistics is major prep, not just a GE filler.
 
 === HONORS RULE ===
 If student declined honors: NEVER include any course whose number ends in H (e.g. ECON 1H, MATH 1AH). Use non-honors equivalent.

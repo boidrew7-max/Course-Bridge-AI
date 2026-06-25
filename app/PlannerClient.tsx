@@ -975,7 +975,7 @@ export default function PlannerClient() {
   const [result, setResult] = useState<TransferResult | null>(null);
 
   // ── Transfer AI chat ──────────────────────────────────────────
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
   const [chatMode, setChatMode] = useState<"onboarding" | "advisor">("onboarding");
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");

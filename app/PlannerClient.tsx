@@ -1495,9 +1495,6 @@ export default function PlannerClient() {
               className="h-[80px] w-auto shrink-0"
               style={{mixBlendMode:"multiply"}}
             />
-            <p className="text-sm leading-tight text-[#7b818b] sm:text-base md:text-xl">
-              Transfer planning for community college students
-            </p>
           </div>
 
           <a

@@ -397,7 +397,7 @@ GE VERIFICATION TABLE (required at end of every schedule):
 | 4 Social Science (×3) | ✅ | COURSE#, COURSE#, COURSE# | VERIFIED/MISSING |
 | 5A Physical Science | ✅ | COURSE# (★LAB if available) | VERIFIED/MISSING |
 | 5B Biological Science | ✅ | COURSE# (★LAB if available) | VERIFIED/MISSING |
-| 5C Lab Science | ✅ | satisfied by ★LAB above OR separate lab course | VERIFIED/MISSING |
+| 5C Lab Science | ✅ | satisfied by ★LAB in 5A or 5B — NO separate course | VERIFIED/MISSING |
 | 6 Foreign Language | ✅ | COURSE# or HS proficiency | VERIFIED/⚠️ |
 
 === INTERNAL VERIFICATION (run BEFORE producing any output) ===
@@ -494,14 +494,17 @@ All 9 slots must be covered by courses actually in the term schedule:
 - Area 4: exactly 3 Social/Behavioral Science courses — STOP at 3
 - Area 5A: Physical Science — ONE course only
 - Area 5B: Biological Science — ONE course only
-- Area 5C: Laboratory Science — requires exactly ONE ★LAB course total across 5A and 5B.
-  RULE: Pick ★LAB for ONE of (5A or 5B). The other science area should use a non-lab course
-  if one is available. Do NOT put ★LAB in both 5A and 5B — that is TWO labs when only ONE
-  is required. Example: BIOL 10 ★LAB satisfies 5B + 5C. For 5A, pick a non-lab physical
-  science course (e.g. PHYS 10, ASTR 28) if available.
-  Only exception: if EVERY listed course in both 5A and 5B is ★LAB, then two labs is unavoidable.
-  If neither 5A nor 5B has ★LAB, add a separate lab-only course for 5C.
-  The plan is INVALID only if NO lab course (★LAB or standalone) covers 5C at all.
+- Area 5C: Laboratory Science — DOES NOT REQUIRE A SEPARATE COURSE.
+  Area 5C is automatically satisfied when your 5A or 5B course has ★LAB.
+  HOW 5C WORKS:
+    • If 5B course is ★LAB (e.g. BIOL 10 ★LAB) → 5B + 5C are BOTH satisfied. Done. No extra course.
+    • If 5A course is ★LAB → 5A + 5C are BOTH satisfied. Done. No extra course.
+    • NEVER add a separate [IGETC 5C] course when 5A or 5B already has ★LAB.
+    • NEVER label a course [IGETC 5C] — that label does not exist in this system.
+    • Only if NEITHER 5A nor 5B course has ★LAB → then add one standalone lab course.
+  FORBIDDEN: scheduling GEOL 10, CHEM 10, or any other course with label [IGETC 5C]
+  when the plan already has a ★LAB course in 5A or 5B.
+  Example: BIOL 10 ★LAB = 5B ✅ + 5C ✅. PHYS 10 = 5A ✅. Schedule complete. No GEOL 10 needed.
 - Area 6: Foreign Language. If no course available: "satisfy with 2+ years same HS foreign language (C or better) — verify with counselor"
 A major prep course that also satisfies an IGETC area counts for both — listed once, labeled with both.
 The IGETC checklist may only show ✅ for a course that physically appears in a term above.
@@ -549,7 +552,18 @@ If student declined honors: NEVER include any course whose number ends in H (e.g
 | 5C Lab | satisfied by ★LAB above | MET / NOT MET |
 | 6 Language | COURSE# or HS proficiency | MET / ⚠️ VERIFY |
 
-**Overall Status:** PASS / FAIL
+**Overall Status:** PASS or NOT COMPLETE
+
+STRICT PASS RULE — you may ONLY write "PASS" if ALL of the following are true:
+1. Every CC-completable major prep requirement has status MET (not PARTIAL, not NOT MET)
+2. Every IGETC area (1A, 1B, 2A, 3A, 3B, 4×3, 5A, 5B, 5C, 6) has status MET
+3. Total scheduled units ≥ 60
+
+If ANY CC-completable requirement is PARTIAL or NOT MET → write "NOT COMPLETE"
+If ANY IGETC area is NOT MET → write "NOT COMPLETE"
+POST-TRANSFER requirements do NOT affect this status — they are handled separately.
+CIS 22C being PARTIAL for CS 61B = NOT COMPLETE (not PASS).
+A plan with Area 3B missing = NOT COMPLETE (not PASS).
 
 ---
 
@@ -588,7 +602,7 @@ If all UC requirements have CC articulation → write "None — all requirements
 - Area 4: ✅/❌ COURSE#, COURSE#, COURSE#
 - Area 5A: ✅/❌ COURSE#
 - Area 5B: ✅/❌ COURSE# ★LAB
-- Area 5C: ✅/❌ (satisfied by ★LAB above OR separate lab)
+- Area 5C: ✅/❌ satisfied by ★LAB in 5A or 5B — do NOT list a separate course here
 - Area 6: ✅/❌ COURSE# or ⚠️ satisfy with 2+ years HS foreign language
 
 ## Key Notes

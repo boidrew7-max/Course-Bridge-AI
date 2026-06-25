@@ -1015,10 +1015,11 @@
       background: var(--bg-surface); border: 1px solid var(--border);
       border-radius: 18px; width: 480px; max-width: calc(100vw - 32px);
       box-shadow: 0 24px 80px var(--shadow); animation: fadeUp 0.2s ease;
-      padding: 36px 32px 28px;
+      padding: 24px 24px 20px;
+      display: flex; flex-direction: column; gap: 0;
     }
 
-    .onboarding-header { text-align: center; margin-bottom: 24px; }
+    .onboarding-header { text-align: center; margin-bottom: 16px; }
     .onboarding-icon {
       width: 52px; height: 52px; background: var(--accent); border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
@@ -1028,19 +1029,41 @@
     .onboarding-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
     .onboarding-sub { font-size: 13px; color: var(--text-2); }
 
-    .onboarding-footer { display: flex; gap: 10px; margin-top: 22px; }
+    .onboarding-messages {
+      height: 280px; overflow-y: auto; display: flex; flex-direction: column;
+      gap: 10px; padding: 12px; background: var(--bg); border-radius: 12px;
+      border: 1px solid var(--border-subtle); margin-bottom: 10px;
+    }
+    .ob-msg { max-width: 88%; line-height: 1.5; font-size: 14px; padding: 10px 14px; border-radius: 14px; }
+    .ob-msg.ai { background: var(--ai-bg); border: 1px solid var(--ai-border); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .ob-msg.user { background: var(--user-bg); color: var(--user-fg); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .ob-msg.typing { opacity: 0.6; font-style: italic; }
+
+    .ob-input-row {
+      display: flex; gap: 8px; margin-bottom: 10px;
+    }
+    .ob-input-row input {
+      flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 14px;
+      font-family: inherit; outline: none; transition: border-color 0.12s;
+    }
+    .ob-input-row input:focus { border-color: var(--accent); }
+    .ob-input-row input:disabled { opacity: 0.5; }
+    .ob-send-btn {
+      background: var(--accent); color: var(--accent-fg); border: none;
+      border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.12s; white-space: nowrap;
+    }
+    .ob-send-btn:hover { background: var(--accent-hover); }
+    .ob-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .onboarding-footer { display: flex; }
     .onboarding-skip {
       flex: 1; background: none; border: 1px solid var(--border); color: var(--text-2);
-      border-radius: 9px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit;
+      border-radius: 9px; padding: 9px; font-size: 13px; cursor: pointer; font-family: inherit;
       transition: all 0.12s;
     }
     .onboarding-skip:hover { border-color: var(--text-2); color: var(--text); }
-    .onboarding-go {
-      flex: 2; background: var(--accent); color: var(--accent-fg);
-      border: none; border-radius: 9px; padding: 11px; font-size: 14px;
-      font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.12s;
-    }
-    .onboarding-go:hover { background: var(--accent-hover); }
 
     /* ── Feedback buttons ─────────────────────────────────── */
 
@@ -1326,33 +1349,15 @@
       <div class="onboarding-header">
         <div class="onboarding-icon">🎓</div>
         <div class="onboarding-title">Welcome to TransferAI!</div>
-        <div class="onboarding-sub">Tell us about yourself for personalized advice (takes 30 seconds)</div>
+        <div class="onboarding-sub">Chat with me to set up your personalized transfer plan</div>
       </div>
-      <div class="settings-field">
-        <label>Your community college</label>
-        <input type="text" id="obCollege" placeholder="e.g. De Anza College, Mt. SAC, Santa Monica CC">
-      </div>
-      <div class="settings-field">
-        <label>Intended major</label>
-        <input type="text" id="obMajor" placeholder="e.g. Computer Science, Psychology, Nursing">
-      </div>
-      <div class="settings-field">
-        <label>Target UC campuses</label>
-        <div class="uc-grid" id="obUCGrid">
-          <div class="uc-chip-sel" data-uc="UCLA" onclick="toggleUCChip(this)">UCLA</div>
-          <div class="uc-chip-sel" data-uc="UC Berkeley" onclick="toggleUCChip(this)">UC Berkeley</div>
-          <div class="uc-chip-sel" data-uc="UC San Diego" onclick="toggleUCChip(this)">UC San Diego</div>
-          <div class="uc-chip-sel" data-uc="UC Irvine" onclick="toggleUCChip(this)">UC Irvine</div>
-          <div class="uc-chip-sel" data-uc="UC Santa Barbara" onclick="toggleUCChip(this)">UC Santa Barbara</div>
-          <div class="uc-chip-sel" data-uc="UC Davis" onclick="toggleUCChip(this)">UC Davis</div>
-          <div class="uc-chip-sel" data-uc="UC Santa Cruz" onclick="toggleUCChip(this)">UC Santa Cruz</div>
-          <div class="uc-chip-sel" data-uc="UC Riverside" onclick="toggleUCChip(this)">UC Riverside</div>
-          <div class="uc-chip-sel" data-uc="UC Merced" onclick="toggleUCChip(this)">UC Merced</div>
-        </div>
+      <div class="onboarding-messages" id="obMessages"></div>
+      <div class="ob-input-row">
+        <input type="text" id="obInput" placeholder="Type your answer…" autocomplete="off" onkeydown="if(event.key==='Enter')obSend()">
+        <button class="ob-send-btn" id="obSendBtn" onclick="obSend()">Send</button>
       </div>
       <div class="onboarding-footer">
         <button class="onboarding-skip" onclick="skipOnboarding()">Skip for now</button>
-        <button class="onboarding-go" id="obGoBtn" onclick="saveOnboarding()">Save &amp; Continue →</button>
       </div>
     </div>
   </div>
@@ -2142,10 +2147,16 @@
       finally { btn.disabled = false; btn.textContent = 'Change Password'; }
     }
 
-    // ── Onboarding ────────────────────────────────────────────
+    // ── Onboarding (chat-driven) ──────────────────────────────
+
+    let obHistory = [];
+    let obLocked  = false;
 
     function showOnboarding() {
       document.getElementById('onboardingBackdrop').classList.add('open');
+      obHistory = [];
+      document.getElementById('obMessages').innerHTML = '';
+      obStreamResponse();
     }
 
     function skipOnboarding() {
@@ -2154,24 +2165,113 @@
       if (currentUser) currentUser.onboarded = true;
     }
 
-    async function saveOnboarding() {
-      const btn = document.getElementById('obGoBtn');
-      btn.disabled = true; btn.textContent = 'Saving…';
+    function obAddBubble(role, text) {
+      const el = document.createElement('div');
+      el.className = `ob-msg ${role}`;
+      el.textContent = text;
+      document.getElementById('obMessages').appendChild(el);
+      document.getElementById('obMessages').scrollTop = 9999;
+      return el;
+    }
+
+    function obParseJson(raw) {
+      const match = raw.match(/\|\|\|JSON(\{.*?\})\|\|\|/s);
+      if (!match) return null;
+      try { return JSON.parse(match[1]); } catch { return null; }
+    }
+
+    function obStripJson(text) {
+      return text.replace(/\|\|\|JSON\{.*?\}\|\|\|/s, '').trim();
+    }
+
+    async function obStreamResponse() {
+      obLocked = true;
+      const input = document.getElementById('obInput');
+      const btn   = document.getElementById('obSendBtn');
+      if (input) input.disabled = true;
+      if (btn)   btn.disabled   = true;
+
+      const bubble = obAddBubble('ai', '…');
+      bubble.classList.add('typing');
+
+      let fullText = '';
+      let parsed   = null;
+
+      try {
+        const res = await fetch('/onboard', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ history: obHistory })
+        });
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '', done = false;
+
+        while (!done) {
+          const { done: sd, value } = await reader.read();
+          if (sd) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6);
+            if (payload === '[DONE]') { done = true; break; }
+            try {
+              fullText += JSON.parse(payload);
+              bubble.textContent = obStripJson(fullText) || '…';
+              document.getElementById('obMessages').scrollTop = 9999;
+            } catch {}
+          }
+        }
+      } catch { bubble.textContent = 'Something went wrong. Please try again.'; }
+
+      bubble.classList.remove('typing');
+      const display = obStripJson(fullText);
+      bubble.textContent = display || fullText;
+
+      obHistory.push({ role: 'assistant', content: fullText });
+
+      parsed = obParseJson(fullText);
+      if (parsed && parsed.ready) {
+        await obSaveProfile(parsed);
+        return;
+      }
+
+      obLocked = false;
+      if (input) input.disabled = false;
+      if (btn)   btn.disabled   = false;
+      if (input) input.focus();
+    }
+
+    function obSend() {
+      if (obLocked) return;
+      const input = document.getElementById('obInput');
+      const text  = (input?.value || '').trim();
+      if (!text) return;
+      input.value = '';
+      obAddBubble('user', text);
+      obHistory.push({ role: 'user', content: text });
+      obStreamResponse();
+    }
+
+    async function obSaveProfile(data) {
+      const profileData = {
+        onboarded:      1,
+        college:        data.college        || '',
+        major:          data.major          || '',
+        target_schools: data.targetSchool   || '',
+      };
       try {
         const res = await fetch('/api/profile', {
           method: 'PUT', headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            college:        document.getElementById('obCollege').value.trim(),
-            major:          document.getElementById('obMajor').value.trim(),
-            target_schools: getUCGrid('obUCGrid'),
-            onboarded: 1,
-          })
+          body: JSON.stringify(profileData)
         });
-        const data = await res.json();
-        if (res.ok) { updateUserDisplay(data); currentUser = data; }
+        const updated = await res.json();
+        if (res.ok) { updateUserDisplay(updated); currentUser = updated; }
+      } catch {}
+      setTimeout(() => {
         document.getElementById('onboardingBackdrop').classList.remove('open');
-      } catch { document.getElementById('onboardingBackdrop').classList.remove('open'); }
-      finally { btn.disabled = false; btn.textContent = 'Save & Continue →'; }
+      }, 1200);
     }
 
     document.addEventListener('click', () => closeSettings());

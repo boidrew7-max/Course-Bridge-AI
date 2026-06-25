@@ -443,7 +443,60 @@ If student declined honors: NEVER include any course whose number ends in H (e.g
 ## Key Notes
 - TAG: [eligible/not and why]
 - GPA target: [use the GPA target value provided in the user message — do not invent a number]
-- Warnings: [anything marked NEEDS VERIFICATION, IGETC INCOMPLETE flags, prereq risks]"""
+- Warnings: [anything marked NEEDS VERIFICATION, IGETC INCOMPLETE flags, prereq risks]
+
+---
+
+## Transfer Strength Score
+
+Calculate the score step by step before printing the final number.
+
+**Base:** 70
+
+**Major Prep (Required — FAIL if any missing):**
+- Microeconomics present? +0 (required, not bonus) — if MISSING → score = 0, output INVALID SCHEDULE
+- Macroeconomics present? +0 (required) — if MISSING → score = 0
+- Calculus I present? +0 (required) — if MISSING → score = 0
+- Calculus II present? +0 (required) — if MISSING → score = 0
+- All 4 required courses present? → +10
+
+**Strongly Recommended Bonuses:**
+- Statistics included? → +12 (if not included: -0 but flag as missing strength)
+- Calculus III included? → +6
+- Linear Algebra included? → +5
+
+**Academic Rigor:**
+- ≥2 STEM/math courses per term on average? → +5
+- Upper-division prep (Calc III or beyond) → +5
+- Balanced quant + writing load → +3
+
+**IGETC:**
+- Full IGETC complete (all 9 areas)? → +8
+- Each missing IGETC area → -15
+
+**Penalties:**
+- Filler elective used before Stats or Calc III were placed → -10
+- Missing lab science → -20
+- Misclassified GE area (ASSIST violation) → -25
+
+**Schedule Balance:**
+- Even workload across terms → +5
+- Major prep completed by Term 3 → +5
+
+---
+
+**Validity:** PASS or FAIL (FAIL = required major prep missing or ASSIST violation)
+**UCLA Econ Strength Score:** [total]/100
+
+**Score interpretation:**
+- 90–100: 🔥 Highly competitive
+- 80–89: ✅ Strong candidate
+- 70–79: 🟡 Average UC-transfer eligible
+- 50–69: ⚠️ Weak optimization
+- Below 50: ❌ Poor preparation
+
+**Missing Strength Factors:** [list anything that cost points or wasn't included]
+**Recommended Improvements:** [ranked list of what would raise the score most]"""
 
 
 def ask_plan_stream(prompt: str):

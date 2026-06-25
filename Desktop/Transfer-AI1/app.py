@@ -441,13 +441,14 @@ Already completed — EXCLUDE ENTIRELY: {completed_str}
 RULES (every rule is mandatory):
 1. MAJOR PREP: Include EVERY course from the articulation list. These are non-negotiable requirements. Do not skip any.
 2. IGETC: The schedule must cover all required IGETC areas (1A, 1B, 2A, 3A, 3B, 4, 5A or 5B). Use only courses from the IGETC list above for these slots.
-3. PREREQUISITES: Never place a course and its prerequisite in the same term — sequence them across terms.
+3. PREREQUISITES: Never place a course and its prerequisite in the same term — sequence them across terms. Specifically: English composition (Area 1A) must appear in Term 1 or Term 2 before any critical thinking, philosophy writing, or communications course. MATH sequence must be ordered: Calculus I before II before III.
 4. COURSE TITLES: Use exact course numbers and titles from the data above. No invented courses.
 5. CC ONLY: Every course must be from {college}. Never list {school} course numbers.
 6. COMPLETED: Never include any already-completed course.
 7. LOAD: 4-5 courses per term, 13-17 units max.
 8. IGETC NOTE: A course that satisfies major prep may also count toward IGETC (e.g., ECON courses count for Area 4). Do not double-count — list it once.
-9. NO PREAMBLE: Start directly with ## Term 1 (Fall).{honors_rule}
+9. NO DUPLICATES: Never include both a regular course and its honors variant (e.g., if ECON 1 is in the plan, do NOT also add ECON 1H). Pick one version only.
+10. NO PREAMBLE: Start directly with ## Term 1 (Fall).{honors_rule}
 
 Output format:
 ## Term 1 (Fall)

@@ -3,7 +3,7 @@ import os
 import time
 from collections import defaultdict
 from flask import Flask, request, Response, stream_with_context, session, jsonify
-from advisor import ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream
+from advisor import ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream, ask_plan_stream, ask_plan_stream_fallback
 from db import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     verify_password, email_exists, update_profile,
@@ -470,25 +470,20 @@ Output format:
 - IGETC: [complete/partial]
 - GPA target: [number]"""
 
-    history = [{"role": "user", "content": prompt}]
-
-    uid          = session.get("user_id")
-    user_profile = get_user_by_id(uid) if uid else None
-
     def generate():
         try:
-            for chunk in ask_advisor_stream(history, user_profile=user_profile):
+            for chunk in ask_plan_stream(prompt):
                 yield f"data: {json.dumps(chunk)}\n\n"
         except Exception as e:
             err_str = str(e).lower()
             if any(kw in err_str for kw in ["rate_limit", "429", "quota", "tokens per"]):
                 try:
-                    for chunk in ask_advisor_stream_fallback(history, user_profile=user_profile):
+                    for chunk in ask_plan_stream_fallback(prompt):
                         yield f"data: {json.dumps(chunk)}\n\n"
                 except Exception:
-                    yield f"data: {json.dumps('Something went wrong. Please try again.')}\n\n"
+                    yield f"data: {json.dumps('Something went wrong generating your plan. Please try again.')}\n\n"
             else:
-                yield f"data: {json.dumps('Something went wrong. Please try again.')}\n\n"
+                yield f"data: {json.dumps('Something went wrong generating your plan. Please try again.')}\n\n"
         yield "data: [DONE]\n\n"
 
     return Response(

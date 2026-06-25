@@ -261,3 +261,44 @@ def ask_advisor_stream_fallback(conversation_history, user_profile=None):
         delta = chunk.choices[0].delta.content
         if delta:
             yield delta
+
+
+def ask_plan_stream(prompt: str):
+    """
+    Dedicated streaming call for plan generation.
+    Bypasses RAG data injection — the articulation + IGETC data is already
+    embedded in the prompt by the /plan route. Uses 2048 tokens (plans are long).
+    """
+    messages = [
+        {"role": "system", "content": "You are TransferAI, a UC transfer advisor. Build complete, accurate transfer schedules using only the articulation and IGETC data provided in the user message. Never invent course numbers or titles."},
+        {"role": "user", "content": prompt},
+    ]
+    stream = _get_client().chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=messages,
+        max_tokens=2048,
+        temperature=0.1,
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
+
+
+def ask_plan_stream_fallback(prompt: str):
+    messages = [
+        {"role": "system", "content": "You are TransferAI, a UC transfer advisor. Build complete, accurate transfer schedules using only the articulation and IGETC data provided."},
+        {"role": "user", "content": prompt},
+    ]
+    stream = _get_client().chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=messages,
+        max_tokens=2048,
+        temperature=0.1,
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta

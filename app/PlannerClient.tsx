@@ -1105,6 +1105,7 @@ export default function PlannerClient() {
   const [wizardHasAp, setWizardHasAp] = useState<boolean | null>(null);
   const [wizardApCredits, setWizardApCredits] = useState("");
   const [wizardHsMath, setWizardHsMath] = useState("");
+  const [wizardMode, setWizardMode] = useState<"competitive" | "efficiency" | null>(null);
   // ── Multi-school tabs ─────────────────────────────────────────
   const [planSchools, setPlanSchools] = useState<string[]>([]);
   const [activeSchoolTab, setActiveSchoolTab] = useState("");
@@ -1233,14 +1234,14 @@ export default function PlannerClient() {
     }
   }, [chatOpen, chatMessages.length, runOnboardingMessage, onboardingDone]);
 
-  async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", hsMath = "") {
+  async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", hsMath = "", mode = "competitive") {
     setAiPlanLoading(true);
     setAiPlan("");
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ college, school, major, completedCourses: courses, acceptHonors, apCredits, hsMath }),
+        body: JSON.stringify({ college, school, major, completedCourses: courses, acceptHonors, apCredits, hsMath, mode }),
       });
       if (!res.ok || !res.body) throw new Error("Plan request failed");
       const reader = res.body.getReader();
@@ -1281,7 +1282,7 @@ export default function PlannerClient() {
     setTimeout(() => {
       document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
-    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses, wizardHonors ?? true, wizardApCredits, wizardHsMath);
+    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses, wizardHonors ?? true, wizardApCredits, wizardHsMath, wizardMode ?? "competitive");
   }
 
   const sendChatMessage = useCallback(async (text?: string) => {
@@ -1666,7 +1667,7 @@ export default function PlannerClient() {
                     setTargetSchool(school);
                     setActiveSchoolTab(school);
                     setResult(null);
-                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardHsMath);
+                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardHsMath, wizardMode ?? "competitive");
                   }}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]"}`}>
                   {school}
@@ -2340,9 +2341,25 @@ export default function PlannerClient() {
                       )}
                     </div>
 
+                    {/* Planning mode */}
+                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
+                      <p className="text-sm font-semibold text-[#303236] mb-1">Planning mode</p>
+                      <p className="text-xs text-[#7b818b] mb-3">Competitive maximizes your transfer strength. Efficiency minimizes workload.</p>
+                      <div className="flex gap-3">
+                        <button onClick={() => setWizardMode("competitive")}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardMode === "competitive" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          🏆 Competitive
+                        </button>
+                        <button onClick={() => setWizardMode("efficiency")}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardMode === "efficiency" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          ⚡ Efficiency
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="flex justify-between items-center pt-2">
                       <button onClick={() => setWizardStep(3)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
-                      <button onClick={completeWizard} disabled={(!wizardNoCourses && !wizardCourses.trim()) || wizardHonors === null || wizardHasAp === null || (wizardHasAp === true && !wizardApCredits.trim())}
+                      <button onClick={completeWizard} disabled={(!wizardNoCourses && !wizardCourses.trim()) || wizardHonors === null || wizardHasAp === null || (wizardHasAp === true && !wizardApCredits.trim()) || wizardMode === null}
                         className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">
                         Build My Plan →
                       </button>

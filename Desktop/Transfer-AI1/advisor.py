@@ -317,14 +317,16 @@ GE VERIFICATION TABLE (required at end of every schedule):
 | 3A Arts | ✅ | COURSE# | VERIFIED/MISSING |
 | 3B Humanities | ✅ | COURSE# | VERIFIED/MISSING |
 | 4 Social Science (×3) | ✅ | COURSE#, COURSE#, COURSE# | VERIFIED/MISSING |
-| 5A Physical Science | ✅ | COURSE# | VERIFIED/MISSING |
-| 5B Biological Science | ✅ | COURSE# | VERIFIED/MISSING |
+| 5A Physical Science | ✅ | COURSE# (★LAB if available) | VERIFIED/MISSING |
+| 5B Biological Science | ✅ | COURSE# (★LAB if available) | VERIFIED/MISSING |
+| 5C Lab Science | ✅ | satisfied by ★LAB above OR separate lab course | VERIFIED/MISSING |
 | 6 Foreign Language | ✅ | COURSE# or HS proficiency | VERIFIED/⚠️ |
 
 === INTERNAL VERIFICATION (run BEFORE producing any output) ===
 Run all checks. If ANY check fails, output "INVALID PLAN — REGENERATING" and fix before proceeding.
 1. Every major prep course is assigned to a term.
-2. Every IGETC area (1A, 1B, 2A, 3A, 3B, 4×3, 5A, 5B, 6) has a course assigned to a term.
+2. Every IGETC area (1A, 1B, 2A, 3A, 3B, 4×3, 5A, 5B, 5C, 6) has a course assigned to a term.
+   Area 5C is satisfied if your 5A or 5B course is marked ★LAB — no extra course needed in that case.
 3. No course appears more than once across all 4 terms.
 4. No course is placed before its prerequisite.
 5. Each term has 12–16 units and 3–5 courses. A term with fewer than 3 courses or under 12 units → INVALID SCHEDULE → rebuild that term.
@@ -371,7 +373,10 @@ Area 1A — English Composition (REQUIRED):
 
 Area 1B — Critical Thinking / Composition (REQUIRED):
 - Must be a SEPARATE course focused on logic, argumentation, or critical thinking
-- PREFERENCE ORDER: If an ENGL course (e.g. ENGL C1001) is listed for Area 1B, use it — it keeps the English sequence together. Only use PHIL or COMM if no ENGL option exists.
+- MANDATORY ENGL-FIRST RULE: You MUST use the first ENGL-prefixed course listed under Area 1B
+  in the IGETC data. PHIL and COMM are only acceptable if zero ENGL courses appear in Area 1B.
+  If ENGL C1001 (or any ENGL course) is in the Area 1B list, that is your choice — no exceptions.
+  Using PHIL 3, COMM 9, or any non-ENGL course when an ENGL option exists → INVALID PLAN.
 - Must come AFTER Area 1A is scheduled
 - If missing or unverified → output: "IGETC AREA 1 INCOMPLETE: 1B MISSING"
 
@@ -384,8 +389,11 @@ INVALID combinations the plan must NEVER produce:
 === IGETC RULES ===
 Each IGETC area slot is filled by EXACTLY ONE course. Once a course fills a slot, no other
 course may also claim that same IGETC area label.
-- Area 2A is ONE slot. If Calculus I fills it, Statistics cannot also be labeled [IGETC 2A].
-  Statistics is in the plan as [Strongly Recommended Major Prep] — not as a second Area 2A.
+- Area 2A is ONE slot. If Calculus I (or any other math course) fills it, Statistics CANNOT also
+  be labeled [IGETC 2A]. Statistics appears in Area 2A IGETC data because it qualifies for Area 2A
+  — but only if no other course already claims that slot. With Calculus in the plan, Statistics must
+  be labeled [Strongly Recommended Major Prep] ONLY. Never give Statistics a dual label of
+  [Strongly Recommended Major Prep] + [IGETC 2A] when Calculus is already in the plan.
 - Area 3B is ONE slot. If PHIL 8 fills it, no other course gets an [IGETC 3B] label.
 - Area 4 requires EXACTLY 3 courses total — STOP at 3, never 4 or 5.
 
@@ -396,8 +404,13 @@ All 9 slots must be covered by courses actually in the term schedule:
 - Area 3A: Arts — ONE course only
 - Area 3B: Humanities — ONE course only
 - Area 4: exactly 3 Social/Behavioral Science courses — STOP at 3
-- Area 5A: Physical Science — ONE course only
-- Area 5B: Biological Science — ONE course only
+- Area 5A: Physical Science — ONE course only; MUST choose one marked ★LAB if available
+- Area 5B: Biological Science — ONE course only; MUST choose one marked ★LAB if available
+- Area 5C: Laboratory Science — NOT a separate course. Satisfied automatically if your chosen 5A or
+  5B course is marked ★LAB. If neither your 5A nor 5B choice has ★LAB, you MUST add a separate
+  lab-only course (e.g. ASTR 15L, ANTH 1L). Always prefer ★LAB options in 5A/5B to avoid adding
+  an extra course. The plan is INVALID if no ★LAB course appears in 5A or 5B (and no lab-only
+  course covers 5C).
 - Area 6: Foreign Language. If no course available: "satisfy with 2+ years same HS foreign language (C or better) — verify with counselor"
 A major prep course that also satisfies an IGETC area counts for both — listed once, labeled with both.
 The IGETC checklist may only show ✅ for a course that physically appears in a term above.
@@ -444,6 +457,7 @@ If student declined honors: NEVER include any course whose number ends in H (e.g
 | IGETC 4 (×3) | COURSE#, COURSE#, COURSE# | X | ✅ |
 | IGETC 5A | COURSE# | X | ✅ |
 | IGETC 5B | COURSE# | X | ✅ |
+| IGETC 5C (lab) | ★LAB course listed above OR separate lab | — | ✅/❌ |
 | IGETC 6 | COURSE# or HS proficiency | X | ✅/⚠️ |
 | Major Prep | list each | X | ✅/NEEDS VERIFICATION |
 | **Total Units** | | **XX** | ✅ ≥60 / ❌ |
@@ -484,7 +498,7 @@ Calculate the score step by step before printing the final number.
 
 **Penalties:**
 - Filler elective used before Stats or Calc III were placed → -10
-- Missing lab science → -20
+- Missing lab science (no ★LAB course in 5A/5B and no standalone lab course for 5C) → -20
 - Misclassified GE area (ASSIST violation) → -25
 
 **Schedule Balance:**

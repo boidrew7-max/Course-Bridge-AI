@@ -198,6 +198,8 @@ _IGETC_REQUIRED = [
     ("4",  "Social & Behavioral Sciences",            3),
     ("5A", "Physical Sciences",                       1),
     ("5B", "Biological Sciences",                     1),
+    # 5C = lab science; satisfied by any 5A or 5B course marked ★LAB — no extra course needed
+    ("5C", "Laboratory Science (★LAB course required)", 1),
     ("6",  "Languages Other Than English",            1),
 ]
 
@@ -224,11 +226,19 @@ def _extract_igetc_courses(college: str) -> str:
     if not by_area:
         return ""
 
+    # Build a set of (prefix, number) tuples that satisfy Area 5C (lab component)
+    lab_keys = set()
+    for c in by_area.get("5C", []):
+        lab_keys.add((c.get("prefix",""), c.get("number","")))
+
     lines = [
         f"=== IGETC COURSES AVAILABLE AT {college} ===",
         "The schedule MUST include courses covering ALL required IGETC areas below.",
         "Use ONLY courses listed here for IGETC slots — do not invent course numbers.",
         "NOTE: Area 6 (Languages Other Than English) — if no course is listed, the student may satisfy this with 2+ years of the same HS foreign language (C or better). Include a note about this in Key Notes.",
+        "LAB SCIENCE RULE: IGETC requires at least ONE science course (5A or 5B) that includes a lab",
+        "component (Area 5C). Courses marked ★LAB below satisfy both their science area AND the lab",
+        "requirement. You MUST pick at least one ★LAB course for Area 5A or 5B.",
         "",
     ]
 
@@ -250,20 +260,25 @@ def _extract_igetc_courses(college: str) -> str:
                 unique.append(c)
         if not unique:
             continue
-        # For Area 1B, prefer ENGL courses over PHIL/COMM so the plan stays
-        # within the English sequence rather than jumping to Philosophy.
+        # For Area 1B, prefer ENGL courses — must be listed first so AI picks ENGL over PHIL/COMM
         if area_code == "1B":
             unique.sort(key=lambda c: (0 if c.get("prefix","").upper().startswith("ENGL") else 1))
+        # For Area 5A/5B, sort lab courses first so AI picks them
+        if area_code in ("5A", "5B"):
+            unique.sort(key=lambda c: (0 if (c.get("prefix",""), c.get("number","")) in lab_keys else 1))
         sample = unique[:5]
-        course_strs = [
-            f"{c.get('prefix','')} {c.get('number','')} - {c.get('title','')} ({c.get('units','?')} units)"
-            for c in sample
-        ]
+        course_strs = []
+        for c in sample:
+            key = (c.get("prefix",""), c.get("number",""))
+            lab_tag = " ★LAB" if key in lab_keys else ""
+            course_strs.append(
+                f"{c.get('prefix','')} {c.get('number','')} - {c.get('title','')} ({c.get('units','?')} units){lab_tag}"
+            )
         lines.append(f"Area {area_code} — {area_name} (need {needed} course{'s' if needed > 1 else ''}):")
         for cs in course_strs:
             lines.append(f"  • {cs}")
-        if len(courses) > 5:
-            lines.append(f"  (+ {len(courses)-5} more options)")
+        if len(unique) > 5:
+            lines.append(f"  (+ {len(unique)-5} more options)")
         lines.append("")
 
     lines.append("=== END IGETC DATA ===")

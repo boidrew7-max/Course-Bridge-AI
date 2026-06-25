@@ -1101,6 +1101,7 @@ export default function PlannerClient() {
   const [wizardMajor, setWizardMajor] = useState("");
   const [wizardCourses, setWizardCourses] = useState("");
   const [wizardNoCourses, setWizardNoCourses] = useState(false);
+  const [wizardHonors, setWizardHonors] = useState<boolean | null>(null);
   // ── Multi-school tabs ─────────────────────────────────────────
   const [planSchools, setPlanSchools] = useState<string[]>([]);
   const [activeSchoolTab, setActiveSchoolTab] = useState("");
@@ -1229,14 +1230,14 @@ export default function PlannerClient() {
     }
   }, [chatOpen, chatMessages.length, runOnboardingMessage, onboardingDone]);
 
-  async function generateAIPlan(college: string, school: string, major: string, courses: string) {
+  async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true) {
     setAiPlanLoading(true);
     setAiPlan("");
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ college, school, major, completedCourses: courses }),
+        body: JSON.stringify({ college, school, major, completedCourses: courses, acceptHonors }),
       });
       if (!res.ok || !res.body) throw new Error("Plan request failed");
       const reader = res.body.getReader();
@@ -1277,7 +1278,7 @@ export default function PlannerClient() {
     setTimeout(() => {
       document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
-    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses);
+    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses, wizardHonors ?? true);
   }
 
   const sendChatMessage = useCallback(async (text?: string) => {
@@ -1662,7 +1663,7 @@ export default function PlannerClient() {
                     setTargetSchool(school);
                     setActiveSchoolTab(school);
                     setResult(null);
-                    generateAIPlan(communityCollege, school, targetMajor, completedCourses);
+                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true);
                   }}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]"}`}>
                   {school}
@@ -2285,9 +2286,24 @@ export default function PlannerClient() {
                         autoFocus
                       />
                     )}
+                    {/* Honors preference */}
+                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
+                      <p className="text-sm font-semibold text-[#303236] mb-3">Are you open to taking honors courses?</p>
+                      <div className="flex gap-3">
+                        <button onClick={() => setWizardHonors(true)}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHonors === true ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          Yes, include them
+                        </button>
+                        <button onClick={() => setWizardHonors(false)}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHonors === false ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          No, skip honors
+                        </button>
+                      </div>
+                    </div>
+
                     <div className="flex justify-between items-center pt-2">
                       <button onClick={() => setWizardStep(3)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
-                      <button onClick={completeWizard} disabled={!wizardNoCourses && !wizardCourses.trim()}
+                      <button onClick={completeWizard} disabled={(!wizardNoCourses && !wizardCourses.trim()) || wizardHonors === null}
                         className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">
                         Build My Plan →
                       </button>

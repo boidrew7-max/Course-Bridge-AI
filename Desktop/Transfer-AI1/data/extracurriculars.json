@@ -1,0 +1,256 @@
+{
+  "meta": {
+    "context": "UC transfer applicants from California community colleges. Extracurriculars are secondary to GPA and major prep, but they differentiate you in competitive pools and fill out your PIQ stories.",
+    "key_principle": "Quality over quantity. One sustained, leadership-level involvement in something major-relevant beats ten club memberships you barely attended."
+  },
+  "how_uc_views_activities": {
+    "official_statement": "UC values a demonstrated interest in your field of study and/or leadership potential. Extracurriculars help distinguish you from other highly qualified transfer applicants in competitive majors.",
+    "priority_order": [
+      "1. GPA and major prep courses — by far the most important factor",
+      "2. Completion of required transfer coursework (60 units, IGETC, major prereqs)",
+      "3. PIQ essays — your personality, growth, and story",
+      "4. Extracurricular activities and awards",
+      "5. Work experience (counts as an extracurricular if relevant)"
+    ],
+    "what_uc_looks_for_in_activities": [
+      "Leadership — did you take initiative or hold a leadership role?",
+      "Major relevance — does this connect to what you want to study?",
+      "Commitment — sustained involvement over time, not a one-time sign-up",
+      "Impact — what changed because you were there?",
+      "Collaboration — can you work with others toward a goal?"
+    ],
+    "if_you_have_none": "If full-time work, caregiving, or financial hardship prevented participation, explain this in the Additional Comments section of the UC application. Work experience and family responsibilities are explicitly recognized by UC as legitimate activities."
+  },
+  "high_value_for_all_transfers": [
+    {
+      "activity": "CC Honors Program",
+      "why": "Nearly every California CC has an honors program. Completing it demonstrates academic excellence above a high GPA alone. UCLA's Transfer Alliance Program (TAP) specifically gives priority review to students who complete an eligible CC honors program — not guaranteed admission, but priority consideration for STEM, social sciences, and humanities.",
+      "how_to_use": "Enroll in honors sections of your major prep courses. Completion typically requires 15+ honors units and a 3.25+ GPA.",
+      "campuses_that_recognize_it": "UCLA TAP (priority review), UC Berkeley (honors noted in holistic review), all UCs weight honors coursework positively",
+      "priority": "Very High"
+    },
+    {
+      "activity": "Phi Theta Kappa (PTK)",
+      "why": "PTK is the national honor society for 2-year college students. Requires 3.5+ GPA and 12+ completed units. Looks strong on the UC application. PTK members transfer at 72% vs 29% nationally. Some UCs give scholarship preference to PTK members.",
+      "how_to_use": "Join as soon as you qualify. Run for an officer position if possible — leadership within PTK is more impressive than membership alone.",
+      "priority": "High"
+    },
+    {
+      "activity": "Transfer Center Programs",
+      "why": "Every California CC has a Transfer Center with free workshops, transfer counselors, college visits, and application support. Participating shows you are actively planning your transfer and being strategic.",
+      "examples": ["Transfer achievement programs", "College campus visit days", "Application workshops", "Meeting with UC representatives who visit your campus"],
+      "how_to_use": "Visit your Transfer Center early — most have workshops you can attend and some have formal enrollment programs that look good on your application.",
+      "priority": "High"
+    },
+    {
+      "activity": "EOPS (Extended Opportunity Programs and Services)",
+      "why": "EOPS is a California state program for students with financial need, academic disadvantage, or who are first-generation college students. Being an EOPS participant signals to UC admissions that you have overcome genuine barriers — UCs are required to give weight to disadvantaged backgrounds.",
+      "eligibility": "Full-time student, California resident, financial need, educationally disadvantaged background",
+      "how_to_use": "Apply as early as possible. EOPS provides extra counseling, priority registration, book grants, and tutoring — these help your GPA directly.",
+      "priority": "Very High (if eligible)"
+    },
+    {
+      "activity": "Student Government (ASG)",
+      "why": "Associated Student Government is one of the most respected extracurriculars for transfer students. Elected or appointed positions demonstrate leadership, collaboration, and community involvement. Even committee membership matters.",
+      "how_to_use": "Run for a class rep seat, join a committee (budget, events, equity), or apply for an appointed position. The more responsibility the better.",
+      "priority": "High"
+    },
+    {
+      "activity": "Major-Relevant Club Officer Position",
+      "why": "A leadership position in a club related to your major is more valuable than general membership in 5 clubs. Presidents, vice presidents, event coordinators, and treasurers demonstrate initiative.",
+      "examples": ["CS/Coding Club president", "Pre-Med/Biology Club officer", "Business Club treasurer", "Psychology Club event coordinator", "Environmental Club president"],
+      "how_to_use": "Join a club in your first semester, attend consistently, and run for a position in your second semester. If the club doesn't exist, founding it is even more impressive.",
+      "priority": "Very High"
+    },
+    {
+      "activity": "Peer Tutoring / Supplemental Instruction (SI)",
+      "why": "Teaching others your major subject is one of the strongest signals of mastery. UCs value tutoring because it shows academic command, communication skills, and service to community. Most CCs have formal paid or volunteer tutor programs.",
+      "how_to_use": "Apply to your CC's tutoring center. Common subjects: math, writing, chemistry, physics, economics. Some programs require a minimum grade (usually B or higher) in the subject you tutor.",
+      "priority": "High"
+    },
+    {
+      "activity": "Research / Undergraduate Research Opportunity",
+      "why": "Research is the single highest-value extracurricular for STEM, psychology, economics, and social science majors. Even one semester assisting a professor makes your application significantly stronger. For UCLA and Berkeley, research experience is often what differentiates applicants in the final decision.",
+      "how_to_use": "Email professors at your CC or nearby UC campuses. Many UCs have formal CC research programs (Berkeley has SROP, UC research partnerships with CCs). Ask your department chair for referrals. Cold email is fine — be specific about what you want to help with.",
+      "programs": [
+        "SRAP (Summer Research Apprenticeship Program) at UC Berkeley",
+        "COSMOS (UC summer STEM program for high-achieving students)",
+        "CSUPERB (CSU biotechnology research, accessible to CC students)",
+        "McNair Scholars Program (for first-gen/low-income students pursuing PhD)",
+        "MARC (Maximizing Access to Research Careers) — if eligible",
+        "Ask your CC if they have research partnerships with local universities"
+      ],
+      "priority": "Very High (especially for STEM, psychology, social science)"
+    },
+    {
+      "activity": "Internship or Industry Work Experience",
+      "why": "For business, CS, engineering, and pre-professional majors, industry internships carry the same weight as research. A summer internship at a relevant company, non-profit, or government office demonstrates real-world application of your major.",
+      "how_to_use": "Use LinkedIn, Handshake (your CC likely has access), Indeed, and your CC career center. Apply in January/February for summer positions. Non-profits and small companies are great options if tech/corporate internships are competitive.",
+      "priority": "Very High (especially for CS, Business, Engineering)"
+    },
+    {
+      "activity": "Volunteer Work (sustained)",
+      "why": "Consistent volunteering — especially related to your major — shows commitment and character. Health-related volunteering for pre-med/nursing students, tutoring low-income youth for education majors, environmental cleanup for environmental science majors.",
+      "what_counts": "Hospital volunteering, food banks, tutoring programs, literacy programs, animal shelters, community organizing, political campaigns, youth sports coaching",
+      "key": "Sustained (6+ months) beats one-day events. 100 hours across a year is more impressive than 100 hours in one week.",
+      "priority": "Medium-High"
+    },
+    {
+      "activity": "Work Experience (paying job)",
+      "why": "UC explicitly recognizes paid work as an extracurricular. If you work 20-30 hours per week to pay for school, that context matters enormously to holistic reviewers. Describe what you learned, how you led, or how your job connects to your goals.",
+      "how_to_use": "List all jobs on the activities section. In your descriptions, emphasize skills gained, leadership, and connection to your major. In PIQ essays, reference work experience as part of your story if relevant.",
+      "priority": "High (especially if it explains limited time for other activities)"
+    }
+  ],
+  "major_specific": {
+    "Computer Science / Engineering": [
+      "Personal coding projects (GitHub portfolio — link in activities or additional info)",
+      "Hackathon participation (MLH hackathons, local events)",
+      "CS/Coding/Robotics Club — officer position preferred",
+      "Open source contributions",
+      "Tech internship or part-time developer role",
+      "Research with a CS professor (ML, data science, systems)",
+      "MESA (Mathematics, Engineering, Science Achievement) — great CC program"
+    ],
+    "Biology / Pre-Med / Pre-Nursing": [
+      "Hospital or clinic volunteering (100+ hours over 1+ year)",
+      "Scribing for a physician",
+      "Research in a biology or chemistry lab",
+      "Pre-Health/Pre-Med club — officer preferred",
+      "EMT certification or CNA certification",
+      "Hospice or nursing home volunteering",
+      "STEM tutoring",
+      "Shadowing a doctor, PA, or nurse (document hours)"
+    ],
+    "Psychology / Social Work": [
+      "Crisis hotline volunteer (many have CC-accessible programs)",
+      "Mental health awareness club or event organizer",
+      "Research assistant in a psychology study",
+      "Youth mentoring or tutoring",
+      "Community outreach with underserved populations",
+      "Peer counseling program at your CC"
+    ],
+    "Business / Economics": [
+      "DECA or business case competitions (some CCs have chapters)",
+      "Business/Entrepreneurship club — leadership role",
+      "Internship at a company, non-profit, or government agency",
+      "Part-time work in business operations, finance, or marketing",
+      "Small business assistance programs",
+      "Investment or finance club — model portfolio competitions"
+    ],
+    "Political Science / Public Policy": [
+      "Political campaign volunteering or interning",
+      "City council or local government involvement",
+      "Debate club or mock trial",
+      "Model UN",
+      "Nonprofit policy work",
+      "Internship with a legislator or community organization",
+      "School newspaper or journalism (political beat)"
+    ],
+    "Environmental Science": [
+      "Environmental club president",
+      "Campus sustainability initiatives",
+      "Research with environmental science faculty",
+      "Local conservation or cleanup volunteering",
+      "Internship with parks, water district, or environmental non-profit"
+    ],
+    "Education / Sociology": [
+      "Tutoring or teaching assistant role at CC",
+      "Youth mentoring (Big Brothers Big Sisters, etc.)",
+      "PUENTE program (Chicano/Latino students — strong transfer rates)",
+      "UMOJA program (African American students — strong transfer rates)",
+      "After-school program work or volunteering",
+      "Community organizing"
+    ],
+    "Nursing (direct entry programs)": [
+      "CNA certification — very strong signal",
+      "Hospital or clinic volunteering (150+ hours minimum)",
+      "Home health aide work experience",
+      "Patient care technician role",
+      "Pre-Nursing club",
+      "CPR/First Aid certification",
+      "Note: Nursing is the most competitive major at every UC — real patient care experience is nearly required"
+    ]
+  },
+  "special_cc_programs": [
+    {
+      "program": "PUENTE Program",
+      "who": "Primarily Chicano/Latino students, though some colleges open it to all",
+      "what": "Counseling, mentoring by community leaders, and accelerated transfer prep. Strong track record of UC transfers.",
+      "value": "High — participating in PUENTE signals community engagement and is recognized by UCs"
+    },
+    {
+      "program": "UMOJA Program",
+      "who": "African American and Pan-African community students",
+      "what": "Counseling, mentoring, culturally responsive curriculum, transfer prep",
+      "value": "High — same recognition as PUENTE"
+    },
+    {
+      "program": "MESA (Mathematics, Engineering, Science Achievement)",
+      "who": "Educationally disadvantaged students in STEM fields",
+      "what": "Study groups, workshops, field trips to universities, mentoring, scholarships",
+      "value": "Very High for STEM majors — direct pipeline to UC research programs"
+    },
+    {
+      "program": "TRIO / Student Support Services",
+      "who": "First-generation, low-income, or students with disabilities",
+      "what": "Tutoring, counseling, financial aid advice, cultural events, study skills",
+      "value": "High — signals first-gen status which UCs factor into holistic review"
+    },
+    {
+      "program": "UCLA Transfer Alliance Program (TAP)",
+      "who": "Students at participating CC honors programs",
+      "what": "Completing your CC honors program makes you TAP-certified. TAP-certified students get priority review at UCLA (NOT guaranteed admission — this is different from TAG)",
+      "value": "Very High for UCLA — without TAP, UCLA transfer is extremely competitive",
+      "important_note": "TAP is NOT a guarantee. It means UCLA will review your application more carefully. You still need a strong GPA, complete major prep, and strong essays."
+    },
+    {
+      "program": "Honors to Honors (H2H) Programs",
+      "who": "CC honors students — specific agreements between certain CCs and UCs",
+      "what": "Some CCs have specific agreements with UC campuses where honors program graduates receive priority admission consideration",
+      "value": "High — check with your Transfer Center for your CC's specific UC agreements"
+    }
+  ],
+  "activities_section_tips": {
+    "how_many": "UC allows up to 20 activities. List everything relevant. 8-15 solid activities is more impressive than padding to 20 with meaningless entries.",
+    "what_to_include": [
+      "Any club membership — especially leadership roles",
+      "Work experience (full-time and part-time jobs)",
+      "Volunteering",
+      "Internships",
+      "Research",
+      "Athletic team participation",
+      "Artistic performance (music, theater, art exhibitions)",
+      "Personal projects (apps, YouTube channel, small business, creative works)",
+      "Family responsibilities (primary caregiver counts)",
+      "Cultural or religious organization involvement",
+      "Awards and honors"
+    ],
+    "how_to_describe": [
+      "Start with a strong action verb: Led, Founded, Designed, Coordinated, Managed",
+      "Include a specific number or metric: '150+ patients seen', 'raised $2,400', '30 students tutored weekly'",
+      "Mention your role explicitly: 'President', 'Lead volunteer', 'Research assistant'",
+      "Keep it to 1-2 sentences — the space is tight",
+      "Don't just describe what the organization does — describe what YOU did and achieved"
+    ],
+    "bad_example": "Member of the Pre-Med Club. Attended meetings and events.",
+    "good_example": "Vice President, Pre-Med Club — organized 8 physician speaker panels per year, recruited 40 new members, coordinated hospital volunteering sign-ups for 120 members.",
+    "awards_section": "List any academic awards, scholarships won, honors program membership, Dean's List, and any external competitions. Phi Theta Kappa membership goes here."
+  },
+  "what_uc_weighs_holistically": {
+    "factors": [
+      "Academic grade point average in all completed college courses",
+      "Completion of required courses (60 units, major prep, IGETC)",
+      "Quality and rigor of academic program (honors courses count positively)",
+      "Geographic context — UCs consider your CC's environment and resources",
+      "First-generation college student status",
+      "Low-income or financial hardship background",
+      "Academic upward trend (improving GPA semester by semester)",
+      "Personal insight essay quality",
+      "Extracurricular depth and major relevance",
+      "Any circumstances that affected prior performance"
+    ],
+    "upward_trend_note": "If your GPA started low and improved significantly, UCs want to see this. A 3.8 after starting at 2.5 is actually a compelling story. Explain the shift in your PIQ or Additional Comments.",
+    "first_gen_note": "Being the first in your family to attend a 4-year university is explicitly weighted in UC holistic review. If this applies to you, make sure it is reflected in your application."
+  }
+}

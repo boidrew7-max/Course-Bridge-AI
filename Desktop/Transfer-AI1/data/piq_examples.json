@@ -1,0 +1,599 @@
+{
+  "real_admitted_essays": {
+    "meta": {
+      "source": "Essays voluntarily posted publicly by admitted students. These are real essays from real people who were admitted to UC schools.",
+      "note": "Use these as benchmarks. When a student submits their own essay for review, compare the specificity, voice, development arc, and reflection depth against these."
+    },
+    "berkeley_transfer_admit": {
+      "result": "Admitted to UC Berkeley (transfer)",
+      "source": "medium.com/@chimichanga_changa — student posted their own essays publicly",
+      "essays": {
+        "major_preparation": {
+          "prompt": "Describe how you have prepared for your intended major (transfer required question)",
+          "major": "Social Sciences",
+          "essay": "I have always been intrigued by social sciences. With a strong curiosity and a spirit of not giving up until getting to the bottom of it, exploring and understanding new information that I do not know well is important in my life, and I would say that it is my way to prepare for my major. I watch political commentary programs supporting different political views, and figure out what they are discussing — whether it is the truth, the right or wrong, or the value. It is interesting listening to what they say and how they react, it is like observing a smaller society. I also observe people around me, those who I know, and those I do not know. Living in a community full of people from everywhere with different ethnicities and backgrounds, I have a lot to experience. Speculating about their personalities, roles, lives, and relationships is an interesting process. My observation, analysis, and speculation extend to exploring questions such as how the society, the structure, and the system of this world function, or how people connect. Most importantly, I think a lot. I absorb what I see, analyze it, and think about it. I debate very often on different topics not only with others but also with myself to discover the truth or the most sensible answer that I am satisfied with. Besides all these things that I am doing, I enjoy taking classes and I am dedicated to my academics. Last semester I spoke to my economics professor and I was greatly impressed by his words. He told me that he loves learning, that the reason he took classes while in college was simply because he wanted to learn. I also love learning, and I will do my best to keep this attitude and passion. I am looking forward to my upper-division courses as they will be more specific and deeper which gives me more to ponder and discuss.",
+          "notes": "Honest voice. Shows intellectual curiosity through specific habits (debate, observation, watching commentary). Weakness: light on concrete coursework/academic preparation details. Got in despite this — Berkeley values authentic intellectual identity."
+        },
+        "greatest_talent": {
+          "prompt": "What would you say is your greatest talent or skill? (Prompt 3)",
+          "essay": "Playing the piano has always been a pleasure of mine. I like to perform, especially when it is sharing something that I love. Choosing the piano ensemble class in my first semester of college is one of the best things I have ever done. As a form of master class, students play in front of the class as a less formal performance. I had not been playing since fourteen, and picking it up in such a challenging way was amazing. I realized that I love performing, especially for people who also share the same interest — who also understand and more importantly enjoy music. Obtaining comments and suggestions is also thrilling to me. When I express myself through music, I get the sense that people understand how I feel. My feelings and how they care about what I play motivate me to practice and work even harder so I can perform better. The professor said that I am naturally musical, that my music sings very well with imaginations, and I appreciate that. Being a person who thinks a lot and has a lot of emotions, playing the piano is meaningful to me because I know I have a way to express and somehow balance and heal myself. To me, learning music is not only about music, it applies to everything in life. There are techniques, moods, spirits, transitions, big pictures, and ideas. Every piece is like a project, a story to be told. I listen to different recordings for the piece which I work on, try different versions including those I create, and eventually build an interpretation of my own for the performance. The thinking process is not even a bit less than writing an essay, but I enjoy it. Overall, I am proud of being able to do something beautiful, having the excitement from improvement and achievement, and just purely enjoy doing so.",
+          "notes": "Genuine passion comes through. The analogy 'every piece is like a project, a story to be told' is memorable. Weakness: tells more than shows — few specific performances or moments. Still effective because the voice is authentic."
+        },
+        "significant_challenge": {
+          "prompt": "Describe the most significant challenge you have faced. (Prompt 5)",
+          "essay": "I am an extremely self-conscious person and a perfectionist, and these two personalities make the most significant challenge I am facing right now. Being an immigrant, English being my second language and coming from a different culture has been challenging to adjust and adapt. I cannot change who I am, I cannot forget what and how things were before. I am redefining myself all the time. Before coming to the States, I used to talk a lot, but talking is a luxury I am afraid of due to my language skill right now. It hurts every time when I feel misunderstood because I care so much to connect with others. I am concerned about a lot of things — did I use the right word? Even though it was the right word that I was thinking of, do the locals say that? Is it weird to say that? How was my accent? How do they think? Is it inconvenient for them to communicate with me? I have discussed this topic with many people. Some stay positive and encourage me while others say that it is impossible for another culture to truly understand you. I do not know. However, I met a person in summer school who was very nice and we talked a lot. He told me that the way I spoke was fun, I asked him immediately 'in a good way?' 'Yeah, of course!' He said. It made a huge impact, I felt more solid and confident after that. He strengthened my courage to feel more comfortable to talk to people, and I have been pushing myself to do so and leave my comfort zone. Communication is important because academics are never just about studying alone, discussions and working together are essential. I am more familiar with the language and the life here, and I know it will get better as long as I stay positive, confident, and brave.",
+          "notes": "Very honest and vulnerable. The specific dialogue ('in a good way?' / 'Yeah, of course!') is the most memorable moment — a single real exchange that carries the whole essay. Shows academic impact: communication affects group work and discussions. Authentic despite being conversational."
+        },
+        "what_makes_you_stand_out": {
+          "prompt": "Beyond what has already been shared, what do you believe makes you stand out? (Prompt 8)",
+          "essay": "As being shaped by the values the society has given, people are unconsciously carrying some responsibilities or even mistakes which are not from themselves — this is what I believe. After finishing tenth grade, I took a gap year. Taking a gap year showed me life lessons which has forced me to grow up and I learned so much about life. I was depressed and confused of what I was doing. I was lost. Being a good kid and a good student for sixteen years, I wanted to know how life could be different, I wanted to do something different. I started finding jobs, and started working in a cafe as a waitress. That was the first time that I stepped out my comfort zone and experienced the real world. My observation and analysis started again — I was trying to understand my colleagues and the company. I thought about the interactions and relations between employees and employer, the low-salaries, and food industry. I thought about the reasons that caused this situation. Why, and how did it become like this? How could it change or be better by setting up rules by government, the company itself, or by the mindset of people? How would that process be like? Besides working, I also took classes in German during my gap year where I met people with different reasons of learning and that is when I realized how everyone is so different. Dreams, goals, pathways, it is impossible to follow a certain way, I need to create one for myself. Many of my friends say that I am more mature than most people in my age. I think I just have a strong curiosity to the world, and I am patient to think. Going through those thinking processes, I gradually became an open-minded person. With knowing different people and trying to understand different ideas, I have a concept that a lot of things are not what we think they are today. I am confident that I have become a person who is critical, but not judgemental and I like that.",
+          "notes": "Unconventional topic (gap year, café job, German classes) — stands out because it is non-standard. The philosophical opening is risky but the essay earns it with the specific story. Shows intellectual maturity and honest self-reflection. Admitted to Berkeley despite a non-traditional path."
+        }
+      }
+    }
+  },
+  "essay_evaluation_rubric": {
+    "description": "Use this rubric when a student submits their own PIQ for review. Score each dimension and give specific actionable feedback.",
+    "dimensions": {
+      "hook_opening": {
+        "weight": "High",
+        "what_to_look_for": "Does the first sentence make you want to keep reading? Strong hooks are specific, concrete, and unexpected. Weak hooks are philosophical, generic, or biographical.",
+        "strong_examples": [
+          "The bug that changed how I think about code lived inside seventeen lines of C++.",
+          "My first semester GPA was 1.8.",
+          "I exclaimed, 'You're too lazy for your own good!'"
+        ],
+        "weak_examples": [
+          "I have always been passionate about science.",
+          "Leadership is an important quality in today's world.",
+          "Ever since I was young, I knew I wanted to make a difference."
+        ]
+      },
+      "specificity": {
+        "weight": "Very High",
+        "what_to_look_for": "Are there real names, real numbers, real places, real conversations? Vague essays feel interchangeable. Specific essays are memorable.",
+        "test": "Could this essay have been written by 10,000 other students? If yes, it needs more specificity.",
+        "good_signs": ["names of courses, professors, organizations", "numbers (dates, GPAs, enrollment counts, hours)", "real quoted dialogue", "specific project or outcome described"],
+        "bad_signs": ["words like 'many', 'various', 'several' without specifics", "generic descriptions of hard work or passion"]
+      },
+      "development_arc": {
+        "weight": "High",
+        "what_to_look_for": "Is there a clear before/during/after? Does the student grow or change? Flat essays describe a situation without showing how it changed the writer.",
+        "what_good_looks_like": "Challenge → specific action taken → concrete result → insight gained → forward connection"
+      },
+      "authenticity_voice": {
+        "weight": "High",
+        "what_to_look_for": "Does this sound like a real person or a college essay? Conversational + precise beats formal + vague. Admissions readers read 5,000+ essays — they can tell when someone is performing.",
+        "good_signs": ["personal quirks or observations that couldn't be invented", "honest about failure or confusion", "specific emotional detail"],
+        "bad_signs": ["inspirational language without substance", "resume-speak", "third-person narration about yourself"]
+      },
+      "transfer_readiness": {
+        "weight": "Very High (transfer required question only)",
+        "what_to_look_for": "Does this answer the implied question: 'Why should we trust you can handle upper-division work?' Names specific CC courses, projects, or research. Shows skills gained, not just classes taken.",
+        "red_flags": ["no mention of specific coursework", "focused on what student wants at UC rather than what they did at CC", "no upper-division readiness argument"]
+      },
+      "word_count": {
+        "weight": "Medium",
+        "what_to_look_for": "350 words is tight. Under 300 usually signals something important was left out. Over 350 will be cut off.",
+        "ideal": "330-350 words"
+      },
+      "forward_connection": {
+        "weight": "Medium",
+        "what_to_look_for": "Does the essay end with a connection to what the student wants to do at UC or in life? The best essays feel like the start of a journey, not the end of a story."
+      }
+    },
+    "scoring": {
+      "excellent": "Essay is specific, has a clear arc, authentic voice, and strong hook. Would stand out in a competitive read.",
+      "good": "Essay has strong elements but lacks specificity in places or has a weak opening/closing. Could be improved with targeted revision.",
+      "needs_work": "Essay is too generic or vague. Reads like it could have been written by anyone. Needs a specific story as the core.",
+      "weak": "Essay uses clichés, makes unsupported claims, or ignores the prompt. Major revision needed."
+    }
+  },
+  "question_guidance": {
+    "meta": {
+      "source": "Curated guidance based on UC admissions published materials and transfer counselor expertise",
+      "format": "Each question includes strong/weak sentence patterns, common mistakes, topic banks, and a structural framework",
+      "note": "Transfer students have unique stories -- community college experience, work/family balance, academic setbacks overcome -- these are assets, not liabilities"
+    },
+    "transfer_required": {
+      "prompt": "Describe how you have prepared for your intended major, including your readiness to succeed in your upper-division courses once you enroll at the University of California.",
+      "why_it_matters": "This is the most important question for transfer applicants. It is the academic version of a statement of purpose. Admissions wants to know: did you use community college to seriously prepare, or are you just trying to escape?",
+      "structural_framework": [
+        "Hook: Open with a specific moment -- a lab result, a conversation, a problem you could not stop thinking about",
+        "Relevant coursework: Name 2-3 specific CC courses and what you actually learned/did in them",
+        "Beyond the classroom: research, internship, job, club, independent study, tutoring",
+        "Skills gained: technical skills, critical thinking, writing, data analysis -- be specific",
+        "Connection to UC: How does your prep connect to what you will do at the UC level?",
+        "Close with forward momentum: what are you excited to study/research/do at UC?"
+      ],
+      "strong_patterns": [
+        "In my Transfer Pathways to Engineering program at Pasadena City College, I designed a PID controller that... This taught me to think about [specific concept].",
+        "Working as a pharmacy tech while taking Organic Chemistry gave me firsthand exposure to... I saw in the lab how [concept] applied to [real situation].",
+        "After earning a B in Calculus II my first semester, I went to office hours every week and retook it, finishing with an A. That discipline connects to...",
+        "My professor encouraged me to present my independent research on [topic] at the [conference]. The experience confirmed that I want to pursue [specific focus area] at UC.",
+        "I have completed the IGETC and all lower-division prerequisites for the [major] major. Beyond coursework, I have..."
+      ],
+      "weak_patterns": [
+        {
+          "example": "I have always been passionate about [major].",
+          "problem": "vague opener that adds nothing"
+        },
+        {
+          "example": "I took many hard classes at community college and they prepared me well.",
+          "problem": "no specifics"
+        },
+        {
+          "example": "I know I will succeed at UC because I am a hard worker and dedicated student.",
+          "problem": "cliche, no evidence"
+        },
+        {
+          "example": "I switched my major three times but now I am sure I want to study [major].",
+          "problem": "signals indecision without redemption arc"
+        },
+        {
+          "example": "The UC system is the best and I have always dreamed of attending.",
+          "problem": "reads as flattery, not preparation"
+        }
+      ],
+      "common_mistakes": [
+        "Listing courses without saying what you learned or did in them",
+        "Focusing entirely on what you WANT to do at UC rather than what you have DONE at CC",
+        "Not addressing the upper-division readiness part -- be specific about skills",
+        "Treating the question as a resume dump instead of a narrative",
+        "Failing to mention any setbacks or challenges overcome -- flat arcs are less compelling"
+      ],
+      "transfer_specific_topics": [
+        "STEM: lab experience, coding projects, math/science sequences completed, research papers",
+        "Business/Econ: data analysis projects, accounting work, economic modeling, internships",
+        "Humanities/Social Science: research papers, critical analysis skills, language skills, fieldwork",
+        "Pre-med/Health: clinical shadowing, patient care experience, science coursework, certifications",
+        "Arts/Design: portfolio pieces, software skills, collaborative projects, exhibitions",
+        "CS/Engineering: GitHub portfolio, hackathons, team projects, algorithms coursework"
+      ]
+    },
+    "1_leadership": {
+      "prompt": "Describe an example of your leadership experience in which you have positively influenced others, helped resolve disputes, or contributed to group efforts over time.",
+      "structural_framework": [
+        "Set the scene: context, your role, the challenge or opportunity",
+        "What you actually did: specific actions, decisions, conversations",
+        "The impact on others: concrete change in the group/team/community",
+        "What you learned about leading: insight, growth, evolution of your approach",
+        "Connection to your values or future goals (optional but strong)"
+      ],
+      "strong_patterns": [
+        "When our study group was fracturing over conflicting schedules, I [specific action] which led to [specific outcome].",
+        "As president of [organization], I noticed [problem]. I proposed [solution], which resulted in [concrete result].",
+        "During my shift at [workplace], a dispute arose between [parties]. I [specific steps] and the resolution was [outcome].",
+        "I did not have a title. But when [situation occurred], I [informal leadership action] and [people responded by]..."
+      ],
+      "weak_patterns": [
+        {
+          "example": "I was president of [club] for two years and organized many events.",
+          "problem": "no conflict, no growth"
+        },
+        {
+          "example": "I am a natural leader and people always come to me for advice.",
+          "problem": "unsubstantiated claim"
+        },
+        {
+          "example": "Leadership is about helping others, which I love to do.",
+          "problem": "philosophy without story"
+        }
+      ],
+      "common_mistakes": [
+        "Confusing a position title with leadership -- the question asks about influence, not rank",
+        "Not showing conflict or challenge -- effortless success is less compelling",
+        "Focusing on the organization's success rather than your specific role in it",
+        "Vague impact statements like everyone felt better -- quantify or specify whenever possible"
+      ],
+      "transfer_specific_topics": [
+        "Study group organizer at community college",
+        "Shift lead or team leader at a job",
+        "Single parent who organizes household and manages others",
+        "Older sibling who guided younger family members through school",
+        "Community organization or volunteer leadership",
+        "Club officer at CC (student government, honor society, major-specific club)",
+        "Peer tutor or supplemental instruction leader"
+      ]
+    },
+    "2_creativity": {
+      "prompt": "Every person has a creative side, and it can be expressed in many ways: problem solving, original and innovative thinking, and artistically, to name a few. Describe how you express your creative side.",
+      "structural_framework": [
+        "Define your creative medium or approach (do not assume art only)",
+        "Specific project or moment where creativity was central",
+        "The process: how you approached the problem or work",
+        "The outcome: what was created or solved",
+        "What creativity means to you -- how it shapes your thinking"
+      ],
+      "strong_patterns": [
+        "When the hospital could not explain why intake times spiked on Tuesdays, I built a data visualization that revealed... This kind of creative problem-solving drives me to study [major].",
+        "I do not paint or draw. My creative outlet is [cooking/coding/community organizing] -- specifically, [specific project or approach].",
+        "In my English class, I noticed the standard five-paragraph essay stifled my arguments. I proposed a different structure to my professor -- [describe it] -- and the result was [outcome]."
+      ],
+      "weak_patterns": [
+        {
+          "example": "I love art and have been drawing since I was five.",
+          "problem": "biographical, not specific"
+        },
+        {
+          "example": "I am creative because I think outside the box.",
+          "problem": "cliche with no evidence"
+        },
+        {
+          "example": "Creativity is important in today's world and I express mine through many different outlets.",
+          "problem": "filler"
+        }
+      ],
+      "transfer_specific_topics": [
+        "Creative problem-solving at work (retail display, scheduling, training materials)",
+        "Art, music, photography, film, writing",
+        "Coding or software development as creative expression",
+        "Cooking, fashion, hair styling as craft",
+        "Engineering or building things from scratch",
+        "Data visualization, research design, statistical modeling",
+        "Teaching -- creating explanations that click for students"
+      ]
+    },
+    "3_talent": {
+      "prompt": "What would you say is your greatest talent or skill? How have you developed and demonstrated that talent over time?",
+      "structural_framework": [
+        "Name the talent specifically -- not I am good with people but I can read a room and de-escalate tension",
+        "Origin: when/how did you discover or develop this?",
+        "Development arc: show growth at 2-3 points in time",
+        "Demonstration: specific moment where it mattered",
+        "Why it matters going forward: connection to major or life goals"
+      ],
+      "strong_patterns": [
+        "Most people avoid conflict. I walk toward it. Working as a [role], I learned to [specific skill], which became essential when [situation].",
+        "I can translate between technical and non-technical audiences -- a skill I built over [time] of [activity]. The clearest demonstration came when [specific example].",
+        "My greatest skill is persistence through ambiguity. When I do not understand something, I do not pretend -- I [specific approach: office hours, YouTube, building a model, etc.]."
+      ],
+      "weak_patterns": [
+        {
+          "example": "My greatest talent is being hardworking and dedicated.",
+          "problem": "these are not talents, they are character traits"
+        },
+        {
+          "example": "I am good at everything on my resume.",
+          "problem": "diffuse, not memorable"
+        },
+        {
+          "example": "I have always been smart and people notice it.",
+          "problem": "arrogant and vague"
+        }
+      ],
+      "common_mistakes": [
+        "Choosing a talent that is not actually yours -- admissions readers notice inauthenticity",
+        "No development arc -- the question asks HOW you developed it over TIME",
+        "Talent with no stakes -- show a moment where the talent was tested or mattered"
+      ],
+      "transfer_specific_topics": [
+        "Math or quantitative reasoning built through hard CC courses",
+        "Communication or public speaking developed through work or family necessity",
+        "Bilingual or multilingual ability",
+        "Technical skills: coding, lab technique, medical/clinical skills",
+        "Interpersonal skills developed through caregiving, teaching, or service work",
+        "Athletic or physical discipline",
+        "Organizational and time management skills (often developed by necessity for working students)"
+      ]
+    },
+    "4_educational": {
+      "prompt": "Describe how you have taken advantage of a significant educational opportunity or worked to overcome an educational barrier you have faced.",
+      "structural_framework": [
+        "Name the opportunity OR barrier clearly and honestly",
+        "Context: why it was significant for YOU specifically",
+        "What you did about it (agency is key for barriers)",
+        "What you gained: skills, perspective, knowledge, resilience",
+        "Forward look: how does this shape your approach to learning at UC?"
+      ],
+      "strong_patterns": [
+        "I could not afford [expensive resource]. Instead, I [creative alternative], which ultimately [unexpected benefit].",
+        "My high school did not offer calculus. When I arrived at community college, I had a two-year gap to close. I took [courses], found [resources], and by my second semester [result].",
+        "My college had an Honors Program that almost no transfer students knew about. I [how you found it, what you did], and the experience changed [specific thing].",
+        "When my mom got sick during finals week, I had to [situation]. I talked to my professor, made a plan, and finished the semester by [specific action]. What I learned was [insight]."
+      ],
+      "weak_patterns": [
+        {
+          "example": "I worked hard despite not having much money.",
+          "problem": "too vague, does not show what you did"
+        },
+        {
+          "example": "I joined every club at my community college.",
+          "problem": "quantity without depth"
+        },
+        {
+          "example": "My high school did not prepare me well so CC was hard at first.",
+          "problem": "blame framing without resolution"
+        }
+      ],
+      "transfer_specific_topics": [
+        "EOPS, CalWORKs, DSPS, or other CC support programs taken advantage of",
+        "Transfer Center, Honors programs, research opportunities at CC",
+        "First-generation college student obstacles overcome",
+        "Financial barriers and how you worked through them",
+        "Learning disability, health issue, or family circumstance managed",
+        "Gap in educational preparation closed through determination",
+        "Language barriers navigated as an English learner"
+      ]
+    },
+    "5_challenge": {
+      "prompt": "Describe the most significant challenge you have faced and the steps you have taken to overcome this challenge. How has this challenge affected your academic achievement?",
+      "structural_framework": [
+        "Name the challenge directly -- do not be coy about it",
+        "Honest academic impact: this question explicitly asks -- do not hide a bad grade or withdrawal",
+        "What you actually did about it (steps taken = plural, show a process)",
+        "What you have learned or how you have changed",
+        "Academic trajectory now: show the upswing"
+      ],
+      "strong_patterns": [
+        "My first semester GPA was 2.1. I had [real reason]. What changed was [specific action]. By my third semester, I was on the Dean's List.",
+        "I withdrew from two classes when my [family member] was hospitalized. At the time, I felt like a failure. What I learned was [insight]. Since then, [academic recovery evidence].",
+        "Working 40 hours a week while taking 15 units nearly broke me in my second semester. I failed [course] and had to retake it. Here is what I changed: [concrete adjustments]."
+      ],
+      "weak_patterns": [
+        {
+          "example": "My biggest challenge was balancing school and work, but I always got it done.",
+          "problem": "no depth"
+        },
+        {
+          "example": "I overcame challenges by staying positive and working hard.",
+          "problem": "inspirational without substance"
+        },
+        {
+          "example": "I had a hard childhood but I do not want to use that as an excuse.",
+          "problem": "self-deprecating setup with no follow-through"
+        }
+      ],
+      "common_mistakes": [
+        "Describing a challenge but then saying it barely affected you -- the question asks about academic impact, be honest",
+        "Making it too dramatic without showing resolution",
+        "Blaming others entirely -- show your agency and what YOU did",
+        "Omitting the academic recovery -- upswing is critical here",
+        "Choosing a challenge that does not actually connect to your academic story"
+      ],
+      "transfer_specific_topics": [
+        "Academic probation or poor first semester at CC",
+        "Family obligations (caring for siblings, parents, own children)",
+        "Financial hardship requiring work during school",
+        "Health challenges (physical or mental)",
+        "Domestic instability, housing insecurity, housing loss",
+        "Immigration-related stresses",
+        "Death of a family member during school",
+        "Work-related injury or major life disruption"
+      ]
+    },
+    "6_academic_subject": {
+      "prompt": "Think about an academic subject that inspires you. Describe how you have furthered this interest inside and/or outside of the classroom.",
+      "structural_framework": [
+        "Name the subject and the specific dimension that excites you (not just I love biology -- which part?)",
+        "What drew you to it -- a class, a moment, a question that would not let go",
+        "Inside the classroom: specific course, project, or discovery",
+        "Outside the classroom: self-directed learning, research, reading, videos, projects, applications",
+        "The question you most want to answer or the problem you most want to solve"
+      ],
+      "strong_patterns": [
+        "I started reading about [specific topic] after Professor [name] mentioned [idea] in passing. I could not stop. I bought [book], then watched every lecture I could find on [platform], and ended up [project or application].",
+        "In Organic Chemistry, we covered [specific topic]. Everyone else thought it was obscure. I thought it was the most beautiful thing I had ever seen because [reason]. Since then, [how you pursued it].",
+        "I wrote a 20-page independent research paper on [narrow topic in your subject] that no one assigned me. I just needed to understand [specific question]."
+      ],
+      "weak_patterns": [
+        {
+          "example": "I have always loved science since I was young.",
+          "problem": "no specificity"
+        },
+        {
+          "example": "My favorite subject is psychology because people are interesting.",
+          "problem": "shallow"
+        },
+        {
+          "example": "I take every class I can in [subject] because it will help with my career.",
+          "problem": "instrumental, not curious"
+        }
+      ],
+      "transfer_specific_topics": [
+        "A course at CC that opened a new intellectual door",
+        "A professor whose framing of a topic changed how you see the world",
+        "An independent project or paper beyond what was assigned",
+        "YouTube/podcast/book rabbit holes in a specific academic area",
+        "Applying academic knowledge at work or in personal life",
+        "Academic competition, debate, or contest",
+        "Cross-disciplinary interest: where two subjects meet"
+      ]
+    },
+    "7_community": {
+      "prompt": "What have you done to make your school or your community a better place?",
+      "structural_framework": [
+        "Define your community (could be CC campus, neighborhood, workplace, family, faith community, online community)",
+        "Identify a specific need or problem you saw",
+        "What you did -- specific actions and decisions",
+        "Concrete impact -- what changed for real people?",
+        "What you learned about service, community, or yourself"
+      ],
+      "strong_patterns": [
+        "I noticed that first-generation students in my cohort did not know how to talk to financial aid. I started a peer coaching group that [specific outcome: X students helped, Y dollars in aid recovered, etc.].",
+        "My neighborhood had no after-school programming for middle schoolers. I organized [specific initiative], and after [time], [concrete result].",
+        "I was not elected to anything. I just saw [specific problem] and decided to [specific action]. After [timeline], [outcome]."
+      ],
+      "weak_patterns": [
+        {
+          "example": "I volunteered at many events and helped many people.",
+          "problem": "no specifics"
+        },
+        {
+          "example": "I believe community is important and I try to give back whenever I can.",
+          "problem": "philosophy, no story"
+        },
+        {
+          "example": "I tutored my friends.",
+          "problem": "too small unless you can show real impact"
+        }
+      ],
+      "transfer_specific_topics": [
+        "CC campus: tutoring center, ASG, student newspaper, clubs, welcome day volunteering",
+        "Transfer Center involvement: mentoring incoming students",
+        "Neighborhood or city: community clean-ups, local organizations, mutual aid",
+        "Faith community service",
+        "Youth programs: coaching, mentoring, after-school work",
+        "Workplace community impact",
+        "Family community: being the first to go to college and paving the way for others"
+      ]
+    },
+    "8_standout": {
+      "prompt": "Beyond what has already been shared in your application, what do you believe makes you stand out as a strong candidate for admission to the University of California?",
+      "structural_framework": [
+        "Identify what is NOT covered in your other 3 responses",
+        "Choose something genuinely distinctive -- not I am hardworking",
+        "Tell the specific story or detail that captures it",
+        "Connect to why it makes you a stronger candidate or community member",
+        "Do not summarize your application -- add something NEW"
+      ],
+      "strong_patterns": [
+        "None of my other responses mention that I have been supporting my family financially since age 17. Here is what that shaped in me: [specific qualities with evidence].",
+        "I am one of the few students applying with [unusual experience, background, or perspective]. That means I bring [specific thing] to every class discussion.",
+        "I spent two years [unusual experience] before community college. That detour taught me [insight], which is why I approach [subject] differently than most students my age."
+      ],
+      "weak_patterns": [
+        {
+          "example": "I am passionate, dedicated, and a hard worker.",
+          "problem": "cliche"
+        },
+        {
+          "example": "I already mentioned my achievements in my other essays, but I wanted to reiterate...",
+          "problem": "literally ignores the prompt"
+        },
+        {
+          "example": "What makes me stand out is my unique personality and perspective on life.",
+          "problem": "says nothing"
+        }
+      ],
+      "common_mistakes": [
+        "Repeating what other PIQ responses already covered",
+        "Using vague character traits instead of specific experiences",
+        "Being too humble and underselling -- this question is your final argument",
+        "Writing a generic diversity statement without a specific story"
+      ],
+      "transfer_specific_topics": [
+        "Non-traditional path: military, workforce, gap years, caregiving",
+        "Family or cultural background not mentioned elsewhere",
+        "Unusual combination of skills (coding + art, nursing + math, etc.)",
+        "First in family to attend college or graduate",
+        "Immigration, refugee, or cultural identity story",
+        "Hidden hardship that explains your trajectory",
+        "Unusual talent, hobby, or achievement outside typical academic achievements"
+      ]
+    }
+  },
+  "question_selection_guide": {
+    "strategy": "Choose 3 questions that let you show DIFFERENT sides of yourself. Do not pick 3 challenges or 3 leadership stories.",
+    "recommended_combinations": [
+      {
+        "combination": [
+          "1_leadership",
+          "4_educational",
+          "6_academic_subject"
+        ],
+        "rationale": "Covers growth, academic drive, and intellectual curiosity -- diverse profile",
+        "best_for": "Students with strong academic record and extracurricular involvement"
+      },
+      {
+        "combination": [
+          "5_challenge",
+          "3_talent",
+          "7_community"
+        ],
+        "rationale": "Resilience, specific skill, and community values -- strong for students with harder paths",
+        "best_for": "Students who overcame significant barriers and want to show depth over polish"
+      },
+      {
+        "combination": [
+          "2_creativity",
+          "6_academic_subject",
+          "8_standout"
+        ],
+        "rationale": "Intellectual + creative + the wildcard -- best for students with unusual backgrounds",
+        "best_for": "Students with non-traditional paths or unique perspectives"
+      },
+      {
+        "combination": [
+          "1_leadership",
+          "5_challenge",
+          "8_standout"
+        ],
+        "rationale": "Covers agency, resilience, and differentiation -- well-rounded",
+        "best_for": "Students who led through hard circumstances and have something unusual to add"
+      }
+    ],
+    "avoid": [
+      "Do not pick a question you cannot answer specifically -- generic responses hurt more than skipping",
+      "Do not pick 8_standout if you have nothing new to add -- it can backfire",
+      "Do not pick 5_challenge unless you have a genuine recovery arc -- if academics are still low, it draws attention without resolution"
+    ]
+  },
+  "model_essays": {
+    "meta": {
+      "note": "Original model essays demonstrating strong structure for each PIQ prompt. Each represents a different student background and major. Use as examples of WHAT GOOD LOOKS LIKE, not templates to copy.",
+      "word_count": "330–350 words (UC maximum). These models run 280–310 to leave room for student's personal specifics.",
+      "source": "Original content created for Transfer AI — not copied from any external database"
+    },
+    "transfer_required": {
+      "prompt": "Describe how you have prepared for your intended major...",
+      "student_profile": "CS major, De Anza College → UC San Diego, 3.9 GPA in CS sequence",
+      "essay": "The bug that changed how I think about code lived inside seventeen lines of C++. During my second semester at De Anza College, I was debugging a memory allocation issue in a Data Structures project when I realized I had no real mental model of what the heap was doing. I had memorized the syntax. I had not understood it.\n\nI went back to the textbook — not to find the answer, but to rebuild the model from scratch. I rewrote the program three times until I could predict exactly what would happen before running it. That week cost me a night of sleep and produced a kind of understanding I had not felt before.\n\nSince then, that approach has defined how I move through coursework. In Algorithms, I proved time complexities by hand rather than memorizing them. In Computer Organization, I built a working ALU in Logisim before the assignment was due because I wanted to see the logic gates before abstracting them away. I have completed all lower-division CS prerequisites — Calculus I through III, Linear Algebra, Discrete Mathematics, Data Structures, and three programming courses — finishing with a 3.9 GPA in the sequence.\n\nOutside class, I have contributed to two open-source projects on GitHub: a Python citation-formatting library and a housing data scraper I built for a Statistics project. Both are live and maintained.\n\nWhat I want at UC San Diego is not to continue what I am doing. I want harder problems, research exposure, and peers who will push my thinking in directions I cannot predict. My coursework has prepared me technically for upper-division work. The compulsive need to understand rather than just solve — I came to that myself, alone at 2 a.m., debugging seventeen lines of C++. That is the thing I want to bring into every room."
+    },
+    "1_leadership": {
+      "prompt": "Describe an example of your leadership experience...",
+      "student_profile": "Math Club president, Cerritos College → UCLA, Math major",
+      "essay": "When I became Math Club president at Cerritos College, I inherited a club with three members and no budget. I had spent my first semester attending quietly, watching people show up and leave looking vaguely disappointed. Eventually I decided no one else was going to turn it around.\n\nMy first initiative was a miscalculation. I organized a guest speaker event, printed 200 flyers, and seven students showed up — none of them our members. Instead of giving up, I spent a week talking to those seven: what would actually bring them back? They did not want lectures. They wanted to work through real problems together — the kind that appeared on competitions and transfer entrance exams.\n\nI redesigned the club entirely. Wednesday sessions became two-hour collaborative problem-solving workshops where upper-division students helped lower-division ones in exchange for exposure to harder material. I reached out to the Math department chair, who gave us a dedicated room and connected us with four professors willing to offer supplemental office hours for members.\n\nEnrollment reached 47 within one semester. Eight members — including three who had been on academic probation — raised their semester GPAs above 3.0. One is now transferring to UC Berkeley.\n\nWhat surprised me about leadership was how little it resembled the version I had imagined. I had expected to inspire people. What I actually did was listen carefully enough to stop organizing events they did not want and start building something they showed up for without being asked.\n\nBy the time I step down, the club runs three independent study groups I do not attend. That is the result I am proudest of — not the membership numbers, but making myself unnecessary."
+    },
+    "2_creativity": {
+      "prompt": "Every person has a creative side...",
+      "student_profile": "Statistics major, Foothill College → UC Berkeley, data visualization as creative expression",
+      "essay": "My creative medium is not paint or code. It is the moment when a spreadsheet becomes a story.\n\nIn my Statistics course at Foothill College, we were assigned a dataset on hospital readmission rates. Everyone in my group charted the averages, labeled the axes, and called it done. I stayed with it. Something in the Tuesday spikes felt wrong — not statistically wrong, just visually wrong, the kind of wrongness that comes from a chart that answers the question but obscures what matters.\n\nI spent two extra days rebuilding the visualization in Python, layering the readmission data against shift-change schedules I found in a public policy report. The pattern that emerged was striking: readmissions clustered in the four hours after overnight-to-morning shift transitions. My chart was not prettier than my group's. It was asking a different question.\n\nMy professor asked if she could use it in future semesters. I said yes, then went home and tried to figure out what question I would want to ask next.\n\nThat is what creativity means to me: not production for its own sake, but the discipline of looking at a given set of facts and insisting that the interesting question has not been asked yet. I do it with data. I do it when I am writing a paper, planning a study session, or trying to explain something to someone who is stuck. What changes is the medium. The compulsion to find the frame that makes the invisible visible stays the same.\n\nI want to study Statistics at Berkeley because the department treats data as an argument, not just a product. That is exactly the kind of creative thinking I have spent two years learning to trust."
+    },
+    "3_talent": {
+      "prompt": "What would you say is your greatest talent or skill?",
+      "student_profile": "Biology major, Riverside City College → UC Davis, bilingual peer tutor",
+      "essay": "My greatest skill is translation — not between Spanish and English, but between people who understand something and people who do not yet.\n\nI noticed I had this ability at fourteen, when my parents asked me to explain our lease renewal to my grandmother. She spoke no English. The landlord's letter was bureaucratic even in Spanish. I spent an hour finding a way to explain 'annual rent increase' using the framework of her vegetable garden's seasonal costs. She understood.\n\nI have been doing some version of that ever since. At Riverside City College, I worked as a peer tutor for Chemistry and Calculus. What I learned quickly is that most students who struggle are not failing to understand the material — they are stuck on the framing. The textbook uses the expert's mental model, which assumes prior knowledge the student does not have yet. My job was to find the back door: the analogy, the diagram, the example from something they already knew.\n\nThe clearest demonstration: I tutored a nursing student through Stoichiometry. The unit conversion logic breaks most students because it is counterintuitive without a real-world anchor. I drew an analogy to medication dosage calculations she already performed by instinct. Her face changed. She went from failing to passing in two weeks and told me afterward that I had explained it the way her brain actually worked.\n\nI developed this ability because I had to. Growing up bilingual, bridging different worlds is not optional. But at some point I stopped seeing it as an obligation and started treating it as a discipline — one I want to keep developing at UC Davis, where I plan to study Biology with an eye toward public health communication."
+    },
+    "4_educational": {
+      "prompt": "Describe how you have taken advantage of a significant educational opportunity or worked to overcome an educational barrier...",
+      "student_profile": "Poli Sci major, Cuesta College → UC Santa Barbara, first-gen, used EOPS + Honors Program",
+      "essay": "I almost did not enroll in community college at all. The summer after high school, my father lost his job and I spent three months working full-time to keep our household stable. By September, the standard college path felt impossible — too expensive, too far from the income my family needed.\n\nWhat changed was a call from a Cuesta College counselor who had tracked down my contact after I missed orientation. She told me about EOPS — Extended Opportunity Programs and Services — a program for financially disadvantaged students I had not known existed. EOPS covered my books, provided weekly counseling, and connected me with a cohort of other working students navigating the same impossible equation.\n\nI do not know what would have happened without that call. I know what happened because of it: I enrolled, took twelve units while working thirty hours a week, and finished my first semester with a 3.7 GPA.\n\nThe second opportunity I chose deliberately. I applied for the Honors Program at the end of year one — not because I felt ready, but because my counselor told me it would push my research writing in ways regular coursework would not. She was right. The independent research project I completed in the Honors capstone — a policy analysis of housing instability among CC students — required a level of sustained intellectual work I had never done before. It was published in the college's undergraduate research journal.\n\nThese were not advantages I was given. They were programs I had to be told about, choose to use, and fight to make work around a job and a complicated home life. At UC Santa Barbara, I intend to keep finding those doors and walking through them."
+    },
+    "5_challenge": {
+      "prompt": "Describe the most significant challenge you have faced...",
+      "student_profile": "Business major, Saddleback College → UC Irvine, academic probation to Dean's List",
+      "essay": "My first semester GPA was 1.8.\n\nI was working 35 hours a week at a distribution warehouse, sleeping five hours a night, and commuting 90 minutes each way to Saddleback College on the two days I made it to class. I told myself I was managing. I was not. I withdrew from two courses and failed a third. In January, I received an academic probation notice.\n\nI am not going to pretend the next part was easy or that I had an inspiring revelation. I was scared, and I was embarrassed. What I actually did: I quit the warehouse job and took a lower-paying position closer to campus. I moved in with my cousin to cut the commute. I met with a counselor and built a schedule I could realistically maintain. I enrolled in 12 units — not 18 — and treated each course as a project with its own weekly plan rather than a deadline I would panic about at the end.\n\nMy second semester GPA was 3.2. My third was 3.7. I made the Dean's List in my fourth.\n\nThe probation notice sits in a folder on my desk. I kept it not as punishment but as a reminder of something I could not have learned any other way: that doing less, more deliberately, produces more than doing everything badly. That principle now shapes every project I take on — at work, in school, and in the study groups I have led since my recovery.\n\nI am applying to UC Irvine with a cumulative transfer GPA of 3.6. The 1.8 semester is in that number. So is everything I built afterward."
+    },
+    "6_academic_subject": {
+      "prompt": "Think about an academic subject that inspires you...",
+      "student_profile": "Molecular Biology pre-med, Diablo Valley College → UC Berkeley",
+      "essay": "In the middle of a lecture on resonance structures, my Organic Chemistry professor at Diablo Valley College drew a benzene ring and said something that stopped me: 'Electrons do not live in one place. They live in the possibility of everywhere they could be.'\n\nI had been treating chemistry as a series of rules to memorize. That sentence cracked it open.\n\nI went home and spent four hours reading about electron delocalization — not the chapter we had covered, but further into molecular orbital theory than our textbook went. I found a Cornell lecture series online and watched all fourteen videos over two weekends, taking notes in a spiral notebook I still carry.\n\nWhat followed was not an assignment. I wrote a twelve-page independent analysis of why certain pharmaceutical drugs have the molecular shapes they do — how geometry determines whether a drug fits a receptor, and how a single bond rotation can mean the difference between effective and toxic. No one asked me to write it. I showed it to my professor, who suggested I submit it to the college's research journal. It was published.\n\nSince then I have read three books on the history of synthetic chemistry, follow two academic researchers on social media, and read their preprints when they are publicly available. I am not pursuing this because it will look good on an application. I am pursuing it because the question of how molecular structure produces biological behavior is the most interesting thing I have ever encountered, and I have barely touched the surface.\n\nI want to study Molecular and Cell Biology at Berkeley because the questions I cannot stop asking live at the intersection of structure and function. I found that intersection in Organic Chemistry. I want to spend the next four years going deeper."
+    },
+    "7_community": {
+      "prompt": "What have you done to make your school or your community a better place?",
+      "student_profile": "Sociology major, LA Pierce College → UCLA, started financial aid peer coaching group",
+      "essay": "I almost lost my financial aid because I did not know I had to file a separate Satisfactory Academic Progress appeal after withdrawing from one class during a family emergency. No one told me. I found out six weeks into the following semester when my disbursement did not arrive and I called the financial aid office in a panic.\n\nAfter I fixed my own situation, I started paying attention to how many students around me did not know what I had just learned the hard way.\n\nI started a financial aid peer coaching group at LA Pierce College — not a formal program, just a Wednesday afternoon table in the library where I would sit for two hours and answer questions. I made a one-page document in plain English explaining the four most common reasons students lose financial aid and how to recover from each one. I posted it on the campus Discord and handed it out at the Transfer Center.\n\nIn my first semester running it, I helped fourteen students with specific financial aid problems: appeals, verification issues, missed deadlines, and one student who had lost her housing stipend due to a coding error in the school's system. I helped her draft a formal written appeal. The error was corrected and her stipend was restored.\n\nWhat I learned is that information is not neutral. Students who knew how financial aid worked — usually the ones with college-educated parents — navigated these systems without drama. Everyone else was losing money or leaving school for reasons that were fixable if you knew the right question to ask.\n\nI cannot close the information gap across the whole system. But I can close it for the students sitting next to me. At UCLA, I intend to find the equivalent gap — whatever that turns out to be — and start working on it."
+    },
+    "8_standout": {
+      "prompt": "Beyond what has already been shared in your application, what do you believe makes you stand out?",
+      "student_profile": "Human Biology major, veteran, CC → UC San Diego",
+      "essay": "None of my other responses mention that I spent four years as an Army Combat Medic before community college.\n\nI enlisted at 18 because I had no idea what I wanted to study and I thought I needed to see more of the world before I could decide. I was right about that, though not in the way I expected. By my third year, I had treated trauma patients in conditions where the difference between a correct decision and a delayed one was measured in minutes. I learned under that pressure that I can stay calm when the situation is genuinely bad — not because I am unusually courageous, but because panic is a luxury I was trained not to afford.\n\nThat composure has changed how I function as a student. When other students panic before an exam, I study. When a group project falls apart, I triage — identify what can still be saved and stop spending energy on what cannot. I do not do this to be impressive. It is just how I was rebuilt by the experience.\n\nI also bring something subtler. I am 24 years old in classrooms of mostly 19-year-olds, and I have learned to treat that difference as an asset. I study with younger students regularly and I am good at it. The experience of teaching medical procedures to scared 18-year-olds under field conditions turns out to transfer well to explaining calculus.\n\nI am applying to UCSD to study Human Biology with a focus on emergency medicine. I am not starting from scratch. I am continuing something I began in a uniform — the project of understanding how to help people in the moments that matter most. Community college gave me the academic foundation. The Army gave me the reason."
+    }
+  },
+  "transfer_essay_principles": {
+    "core_message": "Your community college years should be the ENGINE of your story, not an apologetic preface to your real education.",
+    "principles": [
+      "Own your path: CC was a choice (or it had to be) -- either way, it was real education. Do not apologize for it.",
+      "Show the work: Admissions officers know CC is hard. Show the specific work you did.",
+      "Be specific: I took hard classes loses to I completed Calculus I-III, Linear Algebra, and Differential Equations at De Anza College",
+      "Address the elephant: If you have a difficult grade or withdrawal, question 5 is your place to explain it. Do not hide it.",
+      "Connect the dots: Your CC experience + your UC goal should feel like one coherent story, not two separate chapters.",
+      "Prove readiness: Transfer applicants must answer the implied question -- Why should we trust you can handle upper-division work? Answer it directly.",
+      "Be honest: Admissions readers see thousands of essays. They know when someone is performing vs. being genuine.",
+      "Show growth: A B in your first semester and an A in your third is a better story than all As from day one."
+    ],
+    "word_count_advice": "Use every word. UC PIQs are 350 words maximum. A 290-word response signals that you left something important out.",
+    "tone_advice": "Write like a person, not a cover letter. Conversational + precise beats formal + vague every time."
+  }
+}

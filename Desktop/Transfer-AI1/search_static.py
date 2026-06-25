@@ -1,7 +1,7 @@
 """
 Keyword-based search over static data files.
 """
-import json, os
+import gzip, json, os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -11,12 +11,18 @@ _cache = {}
 
 def _load(filename):
     if filename not in _cache:
-        path = os.path.join(DATA_DIR, filename)
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
-                _cache[filename] = json.load(f)
-        else:
-            _cache[filename] = None
+        base = os.path.join(DATA_DIR, filename)
+        data = None
+        for path in (base + ".gz", base):
+            if os.path.exists(path):
+                try:
+                    opener = gzip.open if path.endswith(".gz") else open
+                    with opener(path, "rt", encoding="utf-8") as f:
+                        data = json.load(f)
+                    break
+                except Exception:
+                    continue
+        _cache[filename] = data
     return _cache[filename]
 
 

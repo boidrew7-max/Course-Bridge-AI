@@ -1,5 +1,4 @@
 agreements/
-data/
 __pycache__/
 *.py[cod]
 .env
@@ -7,3 +6,5 @@ __pycache__/
 *.zip
 *.log
 node_modules/
+data/users.db
+data/uc_tag_matrix.pdf

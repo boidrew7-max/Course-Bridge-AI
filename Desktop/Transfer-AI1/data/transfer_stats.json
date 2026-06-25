@@ -1,0 +1,74 @@
+{
+  "source": "UC Admissions (admission.universityofcalifornia.edu) and UCOP Information Center",
+  "campusProfiles": {
+    "UC Berkeley": {
+      "campus": "UC Berkeley",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/berkeley/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>8W7V07XMK2XRVMDT</RequestId> <HostId>XuBaoPijH+zjQVGdLjH5h9ICkiJSbrC2xblvZ3uZp1qCUlWkP3GbBJBMG0EfbHDsRkK9lU31bww=</HostId> </Error>"
+    },
+    "UC Davis": {
+      "campus": "UC Davis",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/davis/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>E29SPY5SGBJM2233</RequestId> <HostId>aBbnGSJxA14kM92a2Cs+aGBSN/Jy58k92uJO/3dov+yDvt3VgfTbMptp90fij2RbE4MUT+zVdVc=</HostId> </Error>"
+    },
+    "UC Irvine": {
+      "campus": "UC Irvine",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/irvine/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>9KJ4PZ4PWW7ZZD1N</RequestId> <HostId>0FkAFvzuxU0IYZbwVSnqOEh0L0YO5hGEJfzB+B2InYrv1TrBA5jQCoDx+jPBgvkQ52uPeJrH61xiNe7qY2JkkhbDHrOSAqmq</HostId> </Error>"
+    },
+    "UC Los Angeles": {
+      "campus": "UC Los Angeles",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/losangeles/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>YQNJAJCDM6QZQ8R3</RequestId> <HostId>zdZpLrRZUSrRDl8iRPvCh/gFonSzNPAg+0B6Vzoo0ycHP2uAbH2IkXf/77dWD/cyUOEaIcqiIYL7GS714NjDki4B/7f/hD2B</HostId> </Error>"
+    },
+    "UC Merced": {
+      "campus": "UC Merced",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/merced/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>YPT966BH8YZXMGAW</RequestId> <HostId>4AXAwfh3h9NpsCjaZ83EGQAyhvxrTV38FShGhsMge8nx223drffgSaTPsZ8tpi0bD4aU4AT6E5WEkma6YcotM+88RA+lWRMx</HostId> </Error>"
+    },
+    "UC Riverside": {
+      "campus": "UC Riverside",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/riverside/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>GH0RA7D8MAEC8HKY</RequestId> <HostId>1UaLFmdvYueB51pdv+hrNG5AAQwaTKtz3Da+Cg0r0xqRe4MccGRl2Giv1C8aZ5jmwdlMh7qPaFHk1Y8YPOF2Shiba6oQR2Pt</HostId> </Error>"
+    },
+    "UC San Diego": {
+      "campus": "UC San Diego",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/sandiego/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>GB55J3K85W6QDDYN</RequestId> <HostId>hACUUE7DgD06RB7hvKgU7sBfnNspRxC+mFSpVCta5U5QujxBjxueIlN9nceXgefqaGGI97UjoGY=</HostId> </Error>"
+    },
+    "UC Santa Barbara": {
+      "campus": "UC Santa Barbara",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/santabarbara/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>8EC6GQMB8T1GM3JH</RequestId> <HostId>xlQwnmSh4zfb2FGRv1tyRiHCMu7DyrZiW8W3DpIrzSJz6tHePg1wkoNl3d+tTmDDbanOESGuMuw=</HostId> </Error>"
+    },
+    "UC Santa Cruz": {
+      "campus": "UC Santa Cruz",
+      "url": "https://admission.universityofcalifornia.edu/campus-profiles/santacruz/transfer-admit-data.html",
+      "tableRows": [],
+      "pageText": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>K3F0ZX86PE143SP2</RequestId> <HostId>C0A+DdjdBsK7TI5bvun5u2Jlj4WPjxydQtj2KVpBFhInzXkzy8c/jZUPGnCKhcy4451L3As6IPo=</HostId> </Error>"
+    }
+  },
+  "sourceSchoolData": {
+    "url": "https://www.universityofcalifornia.edu/about-us/information-center/admissions-source-school",
+    "csvLinks": [
+      {
+        "href": "https://www.universityofcalifornia.edu/sites/default/files/2024-07/data-download-instructions-2024.pdf",
+        "text": "Data download instructions"
+      }
+    ],
+    "tableRows": [],
+    "pageText": "Skip to main content Main Navigation About News Impact Advocate Top Menu Admissions Alumni Jobs Search Home Admissions by source school Admissions by source school Updated March 12, 2026 These tables present information on UC\u2019s Applicants, Admits, and Enrollees. Freshman applicant counts are presented for fall and transfer counts are presented for the full academic year. Mean high school and transfer GPA are presented for freshman and transfer applicants, admits, and enrollees respectively by source school. Footnotes The universitywide applicant and admit counts are unduplicated. UC Merced opened in 2005, so there is no data prior to 2005 for this campus. Applicants \u2013 Students who make a formal application to attend the University of California. Admits \u2013 Students who have been made a formal offer of admission to attend the University of California. Enrollees \u2013 Students who have accepted an offer of admission and are enrolled at the University of California. CA Public High School \u2013 Public high schools in California, including charter schools CA Private High School \u2013 Private high schools in California Non-CA Domestic High School \u2013 Domestic high schools outside California Foreign Institution \u2013 High schools outside the U.S. California public 2-year college \u2013 California Community Colleges California public 4-year college (CSU) \u2013 California State University campuses California private 4-year college \u2013 Private 4-year colleges and universities in California University of California \u2013 University of California campuses Average GPA \u2013 For freshmen: Average GPA is calculated based on high school grade point average of students from the same school. GPAs used for this analysis are weighted, capped high school GPAs for 10th/11th grade college preparatory courses where extra points up to 8 semesters, no more than 4 in the 10th grade are added to the GPA. See https://admission.universityofcalifornia.edu/admission-requirements/freshman-requirements/gpa-requirement.html. For transfers: Average GPA is calculated based on transfer grade point average for students from the same college. GPAs are for all courses transferable to UC. See https://admission.universityofcalifornia.edu/admission-requirements/transfer-requirements/preparing-to-transfer/transfer-gpa.html. Data download instructions The University of California opened its doors in 1869 with just 10 faculty members and 40 students. Today, the UC system has more than 300,000 students and 265,000 faculty and staff, with 2.5 million alumni living around the world. Subscribe to our newsletter Email address Subscribe UC quick links About UC Campuses & locations Press releases Contact us Advocate External resources Apply or transfer Office of the President Academic Senate Board of Regents UCnet: Employee resources Footer Links 2 Accessibility Terms of Use Privacy Statement Copyright \u00a9 The Regents of the University of California Social Facebook Twitter Instagram TikTok YouTube LinkedIn"
+  },
+  "systemwideAdmitData": {
+    "pageText": "Skip to main content Admissions Requirements How to apply Tuition & financial aid Campuses & majors Apply now Twitter Facebook Search Home Campuses & majors Transfer admit data Transfer admit data Transfer admission profiles summarize the academic qualifications of applicants and admitted transfers to each UC campus for fall 2025. Please be cautious in drawing conclusions from this information. The numbers are useful only as a general guide to selectivity and not as a predictor of your chances for admission to a particular campus. These figures are preliminary, as of June 2025. Some campuses admitted students after that date, which may affect their statistics. In addition, keep these factors in mind: The data reflect the selection process for fall 2025 applicants. The selection process may vary from year to year; therefore the results may differ significantly. Data for several colleges on a campus are grouped together. Some campuses and colleges admit students directly into individual majors, and the degree of competition among majors may vary widely. Admit data by campus Berkeley Davis Irvine UCLA Merced Riverside San Diego Santa Barbara Santa Cruz Campuses & majors UC Berkeley UC Davis UC Irvine UCLA UC Merced UC Riverside UC San Diego UC Santa Barbara UC Santa Cruz Check majors Campus programs & support services Comprehensive review When our campuses receive applications from more prospective transfer students than they can admit, they draw on nine criteria to select among qualified applicants as part of the comprehensive review process. Learn more about how we review applications Admissions universityofcalifornia.edu Counselors Contact us Accessibility Privacy Statement Terms of use Copyright \u00a9 Regents of the University of California",
+    "tableRows": []
+  }
+}

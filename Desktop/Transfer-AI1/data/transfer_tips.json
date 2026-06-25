@@ -1,0 +1,196 @@
+{
+  "meta": {
+    "description": "Strategic tips, lesser-known facts, and actionable advice for California CC students planning a UC transfer. Goes beyond the basics of GPA and courses."
+  },
+  "grade_issues": {
+    "title": "Dealing With Bad Grades",
+    "academic_renewal": {
+      "what": "Academic renewal (AR) allows you to exclude old failing or D grades from your GPA calculation if you have since demonstrated academic success. Each CC has its own AR policy.",
+      "important": "You must still REPORT those grades on the UC application — you cannot hide them. But AR changes how they are calculated in your GPA.",
+      "how": "Contact your CC Admissions and Records office and ask about 'academic renewal' or 'grade forgiveness.' File the petition before submitting your UC application.",
+      "limitation": "UC campuses may or may not honor your CC's academic renewal. UC calculates its own GPA from your transcripts. However, academic renewal is still worth pursuing."
+    },
+    "repeating_courses": {
+      "what": "If you earned a D or F, you can retake the course. UC counts BOTH grades when calculating your UC GPA (unlike some CC policies that only count the better grade).",
+      "strategy": "Retake D or F courses to show improvement. The new grade still won't erase the old one in UC's calculation, but it shows upward trend and academic recovery.",
+      "exception": "UC does exclude the lower grade IF both are from courses where only one attempt is allowed."
+    },
+    "withdrawal_grades": {
+      "what": "W grades (withdrawals) do not affect your GPA. UCs generally overlook occasional Ws.",
+      "exceptions": "UC Merced and Haas School of Business at Berkeley may ask for explanations if you have multiple Ws. Address Ws proactively in the Additional Comments section if you have several.",
+      "rule_of_thumb": "1-2 Ws in 60+ units is usually fine. 5+ Ws is a pattern that needs explaining."
+    },
+    "upward_trend": "A strong upward trend — starting at 2.8 and finishing at 3.8 — is read positively by UC holistic reviewers. Explain the shift in your PIQ (Prompt 5 — challenge) or Additional Comments section."
+  },
+  "application_strategy": {
+    "alternate_major_strategy": {
+      "what": "Many students apply to their intended major AND a less competitive major at the same campus as a backup. This is called the 'alternate major' or 'capped major' strategy.",
+      "how_it_works": "The UC application allows you to list a second choice major for most campuses. If you don't meet the threshold for your first choice (e.g., UCLA CS), they may consider you for your second choice (e.g., UCLA Sociology).",
+      "important": "Not all campuses offer alternate major consideration. UCLA and Berkeley review applications for specific majors only — if you don't get in to your major, you may not get reconsidered for another.",
+      "best_approach": "Apply to multiple campuses rather than relying on alternate major. Spread your applications across reaches (UCLA, Berkeley), matches (UCSD, UCI, UCSB, Davis), and safeties (UCSC, UCR, UCM)."
+    },
+    "campus_selection": {
+      "rule": "Apply to all UC campuses that offer your major and where you meet the requirements. The application fee is ~$70 per campus. Apply to as many as you can afford.",
+      "common_mistake": "Applying only to UCLA and Berkeley and nowhere else. UC applications are unpredictable — even 4.0 students get rejected from UCLA CS.",
+      "recommended_strategy": "2 reach campuses + 2-3 match campuses + 1-2 safeties minimum"
+    },
+    "when_to_apply": {
+      "application_window": "November 1 - November 30 (the year before you plan to transfer)",
+      "no_early_advantage": "UC has a single application window — there is no early decision or early action. All applications are reviewed together.",
+      "tag_deadline": "September 1-30 (one month before the main application opens). TAG must be filed BEFORE the main application.",
+      "fafsa_cadaa_deadline": "March 2 — Priority deadline for California financial aid. File as close to October 1 as possible when it opens."
+    },
+    "additional_comments_section": {
+      "what": "The UC application has an Additional Comments box (~550 words). Most students leave it blank. Using it strategically is an underused advantage.",
+      "use_it_for": [
+        "Explaining a semester with a low GPA (illness, family crisis, job loss)",
+        "Explaining multiple W grades",
+        "Explaining a gap in enrollment",
+        "Noting circumstances that limited extracurricular involvement (work, caregiving)",
+        "Mentioning a significant achievement that doesn't fit elsewhere",
+        "Providing context about your community or background"
+      ],
+      "tone": "Factual and brief. Don't make excuses — provide context. 'In Spring 2023, I withdrew from two courses because I was working 40 hours/week as the primary income earner for my family after my parent lost their job. My GPA the following semester was 3.9.'"
+    }
+  },
+  "waitlist_strategy": {
+    "what_waitlist_means": "Being waitlisted means you were not initially admitted but remain under consideration if admitted students decline their offer. UC waitlists vary widely — some move significantly, others barely move at all.",
+    "historically_thin_waitlists": ["UCLA", "UC Berkeley", "UC San Diego"],
+    "historically_more_movement": ["UC Davis", "UC Santa Barbara", "UC Irvine"],
+    "what_to_do": [
+      "Accept a spot at another UC you were admitted to — you can always decline it later if the waitlist comes through. Do not wait without a backup.",
+      "Send a Letter of Continued Interest (LOCI) to the waitlisted campus. Express why that specific campus is your first choice and share any new achievements since the application (higher GPA, new award, completed a course).",
+      "Do NOT send repeated emails or call the admissions office — it does not help and may hurt.",
+      "Accept your spot on the waitlist if offered — some campuses require you to confirm you want to remain."
+    ],
+    "loci_tips": [
+      "Keep it to 1 page or less",
+      "Mention something specific about that campus (a lab, professor, program) that makes it your first choice",
+      "Include any new information since November: improved GPA, new award, completed key course",
+      "Express genuine enthusiasm — not desperation"
+    ]
+  },
+  "after_admission": {
+    "statement_of_intent_to_register": {
+      "what": "SIR (Statement of Intent to Register) — your formal acceptance of the UC's admission offer.",
+      "deadline": "May 1 for most UC campuses",
+      "note": "You can only submit one SIR. If you are waitlisted somewhere else and are still hoping for that campus, still submit your SIR at your backup — you can cancel it if you get off the other waitlist before the SIR deadline."
+    },
+    "housing": {
+      "urgency": "Housing applications open immediately after admission decisions (typically late April). Act FAST — transfer housing is extremely limited at UCLA, Berkeley, and UCSD. Apply the day the portal opens.",
+      "reality": "Most transfers will not get on-campus housing at competitive campuses. Start researching off-campus options immediately.",
+      "campus_notes": {
+        "UCLA": "Transfers are not guaranteed housing. Priority given to freshmen. Apply immediately after SIR.",
+        "UC Berkeley": "Limited transfer housing — most live off campus in the Telegraph Ave / Southside area",
+        "UC San Diego": "Transfers have better housing access than UCLA/Berkeley",
+        "UC Santa Barbara": "Very limited off-campus options — apply early",
+        "UC Davis": "More affordable housing market than coastal campuses",
+        "UC Irvine": "Housing available but competitive"
+      }
+    },
+    "summer_before_transfer": {
+      "do_not": "Do not take courses that conflict with your first semester at the UC. If you are admitted conditionally (required to complete specific courses), confirm which courses satisfy conditions.",
+      "do": [
+        "Attend New Student Orientation (usually offered in summer — register early)",
+        "Connect with your new department's academic advisor",
+        "Look into transfer student clubs and organizations at your new campus",
+        "Read any required reading assigned over summer if your program has one"
+      ],
+      "conditional_admission": "Many UC admissions are conditional — you must complete specific courses with a minimum grade (usually C or better). If you don't meet the condition, admission can be rescinded. Check your admission letter carefully."
+    },
+    "transfer_student_programs_at_uc": [
+      "Transfer students centers exist at all 9 UC campuses — find yours and use it",
+      "EOP (Educational Opportunity Program) — support for first-gen and low-income students",
+      "Transfer student orientation — attend and connect with other transfers",
+      "Transfer student union/clubs — important social and professional network",
+      "McNair Scholars (PhD prep program for first-gen/low-income students)",
+      "TRIO programs at some campuses"
+    ]
+  },
+  "financial_aid_tips": {
+    "priority_deadlines": {
+      "fafsa_cadaa": "October 1 (opens) — file as early as possible. Priority deadline is March 2 for California aid.",
+      "note": "Filing early does NOT guarantee more aid, but missing the March 2 deadline means you may miss Cal Grant and other priority aid."
+    },
+    "cal_grant": {
+      "what": "Cal Grant is California's largest state grant program. Up to $12,570/year for UC students (2024-25). It does NOT have to be repaid.",
+      "eligibility": "Must file FAFSA or CADAA by March 2. Must meet income and GPA thresholds. Most CC transfer students with financial need qualify.",
+      "types": "Cal Grant A (for higher need), Cal Grant B (for lower-income students — also includes living allowance)"
+    },
+    "blue_and_gold": {
+      "what": "UC Blue and Gold Opportunity Plan — if your family earns under $80,000/year, UC systemwide grants cover your full tuition (not room and board).",
+      "how": "Automatically considered when you file FAFSA/CADAA. No separate application."
+    },
+    "work_study": {
+      "what": "Federal Work-Study provides part-time jobs on or near campus funded by financial aid. Usually 8-12 hours/week at $15-20/hour.",
+      "how": "Accept work-study in your financial aid award package. Then find a qualifying job through your campus student employment portal."
+    },
+    "stacking_aid": "You can stack multiple sources of aid: Pell Grant + Cal Grant + Blue and Gold + campus scholarships + outside scholarships. Outside scholarships are applied to your COA (Cost of Attendance) — if they exceed your need, they may reduce institutional aid, so check with your financial aid office."
+  },
+  "first_gen_and_low_income": {
+    "definition": "First-generation means neither parent completed a 4-year college degree. This is explicitly recognized in UC holistic review.",
+    "resources": [
+      "TRIO Student Support Services — tutoring, counseling, mentoring",
+      "EOP (Educational Opportunity Program) — all UC campuses, for first-gen and low-income students",
+      "Summer Bridge Programs — many UCs offer pre-transfer summer programs for incoming transfers from underrepresented backgrounds",
+      "Transfer student housing priority at some campuses for low-income students",
+      "Emergency funds — most UC campuses have emergency financial assistance for enrolled students"
+    ],
+    "note": "Being first-gen does not automatically boost your chances, but it does mean your achievements are evaluated in context. A 3.6 GPA from a student who worked 30 hours/week while being first-gen is read differently than a 3.6 from a student with every resource."
+  },
+  "common_mistakes": [
+    {
+      "mistake": "Not applying to TAG when eligible",
+      "fix": "If you're going to Davis, Irvine, Merced, Riverside, UCSB, or UCSC — check TAG. It's guaranteed admission. Filing deadline is September 1-30."
+    },
+    {
+      "mistake": "Missing the FAFSA/CADAA March 2 deadline",
+      "fix": "File as soon as possible after October 1. Set a reminder. Missing March 2 can cost thousands of dollars in grants you never see again."
+    },
+    {
+      "mistake": "Only applying to UCLA and Berkeley",
+      "fix": "Apply to all 9 UC campuses you're eligible for and want to attend. The $70 application fee is cheap compared to missing out."
+    },
+    {
+      "mistake": "Leaving the Additional Comments section blank",
+      "fix": "Use it to explain anything unusual — a bad semester, a W grade, limited extracurriculars due to work. Context matters in holistic review."
+    },
+    {
+      "mistake": "Thinking a 3.5 GPA guarantees UCLA or Berkeley",
+      "fix": "Overall admit rates are 22.7% (UCLA) and 24% (Berkeley), but major-specific rates in CS, Engineering, and Nursing can be under 10%. GPA is necessary but not sufficient for the most competitive programs."
+    },
+    {
+      "mistake": "Not completing all major prereqs before applying",
+      "fix": "UC strongly prefers applicants who have completed most or all major prerequisites by Fall of the application year. In-progress Spring courses are less valued. Map out your prereqs on ASSIST.org."
+    },
+    {
+      "mistake": "Confusing TAP (UCLA Transfer Alliance Program) with TAG",
+      "fix": "TAP gives you a priority review at UCLA — not guaranteed admission. TAG guarantees admission at 6 other UCs. These are completely different programs."
+    },
+    {
+      "mistake": "Not checking ASSIST.org for articulation",
+      "fix": "Before taking any course intended to satisfy a UC requirement, verify it articulates on ASSIST.org. Not all courses transfer. Take the wrong course and you may lose a semester."
+    },
+    {
+      "mistake": "Waiting until the last semester to take English Composition",
+      "fix": "English composition is often required to complete IGETC and is sometimes required for TAG. Take it in your first or second semester. Same with math — complete your transferable math requirement early."
+    },
+    {
+      "mistake": "Assuming IGETC is required for transfer",
+      "fix": "IGETC (Intersegmental General Education Transfer Curriculum) satisfies lower-division GE for all UCs but is NOT required for transfer — it's just strongly recommended. Some STEM majors at Berkeley and UCLA actually advise against IGETC. Check your target major's specific advice."
+    }
+  ],
+  "lesser_known_facts": [
+    "90-96% of admitted transfer students at every UC campus are from California community colleges — not out-of-state or international schools.",
+    "UC calculates its own GPA from your transcripts — it may differ from your CC-calculated GPA. UC GPA uses: A=4, B=3, C=2, D=1, F=0. No plus/minus. No P/NP. Repeated courses count both times.",
+    "You do not need a degree (AA/AS) to transfer. You need 60 transferable semester units with the right courses completed.",
+    "A W grade (withdrawal) does NOT affect your UC GPA but may require explanation if you have many of them.",
+    "IGETC certification is printed on your transcript after you complete it — you do not submit a separate document.",
+    "UC accepts TAG applications before the main UC application opens. TAG is September 1-30; main application is November 1-30.",
+    "California community college units are semester units. If your CC uses quarter units, divide by 1.5 to get semester equivalent (e.g., 90 quarter units = 60 semester units).",
+    "Some UC campuses (especially Davis and Santa Cruz) accept transfers every spring, not just fall. Check if your target campus has a spring transfer option.",
+    "You can appeal a UC rejection. Appeals are rarely successful (under 5% reversal rate) but worth submitting if you have a strong case — a major error in your file, or significant new information.",
+    "UC Santa Cruz has a pass/no pass option for many courses. Transferred P grades do not count toward your UC GPA.",
+    "The UC application asks about your parents' education level. Answering honestly as first-gen is important — it is factored into holistic review."
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "note": "These are typical GPA ranges for admitted transfer students. Actual admitted GPAs vary by major and year.",
+  "campuses": {
+    "UC Berkeley": {
+      "typical25th": 3.5,
+      "typical75th": 3.9,
+      "note": "EECS and CS often 3.8+"
+    },
+    "UCLA": {
+      "typical25th": 3.5,
+      "typical75th": 3.9,
+      "note": "All majors competitive; 3.5+ recommended"
+    },
+    "UC San Diego": {
+      "typical25th": 3.3,
+      "typical75th": 3.85,
+      "note": "CS/Engineering 3.6+"
+    },
+    "UC Santa Barbara": {
+      "typical25th": 3.2,
+      "typical75th": 3.8,
+      "note": "Engineering not in TAG; 3.4+ for TAG"
+    },
+    "UC Davis": {
+      "typical25th": 3.0,
+      "typical75th": 3.7,
+      "note": "3.2 for TAG; Engineering needs 3.5+"
+    },
+    "UC Irvine": {
+      "typical25th": 3.2,
+      "typical75th": 3.8,
+      "note": "3.4 for TAG; Bren CS majors higher"
+    },
+    "UC Riverside": {
+      "typical25th": 2.8,
+      "typical75th": 3.6,
+      "note": "TAG at 2.4; CS and Business higher"
+    },
+    "UC Santa Cruz": {
+      "typical25th": 3.0,
+      "typical75th": 3.7,
+      "note": "TAG at 3.0 for all majors"
+    },
+    "UC Merced": {
+      "typical25th": 2.7,
+      "typical75th": 3.5,
+      "note": "Most accessible UC; TAG at 2.7-3.0"
+    }
+  }
+}

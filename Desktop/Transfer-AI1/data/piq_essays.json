@@ -1,0 +1,223 @@
+{
+  "source": "Reddit (r/TransferStudents, r/ApplyingToCollege, and UC subreddits)",
+  "collection_method": "Playwright web scraping of public Reddit posts",
+  "note": "Essays are from public Reddit posts by real applicants. Outcomes are detected from post text and may not be 100% accurate.",
+  "total_essays": 3,
+  "posts_scraped": 3,
+  "essays_by_question": {
+    "transfer_required": [
+      {
+        "text": "LOVE LOVE LOVEEEEEE as someone who got into 7/7UCs i totally agree!!\n    \n      I will add on that I personally did add my high school ecs because my only cc ec was beach/indoor volleyball, but i prioritized what i added!! (for example, i did music in high school and was first chair and was also a 4.5 valedictorian, so i wanted to share tthose parts of me as well since i didnt have a 4.0 in cc or do music, etc etc). however, I definitely did add wayyy to many ecs and had to cut it down, i fully agree that quality is better than quantity when it comes to listing ecs!!\n    \n      also, i struggled very much with my PIQs (started a google doc my junior year of high school but genuinely couldn't write anything substantial until my transfer year, it took me so long to even pick questions because i honestly didn't resonate with any of them), and i finished writing the day apps were due!! i really like what you wrote about PIQs! It's very important to not rush them, because for me I had to spend a lot of time trying to find topics that spoke to me and that i felt accurately represented me and my life. but also, something interesting to note is that according to the UC guidebook, only 3 UCs use PIQs for admission!! (I didn't know this until this past week, apparently 3 use them for admissions and the rest just use them for scholarships which i think is very interesting)\n    \n      congratulations on your admissions twin!! you should be so proud of yourself, and also of your W guide!!",
+        "word_count": 276,
+        "source_url": "https://www.reddit.com/r/TransferStudents/comments/1suynvu/let_me_change_your_life_total_guide_from_ccc_uc/",
+        "subreddit": "",
+        "post_title": "LET ME CHANGE YOUR LIFE. TOTAL GUIDE: FROM CCC ==>> UC BERKELEY ECONOMICS.",
+        "detected_outcomes": [
+          {
+            "school": "UC",
+            "result": "admitted"
+          },
+          {
+            "school": "Berkeley",
+            "result": "admitted"
+          },
+          {
+            "school": "UCLA",
+            "result": "admitted"
+          },
+          {
+            "school": "UCSD",
+            "result": "admitted"
+          },
+          {
+            "school": "UCI",
+            "result": "admitted"
+          },
+          {
+            "school": "UCSC",
+            "result": "admitted"
+          },
+          {
+            "school": "UCSB",
+            "result": "admitted"
+          },
+          {
+            "school": "UCR",
+            "result": "admitted"
+          },
+          {
+            "school": "UC",
+            "result": "rejected_or_waitlisted"
+          },
+          {
+            "school": "Berkeley",
+            "result": "rejected_or_waitlisted"
+          },
+          {
+            "school": "UCLA",
+            "result": "rejected_or_waitlisted"
+          },
+          {
+            "school": "UCSD",
+            "result": "rejected_or_waitlisted"
+          },
+          {
+            "school": "UCI",
+            "result": "rejected_or_waitlisted"
+          },
+          {
+            "school": "UCSC",
+            "result": "rejected_or_waitlisted"
+          },
+          {
+            "school": "UCSB",
+            "result": "rejected_or_waitlisted"
+          },
+          {
+            "school": "UCR",
+            "result": "rejected_or_waitlisted"
+          }
+        ],
+        "piq_question_guess": "transfer_required"
+      }
+    ],
+    "2": [
+      {
+        "text": "I work as an editor for an admissions consulting firm (no not the same one as u/scholargrade, but having read their post did have to check)... and I have seen all of these, often in a single essay.\n    \n      You're missing a couple:\n    \n      The Nervous Before An Event Essay\n    \n      The spotlight's heat scorches my soul as my eyes scan the crowd's expectant faces. It's taken me seven years to get here and I wonder if my ten-year-old self would have ever guessed that I would be here. As the conductor raises his baton and the orchestra begins to play, my fingers effortlessly glide up and down the...\n    \n      You get the picture.\n    \n      The Here's What I'll Do At ______ Once I'm In Essay\n    \n      The alarm goes off and I jump out of bed, ready to face the day at 5am because I am the world's most enthusiastic freshman. After a relaxing six-mile run around (well-known landmark here), I pop into (nearby or campus café here) for a orange mocha soy frappuccino and a vegan breakfast wrap which I hungrily devour. Then it's off to my 8am class HIST 1014 America Is a Bad Place For Bad People class with Dr. Dingus Snodgrass where I'm able to analyze the badness of bad places and people and engage in stimulating debate with my intellectual peers. Dr. Snodgrass and I are working on getting an article on Bad Things published in the peer-reviewed Journal of Nobody-Fucking-Cares and I am excited to be part of such a cutting edge community in a college that is a perfect fit for me....\n    \n      Do I sound jaded? It's because I am.",
+        "word_count": 272,
+        "source_url": "https://www.reddit.com/r/ApplyingToCollege/comments/e20pcf/the_worst_essays_you_can_write/",
+        "subreddit": "",
+        "extraction_method": "standalone_paragraph",
+        "post_title": "The worst essays you can write",
+        "detected_outcomes": [
+          {
+            "school": "unknown",
+            "result": "unknown"
+          }
+        ],
+        "piq_question_guess": "2"
+      }
+    ],
+    "unknown": [
+      {
+        "text": "This sort of is their website, although some colleges have pretty crappy websites. A lot goes into writing all of that, plus the info sessions, plus interviews, plus receptions, plus fly-ins/other events. We actually do a lot when it comes to the \"why us.\" For us though, if enough students don't come, it isn't just, \"whelp on to my safety,\" its, \"ope, guess the college is going to experience serious cuts with many people losing their livelihood.\"\n    \n      Maybe I'm getting too riled up about that, but just know that there are people on the other side of the application trying to get you to attend (sure there are some that never really have to worry about this, like most Ivies, but still, even they work a ton to get students to apply and yield).",
+        "word_count": 134,
+        "source_url": "https://www.reddit.com/r/ApplyingToCollege/comments/jynmdo/colleges_should_write_a_why_student_essay_after/",
+        "subreddit": "",
+        "post_title": "colleges should write a why student essay after they accept them lol",
+        "detected_outcomes": [
+          {
+            "school": "UC",
+            "result": "admitted"
+          }
+        ],
+        "piq_question_guess": "unknown"
+      }
+    ]
+  },
+  "all_essays": [
+    {
+      "text": "LOVE LOVE LOVEEEEEE as someone who got into 7/7UCs i totally agree!!\n    \n      I will add on that I personally did add my high school ecs because my only cc ec was beach/indoor volleyball, but i prioritized what i added!! (for example, i did music in high school and was first chair and was also a 4.5 valedictorian, so i wanted to share tthose parts of me as well since i didnt have a 4.0 in cc or do music, etc etc). however, I definitely did add wayyy to many ecs and had to cut it down, i fully agree that quality is better than quantity when it comes to listing ecs!!\n    \n      also, i struggled very much with my PIQs (started a google doc my junior year of high school but genuinely couldn't write anything substantial until my transfer year, it took me so long to even pick questions because i honestly didn't resonate with any of them), and i finished writing the day apps were due!! i really like what you wrote about PIQs! It's very important to not rush them, because for me I had to spend a lot of time trying to find topics that spoke to me and that i felt accurately represented me and my life. but also, something interesting to note is that according to the UC guidebook, only 3 UCs use PIQs for admission!! (I didn't know this until this past week, apparently 3 use them for admissions and the rest just use them for scholarships which i think is very interesting)\n    \n      congratulations on your admissions twin!! you should be so proud of yourself, and also of your W guide!!",
+      "word_count": 276,
+      "source_url": "https://www.reddit.com/r/TransferStudents/comments/1suynvu/let_me_change_your_life_total_guide_from_ccc_uc/",
+      "subreddit": "",
+      "post_title": "LET ME CHANGE YOUR LIFE. TOTAL GUIDE: FROM CCC ==>> UC BERKELEY ECONOMICS.",
+      "detected_outcomes": [
+        {
+          "school": "UC",
+          "result": "admitted"
+        },
+        {
+          "school": "Berkeley",
+          "result": "admitted"
+        },
+        {
+          "school": "UCLA",
+          "result": "admitted"
+        },
+        {
+          "school": "UCSD",
+          "result": "admitted"
+        },
+        {
+          "school": "UCI",
+          "result": "admitted"
+        },
+        {
+          "school": "UCSC",
+          "result": "admitted"
+        },
+        {
+          "school": "UCSB",
+          "result": "admitted"
+        },
+        {
+          "school": "UCR",
+          "result": "admitted"
+        },
+        {
+          "school": "UC",
+          "result": "rejected_or_waitlisted"
+        },
+        {
+          "school": "Berkeley",
+          "result": "rejected_or_waitlisted"
+        },
+        {
+          "school": "UCLA",
+          "result": "rejected_or_waitlisted"
+        },
+        {
+          "school": "UCSD",
+          "result": "rejected_or_waitlisted"
+        },
+        {
+          "school": "UCI",
+          "result": "rejected_or_waitlisted"
+        },
+        {
+          "school": "UCSC",
+          "result": "rejected_or_waitlisted"
+        },
+        {
+          "school": "UCSB",
+          "result": "rejected_or_waitlisted"
+        },
+        {
+          "school": "UCR",
+          "result": "rejected_or_waitlisted"
+        }
+      ],
+      "piq_question_guess": "transfer_required"
+    },
+    {
+      "text": "I work as an editor for an admissions consulting firm (no not the same one as u/scholargrade, but having read their post did have to check)... and I have seen all of these, often in a single essay.\n    \n      You're missing a couple:\n    \n      The Nervous Before An Event Essay\n    \n      The spotlight's heat scorches my soul as my eyes scan the crowd's expectant faces. It's taken me seven years to get here and I wonder if my ten-year-old self would have ever guessed that I would be here. As the conductor raises his baton and the orchestra begins to play, my fingers effortlessly glide up and down the...\n    \n      You get the picture.\n    \n      The Here's What I'll Do At ______ Once I'm In Essay\n    \n      The alarm goes off and I jump out of bed, ready to face the day at 5am because I am the world's most enthusiastic freshman. After a relaxing six-mile run around (well-known landmark here), I pop into (nearby or campus café here) for a orange mocha soy frappuccino and a vegan breakfast wrap which I hungrily devour. Then it's off to my 8am class HIST 1014 America Is a Bad Place For Bad People class with Dr. Dingus Snodgrass where I'm able to analyze the badness of bad places and people and engage in stimulating debate with my intellectual peers. Dr. Snodgrass and I are working on getting an article on Bad Things published in the peer-reviewed Journal of Nobody-Fucking-Cares and I am excited to be part of such a cutting edge community in a college that is a perfect fit for me....\n    \n      Do I sound jaded? It's because I am.",
+      "word_count": 272,
+      "source_url": "https://www.reddit.com/r/ApplyingToCollege/comments/e20pcf/the_worst_essays_you_can_write/",
+      "subreddit": "",
+      "extraction_method": "standalone_paragraph",
+      "post_title": "The worst essays you can write",
+      "detected_outcomes": [
+        {
+          "school": "unknown",
+          "result": "unknown"
+        }
+      ],
+      "piq_question_guess": "2"
+    },
+    {
+      "text": "This sort of is their website, although some colleges have pretty crappy websites. A lot goes into writing all of that, plus the info sessions, plus interviews, plus receptions, plus fly-ins/other events. We actually do a lot when it comes to the \"why us.\" For us though, if enough students don't come, it isn't just, \"whelp on to my safety,\" its, \"ope, guess the college is going to experience serious cuts with many people losing their livelihood.\"\n    \n      Maybe I'm getting too riled up about that, but just know that there are people on the other side of the application trying to get you to attend (sure there are some that never really have to worry about this, like most Ivies, but still, even they work a ton to get students to apply and yield).",
+      "word_count": 134,
+      "source_url": "https://www.reddit.com/r/ApplyingToCollege/comments/jynmdo/colleges_should_write_a_why_student_essay_after/",
+      "subreddit": "",
+      "post_title": "colleges should write a why student essay after they accept them lol",
+      "detected_outcomes": [
+        {
+          "school": "UC",
+          "result": "admitted"
+        }
+      ],
+      "piq_question_guess": "unknown"
+    }
+  ]
+}

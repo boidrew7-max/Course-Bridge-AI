@@ -1,0 +1,236 @@
+{
+  "source": "UC TAG Matrix PDF (June 2026) + individual campus pages",
+  "pdfUrl": "https://admission.universityofcalifornia.edu/counselors/_files/documents/uc-tag-matrix.pdf",
+  "applicableCycle": "Fall 2027 / Spring 2028",
+  "sharedCriteria": {
+    "applicationPeriod": "October 1 - November 30",
+    "tagFilingPeriod": "September 1 - September 30",
+    "tauDeadline": "January 31",
+    "participatingCampuses": [
+      "UC Davis",
+      "UC Irvine",
+      "UC Merced",
+      "UC Riverside",
+      "UC Santa Barbara",
+      "UC Santa Cruz"
+    ],
+    "nonParticipatingCampuses": [
+      "UC Los Angeles",
+      "UC Berkeley",
+      "UC San Diego"
+    ],
+    "requirements": [
+      "Complete at least 30 semester / 45 quarter UC-transferable units by end of summer before transfer",
+      "Complete at least one UC-E (English) and one UC-M (Math) by fall before transfer",
+      "Complete the 7-course general education pattern by spring before transfer",
+      "Complete 60 semester / 90 quarter UC-transferable units (junior standing) by end of spring before transfer",
+      "Complete at least 30 semester / 45 quarter UC-transferable units at one or more CCC; CCC must be last school attended",
+      "Require no more than 19 UC-transferable units in final spring term to reach junior standing",
+      "Must not exceed 80 semester / 120 quarter total UC-transferable units (after lower-division limits)",
+      "Earn no grade lower than C in fall/winter/spring terms after TAG submission",
+      "Submit TAG application via UC TAP between September 1-30",
+      "Submit UC application October 1-November 30; TAG major and UC application major must match",
+      "Submit Transfer Academic Update (TAU) by January 31"
+    ],
+    "ineligibleStudents": [
+      "Students who have already earned a bachelor's degree or higher",
+      "Students previously enrolled at a UC who intend to return to the same campus",
+      "Students previously enrolled at a UC who left not in good standing",
+      "Students concurrently enrolled in high school at time of TAG submission"
+    ],
+    "ucTapWebsite": "https://uctap.universityofcalifornia.edu",
+    "note": "Approximately two-thirds of UC transfer students do NOT have a TAG. TAG is optional but guarantees admission if requirements are met."
+  },
+  "campuses": [
+    {
+      "name": "University of California, Davis",
+      "id": 89,
+      "shortName": "UC Davis",
+      "tagWebsite": "https://www.ucdavis.edu/admissions/undergraduate/transfer/transfer-admission-guarantee",
+      "phone": "(530) 752-2971",
+      "preEvaluation": true,
+      "terms": [
+        "fall"
+      ],
+      "filingPeriod": "September 1-30",
+      "majorGuaranteed": true,
+      "excludedMajors": [
+        "Undeclared programs",
+        "Business",
+        "Computer Science",
+        "Data Science",
+        "Landscape Architecture"
+      ],
+      "minGPA": {
+        "College of Agricultural and Environmental Sciences": 3.2,
+        "College of Biological Sciences": 3.2,
+        "College of Letters and Science": 3.2,
+        "College of Engineering": 3.5,
+        "default": 3.2
+      },
+      "igetcRequired": false,
+      "notes": "UC Engineering requires 3.5 GPA. GPAs required by end of summer prior to transfer. Major-specific prep GPA requirements apply for selective majors."
+    },
+    {
+      "name": "University of California, Irvine",
+      "id": 120,
+      "shortName": "UC Irvine",
+      "tagWebsite": "https://admissions.uci.edu/apply/transfer-students/guaranteed-admissions.php",
+      "phone": "(949) 824-6703",
+      "preEvaluation": false,
+      "terms": [
+        "fall"
+      ],
+      "filingPeriod": "September 1-30",
+      "majorGuaranteed": true,
+      "excludedMajors": [
+        "Art",
+        "Business Administration",
+        "Dance",
+        "Music",
+        "Nursing Science",
+        "All majors in the Donald Bren School of Information and Computer Sciences"
+      ],
+      "minGPA": {
+        "default": 3.4
+      },
+      "igetcRequired": false,
+      "notes": "GPA required by end of fall term before transfer. Complete major prerequisites for specific majors. Art major requires portfolio."
+    },
+    {
+      "name": "University of California, Merced",
+      "id": 144,
+      "shortName": "UC Merced",
+      "tagWebsite": "https://admissions.ucmerced.edu/transfer/tag",
+      "phone": "(209) 228-7178",
+      "email": "transfer@ucmerced.edu",
+      "preEvaluation": true,
+      "terms": [
+        "fall",
+        "spring"
+      ],
+      "filingPeriod": "September 1-30 (fall); May 1-31 (spring)",
+      "tagDecisionRelease": {
+        "fall": "November 15",
+        "spring": "July 1"
+      },
+      "majorGuaranteed": true,
+      "excludedMajors": [],
+      "minGPA": {
+        "School of Engineering": 3.0,
+        "School of Natural Sciences": 2.9,
+        "School of Social Sciences, Humanities and Arts": 2.8,
+        "Psychology": 3.0,
+        "Public Health": 3.0,
+        "default": 2.8
+      },
+      "igetcRequired": "Required for Public Health only; recommended for all others",
+      "notes": "Most accessible UC for TAG. All majors open. GPA required by end of summer prior to transfer."
+    },
+    {
+      "name": "University of California, Riverside",
+      "id": 46,
+      "shortName": "UC Riverside",
+      "tagWebsite": "https://admissions.ucr.edu/transfer",
+      "phone": "(951) 827-3411",
+      "preEvaluation": true,
+      "terms": [
+        "fall"
+      ],
+      "filingPeriod": "September 1-30",
+      "majorGuaranteed": true,
+      "excludedMajors": [
+        "Art Studio",
+        "All majors in Bourns College of Engineering (BCOE)",
+        "All majors in College of Natural & Agricultural Sciences (CNAS)",
+        "All majors in School of Business Administration",
+        "Business Economics",
+        "Economics",
+        "Psychology",
+        "Neuroscience"
+      ],
+      "minGPA": {
+        "College of Humanities, Arts, and Social Sciences (CHASS)": 2.8,
+        "Psychology": 3.3,
+        "Theater, Film & Digital Production": 3.3,
+        "Bourns College of Engineering (BCOE)": 3.0,
+        "Computer Science": 3.6,
+        "Computer Science with Business Applications": 3.3,
+        "Computer Engineering": 3.3,
+        "Mechanical Engineering": 3.1,
+        "College of Natural and Agricultural Sciences (CNAS)": 2.8,
+        "Data Science": 3.0,
+        "School of Business": 2.8,
+        "School of Education": 2.7,
+        "School of Public Policy": 2.7,
+        "default": 2.4
+      },
+      "igetcRequired": false,
+      "igetcNote": "School of Business Administration highly recommends Cal-GETC/IGETC completion",
+      "notes": "GPA required by end of summer prior to transfer. See UCR Majors Preparation Guide for major-specific requirements."
+    },
+    {
+      "name": "University of California, Santa Barbara",
+      "id": 128,
+      "shortName": "UC Santa Barbara",
+      "tagWebsite": "https://admissions.sa.ucsb.edu/tag",
+      "phone": "(805) 893-2881",
+      "preEvaluation": false,
+      "terms": [
+        "fall"
+      ],
+      "filingPeriod": "September 1-30",
+      "majorGuaranteed": true,
+      "majorGuaranteeNote": "L&S majors without a pre-major are fully guaranteed; L&S majors with a pre-major guarantee the pre-major status only",
+      "excludedMajors": [
+        "All majors in the College of Creative Studies",
+        "All majors in the College of Engineering",
+        "Dance B.A.",
+        "Dance B.F.A.",
+        "Music B.M.",
+        "Theater B.A. - Theater Design Emphasis",
+        "Theater B.F.A. - Acting Emphasis"
+      ],
+      "minGPA": {
+        "default": 3.4,
+        "Biological Sciences": 3.4,
+        "Chemistry and Biochemistry": 3.4,
+        "Economics": 3.4,
+        "Mathematics": 3.4,
+        "Physics": 3.4,
+        "Statistics and Applied Probability": 3.4
+      },
+      "igetcRequired": false,
+      "notes": "GPA required by end of fall term before transfer. Selective L&S majors (Bio, Chem, Econ, Math, Physics, Stats) require major prep GPA. Check ASSIST for details."
+    },
+    {
+      "name": "University of California, Santa Cruz",
+      "id": 132,
+      "shortName": "UC Santa Cruz",
+      "tagWebsite": "https://admissions.ucsc.edu/transfer-admission-guarantee-tag",
+      "phone": "(831) 459-4008",
+      "email": "tag@ucsc.edu",
+      "preEvaluation": true,
+      "terms": [
+        "fall"
+      ],
+      "filingPeriod": "September 1-30",
+      "majorGuaranteed": true,
+      "excludedMajors": [],
+      "minGPA": {
+        "default": 3.0
+      },
+      "igetcRequired": false,
+      "notes": "All majors open for TAG. GPA required by end of summer prior to transfer. Additional major prep GPA requirements for some majors. TAG not available for Computer Science major (updated - now all majors open as of 2026)."
+    }
+  ],
+  "campusPageText": {
+    "UC Davis": "Skip to main content UC Davis Open Search quick links Main navigation (extended config) ABOUT US Administration Inclusive Excellence Rankings Locations Sustainability Visit UC Davis UC Davis Health Student Safety ADMISSIONS Undergraduate Admissions Undocumented Applicants Graduate Admissions Professional Admissions Cost & Aid Apply to UC Davis ACADEMICS Majors Minors Graduate Programs Professional Programs Colleges and Schools Our Faculty Study Abroad RESEARCH From Labs to Lives Undergraduate Research Graduate Research Office of Research Library Museums and Collections Research Partners UC Davis Discoveries CAMPUS LIFE California\u2019s College Town Housing Dining Things to Do Student Jobs Clubs and Communities Athletics NEWS Latest News In Focus Features University News UC Davis Magazine Social Media Student News Blogs Podcasts and Shows Transfer Admission Guarantee Breadcrumb uc davis admissions undergraduate admissions transfer admission transfer admission guarantee Guarantee your admission to UC Davis The UC Davis Transfer Admission Guarantee, known as TAG, is a written agreement that ensures your admission to UC Davis from any California Community College. Check the UC Davis TAG requirements to see if you\u2019re eligible and what you need to start a TAG application. Review TAG requirements How to apply for TAG Custom Image Use the UC Transfer Admission Planner, known as TAP, to start your TAG application. Custom Image Review it with your community college counselor or UC Davis advisor. Custom Image Submit the TAG application by Sept. 30 via UC TAP. Important dates and deadlines Aug. 1 Start your UC undergraduate application on Aug. 1 for admission the following year. Sept. 1-30 Submit your TAG application via the UC TAP. Oct. 1-Nov. 30 Review your TAG decision mid-November. Submit your UC undergraduate application for admission and scholarships Oct. 1 to Nov. 30. Oct. 1-March 2 Apply for financial aid at studentaid.gov or dream.csac.ca.gov. More dates and deadlines TAG decisions Find out what the decisions on your TAG application mean. Learn about TAG decisions TAG FAQs Get answers to many of the Frequently Asked Questions about TAG. Review TAG FAQs Resources for TAG counselors Counselors, find the tools you need to work with students and TAG. Explore TAG counselor resources Follow us UC Davis uc davis health veterinary medicine uc davis continuing and professional education uc davis stores uc davis arts uc davis mobile apps hiring uc davis students and alumni make a gift to uc davis Students orientation student resources graduate students student parents commencement career center jobs and internships parents Alumni cal aggie alumni association career connections member benefits transcripts uc davis magazine Faculty resources teaching research benefits faculty governance Staff resources training benefits jobs staff assembly website feedback University of California, Davis, One Shields Avenue, Davis, CA 95616 | 530-752-1011 Questions or comments? Privacy & Accessibility Principles of Community University of California Last update: June 8, 2026 Copyright \u00a9 The Regents of the University of California, Davis campus. All rights reserved. Report Accessibility Issue This site is officially grown in SiteFarm.",
+    "UC Irvine": "Jump to Header Jump to Main Content Jump to Footer Parents Counselors Current Students Search UCI Financial Aid and Scholarships Search Discover Study Afford Apply Request Info Transfer Students Guaranteed Admissions Related Majors Requirements Second Baccalaureate ADT Pilot Program TAG Roadmap Download our printable TAG roadmap for an easy, visual overview of the TAG process and important deadlines. TAG roadmap Apply Transfer Students Guaranteed Admissions Transfer Admission Guarantee Step up to what\u2019s next in your education. UC Irvine's Transfer Admission Guarantee (TAG) program guarantees admission to highly qualified students from all California Community Colleges. Transfer students who meet eligibility requirements and complete the TAG application can secure guaranteed admission to any participating TAG major at UC Irvine. Majors Excluded from TAG For fall 2027 admission: Art; Business Administration; Dance; Music, B.Mus.; Nursing Science; ALL majors in the Donald Bren School of Information and Computer Sciences. For fall 2028 admission: Charlie Dunlop School of Biological Sciences: Biological Sciences, Biology/Education, Ecology and Evolutionary Biology Claire Trevor School of the Arts: Art; Dance; Music, B.Mus Donald Bren School of Information & Computer Sciences: All majors Henry Samueli School of Engineering: Aerospace Engineering, Computer Engineering, Electrical Engineering, Mechanical Engineering Paul Merage School of Business: Business Administration Sue And Bill Gross School of Nursing: Nursing Science School of Social Ecology: Psychology, B.A. School of Social Sciences: Business Economics, Cognitive Sciences, Economics, Psychology, B.S., Quantitative Economics Applying to TAG Create the UC Transfer Admission Planner (TAP) to start your TAG application Submit your TAG application between September 1 - 30 via UC TAP Submit the UC Application between October 1 - November 30 (Note: The primary major on your UC application must match the major on your TAG application) Submit the Transfer Academic Update via your UC Application January 31 Fulfill all remaining TAG requirements by the end of the spring term before fall enrollment TAG Requirements At the time you submit your UC Irvine TAG application: By the end of fall 2026: By the end of spring 2027: Students must meet all of the requirements in their entirety in order to be considered for TAG. Failing to meet and/or maintain any of the above guidelines automatically voids the guarantee. Situations That Affect TAG Eligibility or Approval Students who are concurrently enrolled in high school at the time of TAG submission Students who have already earned a bachelor, graduate and/or professional degree Students who previously enrolled at UC Irvine during a regular term (excluding summer) Students who are not in good standing at any UC campus Students who have not completed at least 30 UC transferable semester units (equivalent to 45 quarter units) at a California Community College Students who were not enrolled at a California Community College during their last term (excluding summer session) Students who require more than 19 UC transferable semester units (equivalent to 28.5 quarter units) during their last term in order to meet the minimum 60 UC transferable semester unit (90 quarter units) requirement Students who attended any college or university other than a California Community College and have more than 80 UC transferable semester units (equivalent to 120 quarter units) overall, after applying UC-lower division unit limitations and exclusions Students repairing a deficient grade in a required course (for UC eligibility or their major) if that course is still in progress at the time of application review Students previously flagged for falsification of their admissions application at any UC campus Students previously dismissed, suspended, or separated from any institution for student conduct violation The following scenarios will also nullify your TAG application: Incomplete or inaccurate academic history reported in the coursework section of the TAG application and/or UC Application Incomplete or no Transfer Academic Update submitted by the TAU deadline (January 31, 2027) No response submitted to our request for additional information by the stated deadline Submission of the UC application with a different primary major than your TAG application major Many students who are not eligible for TAG are still well-qualified for admission and are strongly encouraged to apply to UC Irvine through the regular application process without a TAG. For fall 2027 admission, the UC Application filing period is October 1 \u2013 November 30, 2026. Tips for a Successful TAG Application Review the majors you select closely. The major you select for TAG and your primary major on your UC application must match exactly in order for your TAG application to remain active. You will not be able to change your TAG major after you submit your TAG. You will not be able to chan",
+    "UC Merced": "Access Denied You don't have permission to access \"http://admissions.ucmerced.edu/transfer/tag\" on this server. Reference #18.1952d117.1782218526.69042ed https://errors.edgesuite.net/18.1952d117.1782218526.69042ed",
+    "UC Riverside": "Your web browser (Chrome 120) has a serious security vulnerability! Update your browser for more security, speed and the best experience on this site. Update browser Ignore Skip to main content A to Z Listing Campus Map Find People News UCR Home Search GET UCR IN MY INBOX UC Riverside Undergraduate Admissions Bold Hearts. Brilliant Minds. DISCOVER ADMISSIONS MAJORS AFFORDABILITY & VALUE COUNSELORS RESOURCES Transfer Continue Your Journey at UC Riverside Your hard work has put your goals within reach, and UCR can help bring them closer. Our award-winning faculty will mentor you. Our diverse campus community will embrace you. And our transfer-specific resources will help you along your path to a degree \u2014 and beyond. We\u2019ve been waiting for a bold and brilliant Highlander just like you! Search by Topic REQUIREMENTS MAJOR PREP REQUIREMENTS TRANSFER ADMISSION GUARANTEE (TAG) VIEWBOOK APPLICATION INFORMATION ENGAGE WITH ADMISSIONS DATES AND DEADLINES STUDENT SUPPORT Requirements Transfer Requirements Complete at least 60 semester (90 quarter) units of UC-transferable credit. Earn at least a 2.4 GPA in UC-transferable courses (2.8 if you're not a California resident). Some majors may require a higher GPA for admission selection. Complete the following 7-course pattern by the end of the spring term prior to fall enrollment at UC. Two transferable courses in English composition; One transferable course in mathematical concepts and quantitative reasoning; Four transferable college courses chosen from at least two of the following subject areas: Arts and humanities Social and behavioral sciences Physical and biological sciences BACK TO TOP Major Prep Requirements Getting Into a Selective Major Most majors require you to complete specific prerequisite (major preparation) courses before you transfer. These courses help ensure you're ready for upper-division work in your chosen major. Be sure to take the recommended lower-division, general education, and breadth courses for your major. Some programs suggest completing the Intersegmental General Education Transfer Curriculum (Cal-GETC) , a set of courses that California Community College students can take to fulfill first- and second-year general education requirements before transferring. However, other programs may prioritize major prerequisites over completing Cal-GETC. To find out what your intended major requires, use ASSIST.org, or contact a UCR admission counselor for guidance. For additional details, refer to the Assist Brochure. VIEW THE MAJORS PREPARATION GUIDE Marlan and Rosemary Bourns College of Engineering (BCOE) Requirements College of Humanities, Arts, and Social Sciences (CHASS) Requirements College of Natural and Agricultural Sciences (CNAS) Requirements School of Business Requirements School of Education Requirements School of Public Policy (SPP) Requirements BACK TO TOP Transfer Admission Guarantee (TAG) Guarantee Your Admission to UCR The Transfer Admission Guarantee (TAG) offers guaranteed admission to California Community College (CCC) students whose last school is a CCC and meets the requirements below. 1 Create Your Transfer Admission Planner (TAP) \u2013 Use TAP, an online tool to track your progress and plan the courses you will need. Your TAP serves as your TAG application. 2 Meet TAG Requirements Have 30 UC-transferable semester (45 quarter) units completed by prior to TAG submission. Meet the minimum TAG GPA required for your intended major prior to TAG submission. Have at least one UC-M course completed by the end of fall 2025. Have the first UC-E requirement completed by the end of fall 2025, the second must be completed by the end of spring 2026. Meet major preparation requirements for all Selective Majors with no grade lower than a C. Have at least 60 semester (90 quarter) transferable units completed by the end of spring 2026 with no more than 19 units needed in spring term to meet the minimum 60 semester/90 quarter unit requirement. View the Majors Preparation Guide to check course requirements for your intended major. 3 Submit Your TAG Application by Sept. 30 \u2013 UCR offers fall admission for transfer students. Before you apply to UCR, log into your TAP to complete the UCR TAG application. 4 Apply Oct. 1-Nov. 30 \u2013 Submit your UC application. TAG GPA Requirements Marlan and Rosemary Bourns College of Engineering (BCOE) College of Humanities, Arts, and Social Sciences (CHASS) College of Natural and Agricultural Sciences (CNAS) School of Business School of Education (SOE) School of Public Policy (SPP) BACK TO TOP Transfer Viewbook | CA Residents Learn more about UC Riverside, its remarkable students, world-class faculty, and beautiful campus. BACK TO TOP Application Information Comprehensive Review General Education Requirements California General Education Transfer Curriculum (Cal-GETC) Personal Insight Questions (PIQ) Advanced Placement (AP) and International Baccalaureate (IB) Credit U.S. Military Service Courses BACK TO TOP Engage With Admiss",
+    "UC Santa Barbara": "Skip to main content University of California, Santa Barbara MY STATUS MAILING LIST QUICK LINKS Main navigation Apply Events & Visits Majors Explore UCSB UCSB Communities Resources Home Apply Transfer Transfer Admission Guarantee Transfer Admission Guarantee The Transfer Admission Guarantee (TAG) offers guaranteed admission to California community college students who meet specific requirements. TAG is offered for the fall term only. To TAG, you must submit an online TAG application from September 1-30 and the UC Application for undergraduate admission from October 1 - November 30. TAG Overview TAG establishes criteria for guaranteed admission to UCSB. At UCSB, TAGs are available for all majors in the College of Letters and Science except performing arts majors that require an audition or portfolio review. Refer to the ASSIST website under articulation agreements by major between UCSB and your community college for more specific details on articulated courses. UCSB does not provide an early evaluation or early decision for TAG applicants. Applicants will be notified of their admission decisions in April. Fall 2027 TAG Requirements The following information outlines the UCSB Transfer Admission Guarantee (TAG) for the College of Letters and Science for the fall 2027 term only. MAJORS WITHOUT TAG: TAG does not apply to: Any major in the College of Creative Studies Any major in the College of Engineering Dance B.A., Dance B.F.A., Music B.M., Theater B.A. (Theater Design Emphasis), or Theater B.F.A. (Acting Emphasis) in the College of Letters & Science MAJOR PREPARATION COURSEWORK All transfer applicants are encouraged to complete as much major preparation as possible prior to transfer. Some majors require completion of specific major preparation coursework as part of TAG. For information about required major preparation coursework, refer to #11 of the Conditions of the Guarantee section below and to the articulation agreements by major between UCSB and your community college online at ASSIST. PRE-MAJORS Some UCSB majors require students to complete certain pre-major requirements at UCSB after transfer in order to advance to full major status. For majors with these pre-major requirements, TAG applies to admission to the pre-major. Meeting TAG requirements does not guarantee that a student will fulfill the pre-major requirements after transfer. Major preparation articulation agreements (found online at ASSIST) include detailed information about the pre-majors. After enrolling, students may contact UCSB academic department advisors to discuss pre-major requirements. UC-Transferable Units TAG does not apply to students approaching senior class standing (students with 80 or more UC-transferable semester units/120 or more quarter units) from accredited four-year universities or from accredited four-year universities and community colleges combined. All students should select their major carefully and complete as much major preparation as possible prior to transfer. A maximum of 70 UC-transferable semester units (105 quarter units) of lower-division coursework from any college or university will transfer to UC. Subject credit is awarded for courses taken beyond 70 semester units (105 quarter units). Any lower-division coursework completed at any UC campus, including UC Extension, will not apply to the 70 semester unit (105 quarter unit) limitation. All transferable UC units will apply toward the 80 semester unit (120 quarter unit) limit for TAG. All UC-transferable upper-division coursework completed at any four-year university will apply toward the 80 semester unit (120 quarter unit) limit for TAG. Advanced Placement (AP), International Baccalaureate (IB), and A Level exam units do not apply to the 80 semester unit (120 quarter unit) limit for TAG. UC allows a maximum of 14 semester/21 quarter units of Pass or Credit grades to reach the minimum number of units needed for admission eligibility. Please note that UCSB\u2019s College of Letters & Science expects students to earn their degree without exceeding 200 quarter units. CONDITIONS OF THE GUARANTEE Submit a TAG application using the UC TAP tool during the filing period for fall 2027 admissions (September 1-30, 2026). Submit your UC Application to UCSB during the filing period for fall 2027 admissions (October 1-November 30, 2026) for the same major as the TAG application. Then, submit the Transfer Academic Update (TAU) by January 31, 2027 and respond to all UC requests for information. Complete at least 30 UC-transferable semester units (or 45 UC-transferable quarter units) by the end of summer 2026, prior to TAG submission. Complete the following required courses with C grades or better by the end of fall 2026: \u25b6 One English composition course (UC-E on the UC-Transferable Course Agreement) \u25b6 One transferable course in mathematical concepts and quantitative reasoning (UC-M on the UC-Transferable Course Agreement) Complete a second English composition course (UC-E on th",
+    "UC Santa Cruz": "Skip to main content Action Menu Begin Your Journey Image Deadlines Image SEARCH Image MENU Utility Menu MyUCSC People Calendars Maps A-Z Index Transfer Admission Guarantee (TAG) Transfer Admission Guarantee On This Page Get Guaranteed Admission to UCSC! UCSC TAG Step-by-Step TAG Decisions UCSC TAG Eligibility UCSC TAG Major Preparation Selection Criteria Get Guaranteed Admission to UCSC! A Transfer Admission Guarantee (TAG) is a formal agreement ensuring fall admission in your desired proposed major, as long as you are transferring from a California community college and as long as you agree to certain conditions. UCSC TAG Step-by-Step Complete the UC Transfer Admission Planner (TAP). Submit your TAG application between September 1 and September 30 of the year before you plan to enroll. Submit the UC application between October 1 and November 30 of the year before you plan to enroll. For fall 2026 applicants only, we are offering a special extended deadline of December 1, 2025. Note: The major on your UC application must match the major on your TAG application. Submit your Transfer Academic Update (TAU) by January 31, 2026. TAG Decisions TAG decisions are normally released on November 15 of each year, ahead of the deadline for the regular UC application. If you have submitted a TAG, you can access your decision and information by logging into your UC Transfer Admission Planner (UC TAP) account on or after November 15. Counselors will also have direct access to their students' TAG decisions. Learn more about your TAG decision! UCSC TAG Eligibility The last school you attend prior to transfer must be a California community college (you may have attended colleges or universities outside of the California community college system, including institutions outside of the U.S. prior to your last term). At the time the TAG is submitted, you must have completed a minimum of 30 UC-transferable semester (45 quarter) units and earned an overall transferable UC GPA of 3.0. By the end of the fall term prior to transfer, you must: Complete the first course in English composition Complete the mathematics course requirement In addition, by the end of the spring term prior to fall transfer, you must: Complete all other courses from the seven-course pattern, required for admission as a junior transfer Complete the minimum of 60 UC-transferable semester (90 quarter) units for admission as a junior transfer Complete a minimum of 30 UC-transferable semester (45 quarter units) of coursework from one or more California community colleges Complete all required major preparation courses with the required minimum grades Have no more than 19 UC-transferable units (semester or quarter) in spring 2026 (or in the last regular term) to reach junior standing Be in good academic standing (not on academic probation or dismissal status) Earn no grades lower than C (2.0) in UC-transferable coursework for the fall, winter, and/or spring terms after TAG submission and prior to transfer. The following students are NOT eligible for UCSC TAG: Students in or approaching senior standing: more than 80 semester (120 quarter) units of combined lower-and upper-division coursework, after applying UC transfer credit limitations. If you only attended a California Community College, you will not be considered in or approaching senior standing. Former UC students who are not in good standing at the UC campus they attended (less than a 2.0 GPA at UC) Former UCSC students, who must apply for readmission to the campus Students who have earned a bachelor\u2019s degree or higher Students who are currently enrolled at a high school UCSC TAG Major Preparation Selection Criteria For all majors except those listed below, TAG is based on the criteria above only. Please see our Non-Screening Majors page for more information about these majors. For the majors listed below, in addition to the criteria above, additional major selection criteria apply. To access these criteria, please click on the link for each major, which will take you to the screening criteria in the General Catalog. You must complete your major preparation coursework and satisfy any major selection criteria by the end of the spring term prior to transfer. Agroecology Applied Mathematics Applied Physics Art and Design: Games and Playable Media Biochemistry and Molecular Biology Biology, BA Biology, BS Biomolecular Engineering and Bioinformatics Biotechnology Business Management Economics Chemistry, BA Chemistry, BS Cognitive Science Computer Engineering Computer Science, BA Computer Science, BS Computer Science: Computer Game Design Earth Sciences Ecology and Evolution Economics Economics/Mathematics Combined Major Electrical Engineering Environmental Sciences Environmental Studies Environmental Studies/Biology Combined Major Environmental Studies/Economics Combined Major Global and Community Health, B.S. Global Economics Marine Biology Mathematics, BA Mathematics, BS Mathematics Education Mathematics Theory "
+  },
+  "rawPdfText": "UC Transfer Admission Guarantee (TAG) for students applying for fall 2027 or spring 2028 admission\nSix University of California (UC) campuses offer guaranteed admission to students from all California community colleges (CCC). Interested students\nmust meet both the shared TAG criteria as well as campus-specific requirements to qualify for a TAG. By participating in a TAG program, students can ensure\ntheir admission to a specific UC campus. Also, students interested in pursuing the Pathways+ transfer option will use a TAG to secure their guarantee.\nShared TAG criteria\nTo qualify for a fall 2027 TAG at any one of the six participating campuses, students must meet the following criteria:\n1. Must have completed at least 30 semester/45 quarter UC-transferable units at the time of TAG submission (end of summer 2026);\n2. Must complete at least one UC-E (English) and one UC-M (Math) by fall 2026;\n3. Must complete the remaining 7-course pattern by spring 2026;\n4. Must complete 60 semester/90 quarter UC-transferable units (junior standing) by the end of spring 2027;\n5. Must complete at least 30 semester/45 quarter UC-transferable units at one or more CCC by spring 2027, and a CCC must be the last school of\nattendance in a regular session;\n6. Must require no more than 19 UC-transferable units (semester or quarter) in spring 2027 (or in the last regular term) to reach junior standing;\n7. Must not exceed 80 semester/120 quarter total UC-transferable units, after applying lower-division limits (students with only CCC coursework and\nAP/IB/A level credits will not exceed this limit);\n8. Must earn no grade lower than C in the current fall, winter and/or spring terms and remain in good academic standing;\n9. Must submit a TAG application through the UC Transfer Admission Planner (UC TAP) between September 1 and September 30, 2026;\n10. Must submit the UC application between October 1 and November 30, 2026, and the TAG major and application major for the TAG campus must match;\n11. Must submit a Transfer Academic Update (TAU) by January 31, 2027; and,\n12. Must meet all campus-specific TAG criteria outlined in the chart below.\nNot eligible for TAG\nThe following students are not eligible for a TAG at any campus:\n\u2022 Students who have already earned a bachelor\u2019s or higher degree;\n\u2022 Students previously enrolled at a UC campus who intend to return to the same UC campus;\n\u2022 Students previously enrolled at a UC campus who were not in good standing when they left that UC; and,\n\u2022 Students concurrently enrolled in high school at the time of TAG submission.\nPlease note: Transfer students do not have to participate in TAG to be considered for admission. In fact, approximately two-thirds of transfer students\nadmitted to UC do not have a TAG. Non-TAG students simply apply for UC admission during the appropriate application filing period. Transfer students are\nresponsible for accurately reporting all college coursework on their TAG and UC applications.\nSpecific information about TAG at each of the six participating UC campuses is provided in the table below.\nAccurate as of June 9, 2026, for the fall 2027 and spring 2028 TAG application cycle. Subject to change. For future TAG application cycle information refer to each individual UC campus admissions\nwebsite.\nUC Transfer Admission Guarantee (TAG) for students applying for fall 2027 or spring 2028 admission\nIs a pre-evaluation of For which terms is a TAG\ncoursework provided as accepted? What is the Is the major guaranteed as part of TAG? What are the excluded majors for TAG?\nCampus\npart of TAG? TAG filing period?\nDavis Yes, wait for TAG decision Accepted for fall quarter only. Yes, provided all TAG requirements are Undeclared programs, Business, Computer Science,\nbefore submitting UC Filing period: Sept. 1-30 completed. Applicants to Landscape Data Science and Landscape Architecture (applicants\napplication. Architecture are approved in a \u201cpre-major\u201d are approved in pre-Landscape Architecture with no\nstatus (no guarantee to the major). guarantee to the major).\nIrvine No Accepted for fall quarter only. Yes, provided all TAG requirements are Art, Business Administration, Dance, Music, Nursing\nFiling period: Sept. 1-30 completed. Science and ALL majors in the Donald Bren School of\nInformation and Computer Sciences. (The Art major\nrequires a portfolio.)\nNote: In addition to the majors above, see additional\nnotes for a list of majors that will be excluded for TAG\napplicants applying for fall 2028 admission.\nMerced Yes, wait for TAG decision Accepted for fall; filing period: Yes, provided all TAG requirements are All majors now open for TAG. Subject to change.\nbefore submitting UC Sept. 1-30 completed.\napplication.\nAccepted for spring; filing\nDecision release dates:\nperiod: May 1-31. See\nFall TAG: Nov 15\nadditional notes for further\nSpring TAG: July 1\ninformation.\nRiverside Yes, wait for TAG decision Accepted for fall; filing period: Yes, provided all TAG requirements are Art Studio\nbefore submitting UC Sept. 1-30 completed.\napplication.\nSanta No Accepted for fall quarter only. Yes, for College of Letters & Science (L&S) All majors in the College of Creative Studies; all majors in\nBarbara Filing period: Sept. 1-30 majors that do not have a pre-major. the College of Engineering; Dance B.A., Dance B.F.A.,\nMusic B.M., Theater B.A. -Theater Design Emphasis, and\nNo, for L&S majors that have a pre-major; the Theater B.F.A.-Acting Emphasis in the College of Letters\npre-major is guaranteed, but further & Science.\nrequirements must be met at UCSB after\ntransfer in order to be accepted into the full\nmajor.\nSanta Yes, wait for TAG decision Accepted for fall quarter Yes, for all screening majors. For the most All majors now open for TAG.\nCruz before submitting UC only. Filing period: Sept. 1-30 current list of screening majors, please\napplication. visit UC Santa Cruz TAG.\nAccurate as of June 9, 2026, for the fall 2027 and spring 2028 TAG application cycle. Subject to change. For future TAG application cycle information refer to each individual UC campus admissions\nwebsite.\nUC Transfer Admission Guarantee (TAG) for students applying for fall 2027 or spring 2028 admission\nCampus Minimum UC Transferable GPA required for a TAG Is completion of Majors that require major preparation\nCal-GETC or IGETC\nrequired?\nDavis College of Agricultural and Environmental Sciences: 3.2 No Complete course series/group requirements for\nCollege of Biological Sciences: 3.2 selective majors; see UC Davis TAG criteria for\nCollege of Letters and Science: 3.2 details.\nCollege of Engineering: 3.5\nGPAs listed above required by end of summer 2026.\nThere are also specific major prep GPA requirements for each selective major.\nFor the most current information, please visit UC Davis TAG.\nIrvine 3.4 minimum GPA by end of fall 2026. No Complete major prerequisites for specific majors; see\nUC Irvine transfer requirements.\nFor the most current information, please visit UC Irvine TAG.\nMerced School of Engineering majors: 3.0 Yes, for Public Complete minimum course prerequisites for specific\nSchool of Natural Science majors: 2.9 Health only. majors; see UC Merced TAG.\nSchool of Social Sciences, Humanities and Arts majors: 2.8\n\u2022 Exception: Psychology 3.0; Public Health 3.0 No for all other majors.\nGPAs listed above required by end of summer 2026.\nFor the most current information, please visit UC Merced TAG.\nRiverside College of Humanities, Arts, and Social Sciences (CHASS): 2.8 No; The School of All majors in the Bourns College of Engineering\n\u2022 Exceptions: Psychology, and Theater, Film & Digital Production: 3.3 Business (BCOE), College of Natural & Agricultural Sciences\nMarlan and Rosemary Bourns College of Engineering (BCOE): 3.0 Administration highly (CNAS), School of Business Administration, and\n\u2022 Exceptions: Computer Science 3.6; Computer Science w/ Business recommends Business Economics, Economics, Psychology, and\nApplications 3.3; Computer Engineering 3.3; Mechanical Engineering 3.1 completion of Cal- Neuroscience majors in the College of Humanities,\nCollege of Natural and Agricultural Sciences (CNAS): 2.8 GETC/IGETC. Arts & Social Sciences (CHASS).\n\u2022 Exception: Data Science 3.0\nSchool of Business: 2.8 See UC Riverside Majors Preparation Guide for\nSchool of Education: 2.7 major preparation and UC Riverside transfer\nSchool of Public Policy: 2.7 admission for campus details.\nGPAs listed above required by end of summer 2026.\nFor the most current information, please visit UC Riverside TAG.\nSanta 3.4 GPA by end of fall 2026 for all majors. No All Biological Sciences, Chemistry and\nBarbara All majors in Biological Sciences, Chemistry and Biochemistry, Economics, Biochemistry, Economics, Mathematics, Physics,\nand Statistics and Applied Probability majors in\nMathematics, Physics, and Statistics and Applied Probability have a minimum GPA\nthe College of Letters and Science.\nrequired for major preparation courses.\nSee \u201cBy Major\u201d articulation agreements at ASSIST for details.\nSee UC Santa Barbara selective majors for more details.\nSanta Cruz 3.0 GPA by end of summer 2026 for all majors. No All screening majors. See UC Santa Cruz TAG for more\ndetails.\nAdditional GPA requirements for major preparation courses for some majors.\nFor the most current information, please visit UC Santa Cruz TAG.\nAccurate as of June 9, 2026, for the fall 2027 and spring 2028 TAG application cycle. Subject to change. For future TAG application cycle information refer to each individual UC campus admissions\nwebsite.\nUC Transfer Admission Guarantee (TAG) for students applying for fall 2027 or spring 2028 admission\nSpring 2028 TAG applicants\n\u2022 UC Merced:\n\u2022 First UC-E must be completed by end of spring 2027.\n\u2022 Second UC-E must be completed by end of summer 2027.\n\u2022 UC-M must be completed by end of fall 2027.\n\u2022 All other TAG qualifications must be met by end of fall 2027.\nCampus TAG websites and contact information\nDavis\n\u2022 Find your UC Davis advisor\n\u2022 (530) 752-2971\nIrvine\n\u2022 (949) 824-6703\nMerced\n\u2022 (209) 228-7178\n\u2022 transfer@ucmerced.edu\nRiverside\n\u2022 (951) 827-3411\n\u2022 Admissions.ucr.edu/ask\nSanta Barbara\n\u2022 (805) 893-2881\nSanta Cruz\n\u2022 (831) 459-4008\n\u2022 tag@ucsc.edu\nAccurate as of June 9, 2026, for the fall 2027 and spring 2028 TAG application cycle. Subject to change. For future TAG application cycle information refer to each individual UC campus admissions\nwebsite.\nGraduate, Undergraduate and Equity Affairs \u2013 Undergraduate Admissions\n2027\u201328 TAG Matrix summary of changes\nShared criteria:\n\u2022 Shared requirement #8 has been revised to state: \u201cStudents must earn no grade lower than C in the current fall, winter and/or\nspring terms and remain in good academic standing\u201d\nCampus updates:\n\u2022 UC Merced: The final page of the TAG Matrix includes guidance for spring 2028 TAG applicants.\n\u2022 UC Riverside: Several academic school names have been updated to reflect current institutional nomenclature.\n\u2022 UC Davis: The Business major is not available through TAG.\n\u2022 UC Santa Barbara:\n\u2022 The Statistics and Applied Probability major requires completion of major preparation coursework and a specified major\npreparation GPA.\n\u2022 The Theater B.A. (Theater Design emphasis) major is no longer available through TAG.\n\u2022 UC Santa Cruz: TAG is currently available for all majors.\n\u2022 UC Irvine: In addition to the current majors excluded from TAG, applicants applying for fall 2028 admission will no longer be\nable to utilize TAG for the following majors: Aerospace Engineering, Biological Sciences, Biology/Education, Business\nEconomics, Cognitive Sciences, Computer Engineering, Ecology & Evolutionary Biology, Economics, Electrical Engineering,\nMechanical Engineering, Psychology (B.A. and B.S); and Quantitative Economics.\nAccurate as of June 9, 2026, for the fall 2027 and spring 2028 TAG application cycle. Subject to change. For future TAG application cycle information refer to each individual UC campus admissions\nwebsite."
+}

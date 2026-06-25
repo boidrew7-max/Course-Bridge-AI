@@ -197,24 +197,92 @@ _UC_NAME_MAP = {
 }
 
 
+# Compact articulation index loaded once at startup
+_ART_INDEX = None
+_ART_INDEX_ENTRIES = []  # list of (cc_l, uc_l, major_l, key) for scoring
+
+def _load_art_index():
+    global _ART_INDEX, _ART_INDEX_ENTRIES
+    if _ART_INDEX is not None:
+        return
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "data", "articulations_index.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            _ART_INDEX = json.load(f)
+        for key in _ART_INDEX:
+            parts = key.split("__")
+            if len(parts) >= 3:
+                cc_l    = parts[0].replace("_", " ").lower()
+                uc_l    = parts[1].replace("_", " ").lower()
+                major_l = "__".join(parts[2:]).replace("_", " ").lower()
+                _ART_INDEX_ENTRIES.append((cc_l, uc_l, major_l, key))
+    except Exception:
+        _ART_INDEX = {}
+
+
 def _extract_major_prep(college: str, uc: str, major: str) -> str:
     """
-    Find the agreement file for college→uc+major, extract the exact CC courses
-    required, and return a structured string the LLM must follow verbatim.
+    Find the best-matching agreement in the compact index and return a
+    structured articulation string the LLM must follow verbatim.
+    Falls back to the raw agreements/ directory if the compact index is absent.
     """
-    from search_agreements import _INDEX, _parse_agreement, _sim
-    import os
+    college_l = college.lower()
+    uc_l      = _UC_NAME_MAP.get(uc.lower().strip(), uc.lower())
+    major_l   = major.lower()
 
+    # ── Try compact index first ──────────────────────────────────
+    _load_art_index()
+    if _ART_INDEX_ENTRIES:
+        best_score, best_key = 0.0, None
+        for (cc, uc_idx, maj, key) in _ART_INDEX_ENTRIES:
+            cc_words  = [w for w in cc.split()  if len(w) >= 3]
+            uc_words  = [w for w in uc_idx.split() if len(w) >= 3]
+            maj_words = [w for w in maj.split()  if len(w) >= 4]
+
+            cc_hit  = sum(1 for w in cc_words  if w in college_l) / max(len(cc_words), 1)
+            uc_hit  = sum(1 for w in uc_words  if w in uc_l)      / max(len(uc_words), 1)
+            maj_hit = sum(1 for w in maj_words if w in major_l)   / max(len(maj_words), 1)
+
+            score = cc_hit * 3 + uc_hit * 3 + maj_hit * 4
+            if score > best_score:
+                best_score = score
+                best_key   = key
+
+        if best_key and best_score >= 2.0:
+            arts = _ART_INDEX.get(best_key, [])
+            parts = best_key.split("__")
+            uc_display    = parts[1].replace("_", " ") if len(parts) > 1 else uc
+            major_display = "__".join(parts[2:]).replace("_", " ") if len(parts) > 2 else major
+
+            lines = [
+                f"=== VERIFIED ARTICULATION DATA: {college} → {uc_display} | {major_display} ===",
+                "Source: ASSIST.org (authoritative — do not deviate from this list)",
+                "",
+                "The student MUST complete the following courses at their community college.",
+                "Use ONLY these exact course numbers and titles. Do not substitute.",
+                "",
+            ]
+            for art in arts:
+                uc_c = art.get("uc", {})
+                uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} — {uc_c.get('t','')}"
+                lines.append(f"• UC requires: {uc_str}")
+                for grp in art.get("cc", []):
+                    parts_cc = []
+                    for c in grp:
+                        parts_cc.append(f"{c.get('p','')} {c.get('n','')} — {c.get('t','')} ({c.get('u','?')} units)")
+                    conj = grp[0].get("j", "Or") if grp else "Or"
+                    lines.append(f"  → Enroll in: {f' {conj} '.join(parts_cc)}")
+            lines.append("")
+            lines.append("=== END ARTICULATION DATA ===")
+            return "\n".join(lines)
+
+    # ── Fallback: raw agreements/ directory ──────────────────────
+    from search_agreements import _INDEX, _parse_agreement
     if not _INDEX:
         return ""
 
-    college_l = college.lower()
-    # Resolve common UC abbreviations to the canonical index name
-    uc_l = _UC_NAME_MAP.get(uc.lower().strip(), uc.lower())
-    major_l   = major.lower()
-
-    # Score every agreement file
-    best_score, best_entry = 0, None
+    best_score, best_entry = 0.0, None
     for entry in _INDEX:
         cc_words  = [w for w in entry["cc"].lower().split()  if len(w) >= 3]
         uc_words  = [w for w in entry["uc"].lower().split()  if len(w) >= 3]
@@ -226,8 +294,8 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
 
         score = cc_hit * 3 + uc_hit * 3 + maj_hit * 4
         if score > best_score:
-            best_score  = score
-            best_entry  = entry
+            best_score = score
+            best_entry = entry
 
     if not best_entry or best_score < 2.0:
         return ""
@@ -240,62 +308,52 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
     except Exception:
         return ""
 
-    result = data.get("result", {})
+    result   = data.get("result", {})
     arts_raw = result.get("articulations", "[]")
-    arts = json.loads(arts_raw) if isinstance(arts_raw, str) else (arts_raw or [])
+    arts     = json.loads(arts_raw) if isinstance(arts_raw, str) else (arts_raw or [])
 
     lines = [
         f"=== VERIFIED ARTICULATION DATA: {college} → {best_entry['uc']} | {best_entry['major']} ===",
-        f"Source: ASSIST.org agreement (authoritative — do not deviate from this list)",
+        "Source: ASSIST.org (authoritative — do not deviate from this list)",
         "",
         "The student MUST complete the following courses at their community college.",
-        "Use ONLY these course numbers and titles. Do not substitute or add unlisted courses.",
+        "Use ONLY these exact course numbers and titles. Do not substitute.",
         "",
     ]
-
     has_data = False
     for art in arts:
         if not isinstance(art, dict):
             continue
-        inner   = art.get("articulation", {})
-        uc_c    = inner.get("course", {})
-        sa      = inner.get("sendingArticulation", {})
-        reason  = sa.get("noArticulationReason", "")
-        items   = sa.get("items", [])
-
-        uc_str = (f"{uc_c.get('prefix','')} {uc_c.get('courseNumber','')} "
-                  f"— {uc_c.get('courseTitle','')}")
-
-        if reason:
-            lines.append(f"• {uc_str}: No CC equivalent (cannot be satisfied at CC)")
-        else:
-            cc_options = []
-            for grp in items:
-                if not isinstance(grp, dict):
-                    continue
-                conj = grp.get("courseConjunction", "Or")
-                grp_courses = []
-                for c in grp.get("items", []):
-                    if isinstance(c, dict) and c.get("courseNumber"):
-                        title = c.get("courseTitle", "")
-                        num   = c.get("courseNumber", "")
-                        pfx   = c.get("prefix", "")
-                        units = c.get("maxUnits", "?")
-                        grp_courses.append(f"{pfx} {num} — {title} ({units} units)")
-                if grp_courses:
-                    cc_options.append(f" {conj} ".join(grp_courses))
-
-            if cc_options:
-                has_data = True
-                lines.append(f"• UC requires: {uc_str}")
-                for opt in cc_options:
-                    lines.append(f"  → Enroll in: {opt}")
-            else:
-                lines.append(f"• {uc_str}: No direct articulation found")
+        inner = art.get("articulation", {})
+        uc_c  = inner.get("course", {})
+        sa    = inner.get("sendingArticulation", {})
+        if sa.get("noArticulationReason"):
+            continue
+        items = sa.get("items", [])
+        cc_options = []
+        for grp in items:
+            if not isinstance(grp, dict):
+                continue
+            conj = grp.get("courseConjunction", "Or")
+            grp_courses = []
+            for c in grp.get("items", []):
+                if isinstance(c, dict) and c.get("courseNumber"):
+                    grp_courses.append(
+                        f"{c.get('prefix','')} {c.get('courseNumber','')} "
+                        f"— {c.get('courseTitle','')} ({c.get('maxUnits','?')} units)"
+                    )
+            if grp_courses:
+                cc_options.append(f" {conj} ".join(grp_courses))
+        if cc_options:
+            has_data = True
+            uc_str = (f"{uc_c.get('prefix','')} {uc_c.get('courseNumber','')} "
+                      f"— {uc_c.get('courseTitle','')}")
+            lines.append(f"• UC requires: {uc_str}")
+            for opt in cc_options:
+                lines.append(f"  → Enroll in: {opt}")
 
     if not has_data:
         return ""
-
     lines.append("")
     lines.append("=== END ARTICULATION DATA ===")
     return "\n".join(lines)

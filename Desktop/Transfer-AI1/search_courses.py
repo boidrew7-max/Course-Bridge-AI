@@ -1,19 +1,26 @@
+import gzip
 import json
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-courses_path = os.path.join(
-    BASE_DIR,
-    "data",
-    "all_transferable_courses.json"
-)
 
-try:
-    with open(courses_path, "r", encoding="utf-8") as f:
-        courses = json.load(f)
-except (FileNotFoundError, OSError):
-    courses = []
+def _load_json_or_gz(base_path):
+    """Try .gz first, then .json, return [] on failure."""
+    for path in (base_path + ".gz", base_path):
+        if not os.path.exists(path):
+            continue
+        try:
+            opener = gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            continue
+    return []
+
+
+courses_path = os.path.join(BASE_DIR, "data", "all_transferable_courses.json")
+courses = _load_json_or_gz(courses_path)
 
 
 def search_courses(query):

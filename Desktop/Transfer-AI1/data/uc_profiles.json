@@ -1,0 +1,349 @@
+{
+  "University of California, Berkeley": {
+    "id": 79,
+    "shortName": "UC Berkeley",
+    "nickname": "Cal",
+    "location": "Berkeley, CA (San Francisco Bay Area)",
+    "academicSystem": "semester",
+    "totalUndergrads": 32000,
+    "setting": "Urban",
+    "tagParticipant": false,
+    "transferAdmitRate2025": 0.24,
+    "transferApplicants2025": 23322,
+    "transferAdmits2025": 5603,
+    "notablePrograms": [
+      "Computer Science",
+      "Electrical Engineering and Computer Science (EECS)",
+      "Business (Haas)",
+      "Data Science",
+      "Biology",
+      "Economics",
+      "Political Science",
+      "Architecture",
+      "Chemistry"
+    ],
+    "topTransferMajors": [
+      "Computer Science",
+      "Economics",
+      "Political Science",
+      "Biology"
+    ],
+    "transferProfile": {
+      "typicalGPA": "3.5-4.0",
+      "note": "Most selective UC for transfers. EECS is among the hardest majors to get into as a transfer."
+    },
+    "financialAid": {
+      "blueAndGold": true,
+      "note": "UC Blue and Gold covers tuition for CA residents with family income under ~$80,000."
+    },
+    "website": "https://admissions.berkeley.edu/transfer-requirements/",
+    "strengths": "Research powerhouse, strongest CS/engineering in UC system, public Ivy reputation"
+  },
+  "University of California, Los Angeles": {
+    "id": 117,
+    "shortName": "UCLA",
+    "nickname": "UCLA",
+    "location": "Los Angeles, CA (Westside)",
+    "academicSystem": "quarter",
+    "totalUndergrads": 32000,
+    "setting": "Urban",
+    "tagParticipant": false,
+    "transferAdmitRate2025": 0.227,
+    "transferApplicants2025": 28266,
+    "transferAdmits2025": 6403,
+    "notablePrograms": [
+      "Film/TV (School of Theater, Film and Television)",
+      "Psychology",
+      "Biology",
+      "Computer Science",
+      "Economics",
+      "Political Science",
+      "Communications",
+      "Nursing",
+      "Business Economics"
+    ],
+    "topTransferMajors": [
+      "Psychology",
+      "Political Science",
+      "Economics",
+      "Biology"
+    ],
+    "transferProfile": {
+      "typicalGPA": "3.5-4.0",
+      "note": "Second most selective UC. Strong humanities and film programs alongside STEM."
+    },
+    "financialAid": {
+      "blueAndGold": true,
+      "note": "Luskin Endowment for Guaranteed Education for families under $80k."
+    },
+    "website": "https://admission.ucla.edu/apply/transfer",
+    "strengths": "Entertainment industry connections, strong research, LA network, diverse programs"
+  },
+  "University of California, San Diego": {
+    "id": 7,
+    "shortName": "UC San Diego",
+    "nickname": "UCSD",
+    "location": "La Jolla, CA (San Diego)",
+    "academicSystem": "quarter",
+    "totalUndergrads": 33000,
+    "setting": "Suburban",
+    "tagParticipant": false,
+    "transferAdmitRate2025": 0.527,
+    "transferApplicants2025": 23441,
+    "transferAdmits2025": 12355,
+    "notablePrograms": [
+      "Computer Science",
+      "Bioengineering",
+      "Cognitive Science",
+      "Economics",
+      "Marine Biology",
+      "Data Science",
+      "Electrical Engineering",
+      "Physics"
+    ],
+    "topTransferMajors": [
+      "Computer Science",
+      "Economics",
+      "Biology",
+      "Psychology"
+    ],
+    "transferProfile": {
+      "typicalGPA": "3.3-3.9",
+      "note": "Strong STEM focus, especially biotech and computer science. Residential college system."
+    },
+    "financialAid": {
+      "blueAndGold": true
+    },
+    "website": "https://admissions.ucsd.edu/transfer/",
+    "strengths": "Top biotech and pharma connections, strong CS, beautiful campus, Scripps research"
+  },
+  "University of California, Santa Barbara": {
+    "id": 128,
+    "shortName": "UC Santa Barbara",
+    "nickname": "UCSB",
+    "location": "Santa Barbara, CA (coastal)",
+    "academicSystem": "quarter",
+    "totalUndergrads": 23000,
+    "setting": "Suburban/Coastal",
+    "tagParticipant": true,
+    "tagMinGPA": 3.4,
+    "transferAdmitRate2025": 0.589,
+    "transferApplicants2025": 18828,
+    "transferAdmits2025": 11089,
+    "notablePrograms": [
+      "Computer Science",
+      "Economics",
+      "Biology",
+      "Chemistry",
+      "Mathematics",
+      "Physics",
+      "Environmental Studies",
+      "Film and Media Studies"
+    ],
+    "topTransferMajors": [
+      "Economics",
+      "Computer Science",
+      "Biology",
+      "Psychology"
+    ],
+    "transferProfile": {
+      "typicalGPA": "3.2-3.9",
+      "note": "TAG available (3.4 GPA). Engineering excluded from TAG. Strong research university."
+    },
+    "financialAid": {
+      "blueAndGold": true
+    },
+    "website": "https://admissions.sa.ucsb.edu/apply/transfer-students",
+    "strengths": "Beautiful coastal campus, strong research, TAG access, Nobel Prize faculty"
+  },
+  "University of California, Davis": {
+    "id": 89,
+    "shortName": "UC Davis",
+    "nickname": "UC Davis",
+    "location": "Davis, CA (Sacramento area)",
+    "academicSystem": "quarter",
+    "totalUndergrads": 31000,
+    "setting": "College Town",
+    "tagParticipant": true,
+    "tagMinGPA": 3.2,
+    "transferAdmitRate2025": 0.57,
+    "transferApplicants2025": 17154,
+    "transferAdmits2025": 9776,
+    "notablePrograms": [
+      "Agricultural Sciences",
+      "Veterinary Medicine (pre-vet)",
+      "Biology",
+      "Environmental Science",
+      "Computer Science",
+      "Psychology",
+      "Economics",
+      "Managerial Economics"
+    ],
+    "topTransferMajors": [
+      "Biology",
+      "Psychology",
+      "Economics",
+      "Computer Science"
+    ],
+    "transferProfile": {
+      "typicalGPA": "3.0-3.8",
+      "note": "TAG available (3.2 GPA for most, 3.5 for engineering). Provides pre-eval before UC app."
+    },
+    "financialAid": {
+      "blueAndGold": true
+    },
+    "website": "https://admissions.ucdavis.edu/apply/transfer",
+    "strengths": "Best vet/ag programs in UC system, sustainable campus, strong pre-med pipeline"
+  },
+  "University of California, Irvine": {
+    "id": 120,
+    "shortName": "UC Irvine",
+    "nickname": "UCI",
+    "location": "Irvine, CA (Orange County)",
+    "academicSystem": "quarter",
+    "totalUndergrads": 30000,
+    "setting": "Suburban",
+    "tagParticipant": true,
+    "tagMinGPA": 3.4,
+    "transferAdmitRate2025": null,
+    "transferApplicants2025": 25352,
+    "notablePrograms": [
+      "Computer Science (Bren School)",
+      "Criminology",
+      "Business Administration",
+      "Biology",
+      "Psychology",
+      "Data Science",
+      "Public Health"
+    ],
+    "topTransferMajors": [
+      "Psychology",
+      "Criminology",
+      "Biology",
+      "Business"
+    ],
+    "transferProfile": {
+      "typicalGPA": "3.2-3.9",
+      "note": "TAG available (3.4 GPA). Bren School (CS/IT majors) excluded from TAG."
+    },
+    "financialAid": {
+      "blueAndGold": true
+    },
+    "website": "https://admissions.uci.edu/apply/transfer-students/",
+    "strengths": "Top criminology program, growing CS/tech reputation, safe suburban campus"
+  },
+  "University of California, Riverside": {
+    "id": 46,
+    "shortName": "UC Riverside",
+    "nickname": "UCR",
+    "location": "Riverside, CA (Inland Empire)",
+    "academicSystem": "quarter",
+    "totalUndergrads": 22000,
+    "setting": "Suburban",
+    "tagParticipant": true,
+    "tagMinGPA": 2.4,
+    "transferAdmitRate2025": 0.682,
+    "transferApplicants2025": 13714,
+    "transferAdmits2025": 9351,
+    "notablePrograms": [
+      "Biology",
+      "Business Administration",
+      "Psychology",
+      "Computer Science",
+      "Environmental Sciences",
+      "Pre-Med",
+      "Public Policy"
+    ],
+    "topTransferMajors": [
+      "Biology",
+      "Business Administration",
+      "Psychology"
+    ],
+    "transferProfile": {
+      "typicalGPA": "2.8-3.6",
+      "note": "Most accessible TAG among larger UCs (2.4 GPA minimum). Good pre-med track."
+    },
+    "financialAid": {
+      "blueAndGold": true
+    },
+    "website": "https://admissions.ucr.edu/transfer",
+    "strengths": "Accessible TAG, strong pre-med, diverse student body, growing research profile"
+  },
+  "University of California, Santa Cruz": {
+    "id": 132,
+    "shortName": "UC Santa Cruz",
+    "nickname": "UCSC",
+    "location": "Santa Cruz, CA (Monterey Bay)",
+    "academicSystem": "quarter",
+    "totalUndergrads": 17000,
+    "setting": "Suburban/Forest",
+    "tagParticipant": true,
+    "tagMinGPA": 3.0,
+    "transferAdmitRate2025": 0.688,
+    "transferApplicants2025": 12866,
+    "transferAdmits2025": 8852,
+    "notablePrograms": [
+      "Computer Science",
+      "Computer Game Design",
+      "Biology",
+      "Environmental Studies",
+      "Astronomy",
+      "Psychology",
+      "Sociology",
+      "Film and Digital Media"
+    ],
+    "topTransferMajors": [
+      "Computer Science",
+      "Biology",
+      "Psychology",
+      "Environmental Studies"
+    ],
+    "transferProfile": {
+      "typicalGPA": "3.0-3.7",
+      "note": "TAG available for all majors (3.0 GPA). Unique campus culture, strong CS and astronomy."
+    },
+    "financialAid": {
+      "blueAndGold": true
+    },
+    "website": "https://admissions.ucsc.edu/transfer-students",
+    "strengths": "Unique progressive culture, strong CS/game design, small class sizes, beautiful redwood campus"
+  },
+  "University of California, Merced": {
+    "id": 144,
+    "shortName": "UC Merced",
+    "nickname": "UCM",
+    "location": "Merced, CA (Central Valley)",
+    "academicSystem": "semester",
+    "totalUndergrads": 9000,
+    "setting": "Small City",
+    "tagParticipant": true,
+    "tagMinGPA": 2.8,
+    "transferAdmitRate2025": 0.721,
+    "transferApplicants2025": 5173,
+    "transferAdmits2025": 3730,
+    "notablePrograms": [
+      "Engineering",
+      "Biology",
+      "Psychology",
+      "Environmental Engineering",
+      "Computer Science and Engineering",
+      "Public Health",
+      "Economics"
+    ],
+    "topTransferMajors": [
+      "Biology",
+      "Psychology",
+      "Engineering"
+    ],
+    "transferProfile": {
+      "typicalGPA": "2.7-3.5",
+      "note": "Newest UC, most accessible TAG (2.8 GPA). Small campus with growing research reputation."
+    },
+    "financialAid": {
+      "blueAndGold": true,
+      "note": "Highest financial aid rates in UC system."
+    },
+    "website": "https://admissions.ucmerced.edu/apply/transfer",
+    "strengths": "Most accessible UC, highest % of first-gen students, strong financial aid, semester system"
+  }
+}

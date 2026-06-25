@@ -1,0 +1,183 @@
+{
+  "source": "University of California Admissions",
+  "url": "https://admission.universityofcalifornia.edu/how-to-apply/applying-as-a-transfer/personal-insight-questions.html",
+  "last_updated": "2024-2025 application cycle",
+  "format": {
+    "total_questions": 4,
+    "required_for_transfers": 1,
+    "additional_to_choose": 3,
+    "total_additional_pool": 8,
+    "word_limit_per_question": 350,
+    "description": "Transfer applicants answer 1 required question (about major preparation) plus 3 questions of their choice from 8 additional prompts."
+  },
+  "required_prompt": {
+    "number": 0,
+    "type": "required_for_transfers",
+    "prompt": "Describe how you have prepared for your intended major, including your readiness to succeed in your upper-division courses once you enroll at the University of California.",
+    "word_limit": 350,
+    "notes": "This question is REQUIRED for transfer applicants. It replaces one of the 3 additional questions from the general pool.",
+    "tips": [
+      "Describe relevant coursework, research, work experience, or extracurricular activities",
+      "Show intellectual curiosity and genuine interest in the field",
+      "Discuss challenges you overcame and what you learned",
+      "Connect your community college experience to your UC goals",
+      "Be specific about how your preparation will help you succeed at the UC level"
+    ]
+  },
+  "additional_prompts": {
+    "1": {
+      "number": 1,
+      "type": "additional",
+      "prompt": "Describe an example of your leadership experience in which you have positively influenced others, helped resolve disputes, or contributed to group efforts over time.",
+      "word_limit": 350,
+      "notes": "Leadership can be formal (club officer, team captain) or informal (helping peers, community initiatives)",
+      "tips": [
+        "Focus on impact, not just your role or title",
+        "Show how you motivated others or brought people together",
+        "Describe a specific situation with a clear outcome",
+        "Leadership doesn't require a formal position — think broadly"
+      ]
+    },
+    "2": {
+      "number": 2,
+      "type": "additional",
+      "prompt": "Every person has a creative side, and it can be expressed in many ways: problem solving, original and innovative thinking, and artistically, to name a few. Describe how you express your creative side.",
+      "word_limit": 350,
+      "notes": "Creativity can be applied to any area — art, science, business, community, etc.",
+      "tips": [
+        "Think beyond traditional art — creativity in coding, cooking, problem-solving all count",
+        "Show the process, not just the product",
+        "Connect creativity to your identity or goals",
+        "Be specific with examples"
+      ]
+    },
+    "3": {
+      "number": 3,
+      "type": "additional",
+      "prompt": "What would you say is your greatest talent or skill? How have you developed and demonstrated that talent over time?",
+      "word_limit": 350,
+      "notes": "Could be academic, athletic, artistic, interpersonal, or practical skills",
+      "tips": [
+        "Choose something genuinely meaningful to you, not just impressive-sounding",
+        "Show growth and development over time",
+        "Include specific examples and milestones",
+        "Connect the skill to who you are and your future goals"
+      ]
+    },
+    "4": {
+      "number": 4,
+      "type": "additional",
+      "prompt": "Describe how you have taken advantage of a significant educational opportunity or worked to overcome an educational barrier you have faced.",
+      "word_limit": 350,
+      "notes": "Covers both opportunity AND barrier — pick whichever applies more strongly to your story",
+      "tips": [
+        "Educational opportunity: research programs, special courses, mentorship, study abroad",
+        "Educational barrier: financial hardship, family obligations, lack of resources, personal challenges",
+        "Show what you did about it — your agency and resilience matter",
+        "Transfer students often have powerful stories here — use them"
+      ]
+    },
+    "5": {
+      "number": 5,
+      "type": "additional",
+      "prompt": "Describe the most significant challenge you have faced and the steps you have taken to overcome this challenge. How has this challenge affected your academic achievement?",
+      "word_limit": 350,
+      "notes": "This question explicitly asks about academic impact — don't forget to address that",
+      "tips": [
+        "Be honest about the challenge and its real impact on your academics",
+        "Focus on your response to the challenge, not just the challenge itself",
+        "Show growth, resilience, and what you learned",
+        "Avoid framing challenges as entirely someone else's fault"
+      ]
+    },
+    "6": {
+      "number": 6,
+      "type": "additional",
+      "prompt": "Think about an academic subject that inspires you. Describe how you have furthered this interest inside and/or outside of the classroom.",
+      "word_limit": 350,
+      "notes": "Best answered with genuine intellectual passion — admissions readers can tell the difference",
+      "tips": [
+        "Go deep on one subject rather than listing many interests",
+        "Show intellectual curiosity and self-directed learning",
+        "Include specific books, projects, experiences, or discoveries",
+        "Connect to your intended major if possible"
+      ]
+    },
+    "7": {
+      "number": 7,
+      "type": "additional",
+      "prompt": "What have you done to make your school or your community a better place?",
+      "word_limit": 350,
+      "notes": "Community can mean campus, hometown, online community, workplace, family, etc.",
+      "tips": [
+        "Concrete actions and outcomes are more persuasive than vague good intentions",
+        "Impact matters more than scale — helping 5 people meaningfully beats vague 'awareness'",
+        "Connect to your values and what drives you",
+        "Community college students often have rich community involvement stories"
+      ]
+    },
+    "8": {
+      "number": 8,
+      "type": "additional",
+      "prompt": "Beyond what has already been shared in your application, what do you believe makes you stand out as a strong candidate for admission to the University of California?",
+      "word_limit": 350,
+      "notes": "A catch-all question — use it to fill in anything not covered by other responses",
+      "tips": [
+        "This is your chance to tell something not covered elsewhere in the application",
+        "Could be an unusual background, perspective, identity, or achievement",
+        "Avoid restating what's already in your application",
+        "Be specific — vague 'I'm passionate and hardworking' statements don't work here"
+      ]
+    }
+  },
+  "general_tips": [
+    "Use all 350 words — shorter responses leave value on the table",
+    "Be specific: concrete details are more persuasive than general statements",
+    "Show don't tell: describe experiences, don't just claim qualities",
+    "Each response should stand alone — don't reference other responses",
+    "Write in your own voice — authenticity matters more than formal language",
+    "Start with a hook: an opening image, question, or moment draws the reader in",
+    "The required transfer question (major prep) is your most important — write it first",
+    "Choose additional questions that let you show different sides of yourself",
+    "Avoid overclaiming: 'I want to cure cancer' sounds grandiose; be humble and specific",
+    "Transfer students: your community college journey is an asset, not a handicap"
+  ],
+  "transfer_specific_advice": [
+    "Admissions readers know you came from CC — frame it as a deliberate, mature choice",
+    "Address any academic record issues directly if using question 5",
+    "Your work/life experience is a differentiator — use it",
+    "Show why UC specifically, not just 'I want a better school'",
+    "The major prep question is your academic statement of purpose — treat it seriously"
+  ],
+  "what_uc_is_looking_for": [
+    "Intellectual curiosity and passion for learning",
+    "Resilience and ability to overcome challenges",
+    "Positive contributions to communities (campus, work, family, neighborhood)",
+    "Self-awareness and personal growth",
+    "Leadership potential (formal or informal)",
+    "Unique perspective or background that enriches campus community",
+    "Clear purpose and direction — know why you want this major at this UC"
+  ],
+  "scraped_pages": {
+    "transfer_specific": {
+      "url": "https://admission.universityofcalifornia.edu/how-to-apply/applying-as-a-transfer/personal-insight-questions.html",
+      "content_length": 7582,
+      "text": "Skip to main content Admissions Requirements How to apply Tuition & financial aid Campuses & majors Apply now Twitter Facebook Search Home How to apply Applying as a transfer Personal insight questions Personal insight questions There’s a lot more to your UC application than grades and coursework. There’s the journey you took to get here too. From developing your talents and skills, to making a difference in your community, to preparing for your major: everything you’ve done has led you here. That’s the story we want to hear. Directions There is one required question you must answer. You must also answer 3 out of 7 additional questions. Each response is limited to a maximum of 350 words. Which three questions you choose to answer are up to you. However, you should select questions that are most relevant to your experience and that best reflect your individual circumstances. Keep in mind All questions are equal: All questions are given equal consideration in the application review process, which means there is no advantage or disadvantage to choosing certain questions over others. There is no right or wrong way to answer these questions: It's about getting to know your personality, background, interests and achievements in your own unique voice. Questions & guidance Remember, the personal insight questions are just that; personal. Which means you should use our guidance for each question just as a suggestion in case you need help. The important thing is expressing who you are, what matters to you and what you want to share with UC. Required question Please describe how you have prepared for your intended major, including your readiness to succeed in your upper-division courses once you enroll at the university. Things to consider: How did your interest in your major develop? Do you have any experience related to your major outside the classroom;such as volunteer work, internships and employment, or participation in student organizations and activities? If you haven't had experience in the field, consider including experience in the classroom. This may include working with faculty or doing research projects. If you're applying to multiple campuses with a different major at each campus, think about approaching the topic from a broader perspective, or find a common thread among the majors you've chosen. Choose to answer any three of the following seven questions: 1. Describe an example of your leadership experience in which you have positively influenced others, helped resolve disputes, or contributed to group efforts over time. Things to consider: A leadership role can mean more than just a title. It can mean being a mentor to others, acting as the person in charge of a specific task, or taking lead role in organizing an event or project. Think about your accomplishments and what you learned from the experience. What were your responsibilities? Did you lead a team? How did your experience change your perspective on leading others? Did you help to resolve an important dispute at your school, church in your community or an organization? And your leadership role doesn't necessarily have to be limited to school activities. For example, do you help out or take care of your family? 2. Every person has a creative side, and it can be expressed in many ways: problem solving, original and innovative thinking, and artistically, to name a few. Describe how you express your creative side. Things to consider: What does creativity mean to you? Do you have a creative skill that is important to you? What have you been able to do with that skill? If you used creativity to solve a problem, what was your solution? What are the steps you took to solve the problem? How does your creativity influence your decisions inside or outside the classroom? Does your creativity relate to your major or a future career? 3. What would you say is your greatest talent or skill? How have you developed and demonstrated that talent over time? Things to consider: If there's a talent or skill that you're proud of, this is the time to share it. You don't necessarily have to be recognized or have received awards for your talent (although if you did and you want to talk about, feel free to do so). Why is this talent or skill meaningful to you? Does the talent come naturally or have you worked hard to develop this skill or talent? Does your talent or skill allow you opportunities in or outside the classroom? If so, what are they and how do they fit into your schedule? 4. Describe how you have taken advantage of a significant educational opportunity or worked to overcome an educational barrier you have faced. Things to consider: An educational opportunity can be anything that has added value to your educational experience and better prepared you for college. For example, participation in an honors or academic enrichment program, or enrollment in an academy that's geared toward an occupation or a major, or taking advanced courses that interest you, just to name a few. If you choose to write about educational barriers you've faced, how did you overcome or strive to overcome them? What personal characteristics or skills did you call on to overcome this challenge? How did overcoming this barrier help shape who you are today? 5. Describe the most significant challenge you have faced and the steps you have taken to overcome this challenge. How has this challenge affected your academic achievement? Things to consider: A challenge could be personal, or something you have faced in your community or school. Why was the challenge significant to you? This is a good opportunity to talk about any obstacles you've faced and what you've learned from the experience. Did you have support from someone else or did you handle it alone? If you're currently working your way through a challenge, what are you doing now, and does that affect different aspects of your life? For example, ask yourself, How has my life changed at home, at my school, with my friends, or with my family? 6. What have you done to make your school or your community a better place? Things to consider: Think of community as a term that can encompass a group, team or a place like your high school, hometown, or home. You can define community as you see fit, just make sure you talk about your role in that community. Was there a problem that you wanted to fix in your community? Why were you inspired to act? What did you learn from your effort? How did your actions benefit others, the wider community or both? Did you work alone or with others to initiate change in your community? 7. Beyond what has already been shared in your application, what do you believe makes you a strong candidate for admissions to the University of California? Things to consider:If there's anything you want us to know about you, but didn't find a question or place in the application to tell us, now's your chance. What have you not shared with us that will highlight a skill, talent, challenge or opportunity that you think will help us know you better? From your point of view, what do you feel makes you an excellent choice for UC? Don't be afraid to brag a little. Writing tips How to apply Applying as a first year Applying as a transfer Dates & deadlines Filling out the application Personal insight questions How applications are reviewed After you apply Need more help? Download our worksheets: English [PDF] Spanish [PDF] Admissions universityofcalifornia.edu Counselors Contact us Accessibility Privacy Statement Terms of use Copyright © Regents of the University of California"
+    },
+    "general_overview": {
+      "url": "https://admission.universityofcalifornia.edu/how-to-apply/personal-insight-questions.html",
+      "content_length": 385,
+      "text": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>PR6J6R61TP81AS1X</RequestId> <HostId>Raol7w2MYr8WCFn/mAez/KysgNKsZOho8GuX17M8TZvXxwkZLyd29ZcR8ld9HM50scm5kBHLM1D2G6fK24U02sTgDLXLjj3k</HostId> </Error>"
+    },
+    "writing_tips": {
+      "url": "https://admission.universityofcalifornia.edu/how-to-apply/personal-insight-questions/tips-for-writing.html",
+      "content_length": 385,
+      "text": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>X3SJXN92JAY9MEYY</RequestId> <HostId>BfYo727qYu+Vq5oFS9/cR7skbEqG0j8KhdiCiz832y3NJjTXkWvOmiUNON0NmPjYvVqeePE1RConoQdSOOeNcUs8zgJIUko6</HostId> </Error>"
+    },
+    "prompts_overview": {
+      "url": "https://admission.universityofcalifornia.edu/how-to-apply/personal-insight-questions/prompts.html",
+      "content_length": 365,
+      "text": "This XML file does not appear to have any style information associated with it. The document tree is shown below. <Error> <Code>NoSuchKey</Code> <Message>The specified key does not exist.</Message> <Key>error404.html</Key> <RequestId>CJGGWWA5DZ6CQBD3</RequestId> <HostId>M/rgHlIL7P3WdhpDQR4c8wu8j5WzIugfXq/MhPsgeb2ATI8VcxuoPmSCe4kHSmiVwBkcoTpcGB8=</HostId> </Error>"
+    }
+  }
+}

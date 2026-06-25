@@ -1,13 +1,23 @@
-import json, os
+import gzip, json, os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-professors_path = os.path.join(BASE_DIR, "data", "professors.json")
 
-try:
-    with open(professors_path, "r", encoding="utf-8") as f:
-        _professors = json.load(f)
-except (FileNotFoundError, OSError):
-    _professors = []
+
+def _load_json_or_gz(base_path):
+    for path in (base_path + ".gz", base_path):
+        if not os.path.exists(path):
+            continue
+        try:
+            opener = gzip.open if path.endswith(".gz") else open
+            with opener(path, "rt", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            continue
+    return []
+
+
+professors_path = os.path.join(BASE_DIR, "data", "professors.json")
+_professors = _load_json_or_gz(professors_path)
 
 # professors.json is a flat list of professor objects
 if isinstance(_professors, dict):

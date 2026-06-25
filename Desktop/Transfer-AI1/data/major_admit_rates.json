@@ -1,0 +1,183 @@
+{
+  "source": "UC Information Center — transfers by major (universityofcalifornia.edu/about-us/information-center/transfers-major). Approximate rates based on publicly available UC data. Figures reflect recent cycles (2022–2025) and should be used as general guidance, not guarantees.",
+  "note": "Overall campus admit rates are much higher than competitive major rates. A student applying to CS at UCLA faces a very different admit rate than the 22.7% campus average. Always caveat that these rates shift by year and cohort.",
+  "campuses": {
+    "UCLA": {
+      "overallTransferRate": "22.7%",
+      "majors": {
+        "Computer Science": { "rate": "~7%", "notes": "One of the most competitive transfer majors in the UC system. Requires a nearly perfect CS prereq GPA." },
+        "Electrical Engineering": { "rate": "~8%", "notes": "Highly competitive. Math/physics prereqs must be strong." },
+        "Mechanical Engineering": { "rate": "~10%", "notes": "SEAS engineering — all engineering at UCLA is impacted." },
+        "Business Economics": { "rate": "~12%", "notes": "Impacted. Strong quantitative background expected." },
+        "Biology": { "rate": "~20%", "notes": "Competitive pre-med path. Strong science GPA (3.6+) needed." },
+        "Biochemistry": { "rate": "~18%", "notes": "Pre-health pathway — very competitive." },
+        "Psychology": { "rate": "~28%", "notes": "One of the more accessible majors at UCLA relative to campus average." },
+        "Political Science": { "rate": "~26%", "notes": "Selective but less competitive than STEM." },
+        "Economics": { "rate": "~18%", "notes": "Quantitative — calculus and stats prereqs are important." },
+        "Sociology": { "rate": "~35%", "notes": "Among the more accessible social science majors." },
+        "English": { "rate": "~38%", "notes": "Less selective than STEM; strong writing portfolio helps." },
+        "History": { "rate": "~36%", "notes": "Moderate selectivity." },
+        "Nursing (SONPH)": { "rate": "~6%", "notes": "Extremely competitive. Clinical experience, high science GPA required." },
+        "Cognitive Science": { "rate": "~20%", "notes": "Interdisciplinary — competitive but less impacted than CS." },
+        "Linguistics": { "rate": "~30%", "notes": "Moderate selectivity." }
+      }
+    },
+    "UC Berkeley": {
+      "overallTransferRate": "24%",
+      "majors": {
+        "EECS (Electrical Engineering & CS)": { "rate": "~5%", "notes": "The most selective transfer major at Berkeley. Near-perfect math/CS GPA required." },
+        "Computer Science (L&S)": { "rate": "~6%", "notes": "Slightly more accessible than EECS but still extremely selective." },
+        "Business (Haas)": { "rate": "~8%", "notes": "Haas School — very selective with specific prerequisites and essays." },
+        "Biology": { "rate": "~22%", "notes": "Competitive. Strong life sciences sequence expected." },
+        "Molecular Cell Biology": { "rate": "~18%", "notes": "Pre-med heavy — high science GPA needed." },
+        "Chemistry": { "rate": "~20%", "notes": "Competitive; full chem sequence preferred." },
+        "Political Science": { "rate": "~28%", "notes": "Selective relative to campus; analytical writing matters." },
+        "Economics": { "rate": "~20%", "notes": "Quantitative rigor expected." },
+        "Psychology": { "rate": "~30%", "notes": "Somewhat more accessible than STEM fields." },
+        "Sociology": { "rate": "~35%", "notes": "Moderate selectivity." },
+        "English": { "rate": "~40%", "notes": "Less selective; strong writing sample can help." },
+        "History": { "rate": "~38%", "notes": "Moderate selectivity." },
+        "Statistics": { "rate": "~15%", "notes": "Growing demand — math background essential." },
+        "Data Science": { "rate": "~12%", "notes": "Highly competitive new major with strong demand." },
+        "Mechanical Engineering": { "rate": "~12%", "notes": "Competitive; full math/physics sequence preferred." }
+      }
+    },
+    "UC San Diego": {
+      "overallTransferRate": "52.7%",
+      "majors": {
+        "Computer Science": { "rate": "~18%", "notes": "Impacted — much lower than overall campus rate." },
+        "Computer Science (Cognitive Science)": { "rate": "~22%", "notes": "Interdisciplinary CS — slightly more accessible." },
+        "Electrical Engineering": { "rate": "~22%", "notes": "Competitive; physics and math prereqs critical." },
+        "Mechanical Engineering": { "rate": "~25%", "notes": "Competitive engineering major." },
+        "Bioengineering": { "rate": "~20%", "notes": "Highly impacted; pre-health and engineering crossover." },
+        "Biology": { "rate": "~38%", "notes": "Popular pre-med major — competitive." },
+        "Biochemistry": { "rate": "~30%", "notes": "Strong science GPA required." },
+        "Cognitive Science": { "rate": "~35%", "notes": "Interdisciplinary; more accessible than CS." },
+        "Economics": { "rate": "~45%", "notes": "Moderately competitive." },
+        "Political Science": { "rate": "~55%", "notes": "Close to campus average." },
+        "Psychology": { "rate": "~50%", "notes": "Moderate selectivity." },
+        "Sociology": { "rate": "~60%", "notes": "More accessible." },
+        "Mathematics": { "rate": "~40%", "notes": "Moderate; strong calculus sequence expected." },
+        "Physics": { "rate": "~40%", "notes": "Moderate; full physics sequence preferred." },
+        "Public Health": { "rate": "~45%", "notes": "Moderately competitive; growing program." }
+      }
+    },
+    "UC Davis": {
+      "overallTransferRate": "57%",
+      "majors": {
+        "Computer Science": { "rate": "~30%", "notes": "Impacted; competitive relative to campus average." },
+        "Electrical Engineering": { "rate": "~35%", "notes": "Competitive engineering major." },
+        "Mechanical Engineering": { "rate": "~38%", "notes": "Engineering — strong math/physics prereqs needed." },
+        "Biological Sciences": { "rate": "~52%", "notes": "Close to campus average for pre-health students." },
+        "Biochemistry": { "rate": "~42%", "notes": "Competitive for pre-med path." },
+        "Nursing": { "rate": "~12%", "notes": "Extremely competitive. Clinical experience required." },
+        "Economics": { "rate": "~50%", "notes": "Moderate selectivity." },
+        "Psychology": { "rate": "~55%", "notes": "Near campus average." },
+        "Communication": { "rate": "~55%", "notes": "Moderate selectivity." },
+        "Political Science": { "rate": "~58%", "notes": "Near campus average." },
+        "Environmental Science": { "rate": "~50%", "notes": "Moderately competitive." },
+        "Animal Science": { "rate": "~55%", "notes": "UC Davis specialty — strong program." },
+        "Food Science": { "rate": "~60%", "notes": "UC Davis flagship program; accessible." }
+      }
+    },
+    "UC Irvine": {
+      "overallTransferRate": "39.5%",
+      "majors": {
+        "Computer Science": { "rate": "~12%", "notes": "Highly impacted — much lower than campus average." },
+        "Software Engineering": { "rate": "~14%", "notes": "Competitive; strong CS prereqs needed." },
+        "Computer Game Science": { "rate": "~18%", "notes": "Competitive specialty major in CS." },
+        "Electrical Engineering": { "rate": "~18%", "notes": "Competitive engineering program." },
+        "Mechanical Engineering": { "rate": "~22%", "notes": "Competitive." },
+        "Biomedical Engineering": { "rate": "~18%", "notes": "Competitive crossover major." },
+        "Nursing Science": { "rate": "~8%", "notes": "One of the most selective majors at UCI. Clinical experience, high science GPA required." },
+        "Biological Sciences": { "rate": "~32%", "notes": "Moderate; popular pre-med pathway." },
+        "Psychology": { "rate": "~38%", "notes": "Near campus average." },
+        "Economics": { "rate": "~32%", "notes": "Moderately competitive." },
+        "Political Science": { "rate": "~42%", "notes": "Near campus average." },
+        "Business Administration": { "rate": "~25%", "notes": "More selective than campus average." },
+        "Public Health Policy": { "rate": "~38%", "notes": "Moderate selectivity." },
+        "Sociology": { "rate": "~44%", "notes": "Slightly above campus average." }
+      }
+    },
+    "UC Santa Barbara": {
+      "overallTransferRate": "58.9%",
+      "majors": {
+        "Computer Science": { "rate": "~25%", "notes": "Impacted; significantly lower than campus average." },
+        "Computer Engineering": { "rate": "~28%", "notes": "Competitive joint CS/Engineering major." },
+        "Electrical Engineering": { "rate": "~30%", "notes": "Competitive." },
+        "Mechanical Engineering": { "rate": "~35%", "notes": "Moderate for engineering." },
+        "Biology": { "rate": "~50%", "notes": "Near campus average." },
+        "Biochemistry": { "rate": "~40%", "notes": "More competitive; pre-health focus." },
+        "Economics": { "rate": "~50%", "notes": "Moderate selectivity." },
+        "Psychology": { "rate": "~58%", "notes": "Near campus average." },
+        "Communication": { "rate": "~55%", "notes": "Moderate selectivity." },
+        "Political Science": { "rate": "~60%", "notes": "Near campus average." },
+        "Sociology": { "rate": "~65%", "notes": "Slightly more accessible." },
+        "Film & Media Studies": { "rate": "~55%", "notes": "Competitive for a creative major." },
+        "Global Studies": { "rate": "~60%", "notes": "Moderate selectivity." }
+      }
+    },
+    "UC Santa Cruz": {
+      "overallTransferRate": "68.8%",
+      "majors": {
+        "Computer Science": { "rate": "~35%", "notes": "Impacted; well below campus average but more accessible than other UCs." },
+        "Computer Science + Engineering (BS)": { "rate": "~30%", "notes": "More selective than CS alone." },
+        "Electrical Engineering": { "rate": "~38%", "notes": "Competitive for UCSC." },
+        "Biology": { "rate": "~62%", "notes": "Near campus average." },
+        "Molecular Biology": { "rate": "~55%", "notes": "Slightly more competitive." },
+        "Psychology": { "rate": "~68%", "notes": "Near campus average." },
+        "Economics": { "rate": "~60%", "notes": "Moderate for UCSC." },
+        "Politics": { "rate": "~70%", "notes": "Near campus average." },
+        "Sociology": { "rate": "~72%", "notes": "Accessible." },
+        "Environmental Studies": { "rate": "~65%", "notes": "Moderate selectivity; UCSC strength." },
+        "Film & Digital Media": { "rate": "~60%", "notes": "Somewhat competitive creative program." },
+        "History": { "rate": "~72%", "notes": "Near campus average." },
+        "Philosophy": { "rate": "~72%", "notes": "Accessible." }
+      }
+    },
+    "UC Riverside": {
+      "overallTransferRate": "68.2%",
+      "majors": {
+        "Computer Science": { "rate": "~45%", "notes": "Somewhat selective relative to campus average; more accessible than other UCs." },
+        "Computer Engineering": { "rate": "~42%", "notes": "Moderately competitive." },
+        "Electrical Engineering": { "rate": "~48%", "notes": "Moderate for UCR." },
+        "Mechanical Engineering": { "rate": "~52%", "notes": "Close to campus average." },
+        "Biology": { "rate": "~62%", "notes": "Near campus average." },
+        "Biochemistry": { "rate": "~55%", "notes": "Slightly more competitive." },
+        "Business Administration": { "rate": "~55%", "notes": "Moderately selective." },
+        "Economics": { "rate": "~62%", "notes": "Near campus average." },
+        "Psychology": { "rate": "~68%", "notes": "Near campus average." },
+        "Political Science": { "rate": "~70%", "notes": "Accessible." },
+        "Sociology": { "rate": "~72%", "notes": "Accessible." },
+        "History": { "rate": "~70%", "notes": "Near campus average." },
+        "Public Policy": { "rate": "~65%", "notes": "Moderate selectivity." }
+      }
+    },
+    "UC Merced": {
+      "overallTransferRate": "72.1%",
+      "majors": {
+        "Computer Science": { "rate": "~60%", "notes": "Below campus average but still quite accessible." },
+        "Electrical Engineering": { "rate": "~62%", "notes": "Moderate for UC Merced." },
+        "Mechanical Engineering": { "rate": "~65%", "notes": "Close to campus average." },
+        "Biological Sciences": { "rate": "~70%", "notes": "Near campus average." },
+        "Biochemistry": { "rate": "~65%", "notes": "Slightly more selective." },
+        "Psychology": { "rate": "~75%", "notes": "Near campus average; accessible." },
+        "Economics": { "rate": "~72%", "notes": "Near campus average." },
+        "Political Science": { "rate": "~75%", "notes": "Accessible." },
+        "Sociology": { "rate": "~78%", "notes": "Highly accessible." },
+        "Management": { "rate": "~68%", "notes": "UC Merced's business program; competitive for campus." },
+        "Environmental Engineering": { "rate": "~68%", "notes": "Specialty program; moderately competitive." },
+        "Cognitive Science": { "rate": "~70%", "notes": "Near campus average." }
+      }
+    }
+  },
+  "keyInsights": [
+    "CS and Engineering majors are consistently 20–40 points below campus overall admit rates at every UC.",
+    "Nursing is the most competitive major at UC campuses that offer it (UCI Nursing ~8%, UCLA Nursing ~6%).",
+    "Business programs (Haas at Berkeley, UCLA Business Econ, UCI Business Admin) are more selective than most STEM majors.",
+    "Humanities and social sciences (Sociology, History, English) are typically the most accessible majors at any campus.",
+    "UC Merced is the most accessible UC campus across all majors — strong transfer option for students building GPA.",
+    "Overall campus admit rates can be misleading — always look at your specific major's rate.",
+    "These rates shift year to year based on application volume and available spots. Use as general guidance."
+  ]
+}

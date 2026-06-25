@@ -1,6 +1,12 @@
 # Secrets and local data
 .env
-data/
+data/users.db
+data/uc_tag_matrix.pdf
+
+# Large raw JSON — committed as .gz instead
+data/all_transferable_courses.json
+data/professors.json
+data/igetc_map.json
 
 # Scraper output
 agreements/

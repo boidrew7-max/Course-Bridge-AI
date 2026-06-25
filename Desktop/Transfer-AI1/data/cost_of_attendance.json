@@ -1,0 +1,142 @@
+{
+  "academicYear": "2024-2025",
+  "note": "Costs shown are for California resident undergraduate students, on-campus housing. Non-residents pay ~$31,026 additional in supplemental tuition.",
+  "systemwideTuition": {
+    "amount": 13146,
+    "note": "UC systemwide tuition is the same at all 9 campuses"
+  },
+  "campuses": {
+    "University of California, Berkeley": {
+      "id": 79,
+      "shortName": "UC Berkeley",
+      "tuition": 13146,
+      "fees": 1172,
+      "roomAndBoard": 22296,
+      "booksAndSupplies": 800,
+      "personalExpenses": 1500,
+      "transportation": 600,
+      "total": 39514,
+      "totalNonResident": 70540,
+      "source": "https://financialaid.berkeley.edu/cost-of-attendance/",
+      "notes": "One of the higher-cost UC campuses due to Bay Area cost of living"
+    },
+    "University of California, Los Angeles": {
+      "id": 117,
+      "shortName": "UCLA",
+      "tuition": 13146,
+      "fees": 1070,
+      "roomAndBoard": 20616,
+      "booksAndSupplies": 900,
+      "personalExpenses": 1500,
+      "transportation": 600,
+      "total": 37832,
+      "totalNonResident": 68858,
+      "source": "https://financialaid.ucla.edu/cost-of-attendance",
+      "notes": "LA cost of living is high; off-campus housing in Westwood is expensive"
+    },
+    "University of California, San Diego": {
+      "id": 7,
+      "shortName": "UC San Diego",
+      "tuition": 13146,
+      "fees": 1466,
+      "roomAndBoard": 19564,
+      "booksAndSupplies": 1000,
+      "personalExpenses": 1200,
+      "transportation": 600,
+      "total": 36976,
+      "totalNonResident": 68002,
+      "source": "https://fas.ucsd.edu/aid/types/cost.html",
+      "notes": "La Jolla has a moderate cost of living compared to other coastal UC locations"
+    },
+    "University of California, Santa Barbara": {
+      "id": 128,
+      "shortName": "UC Santa Barbara",
+      "tuition": 13146,
+      "fees": 1128,
+      "roomAndBoard": 18660,
+      "booksAndSupplies": 750,
+      "personalExpenses": 1500,
+      "transportation": 600,
+      "total": 35784,
+      "totalNonResident": 66810,
+      "source": "https://finaid.ucsb.edu/cost/",
+      "notes": "Isla Vista (adjacent to campus) has affordable student housing options"
+    },
+    "University of California, Davis": {
+      "id": 89,
+      "shortName": "UC Davis",
+      "tuition": 13146,
+      "fees": 1019,
+      "roomAndBoard": 19330,
+      "booksAndSupplies": 800,
+      "personalExpenses": 1800,
+      "transportation": 600,
+      "total": 36695,
+      "totalNonResident": 67721,
+      "source": "https://financialaid.ucdavis.edu/undergraduate/cost",
+      "notes": "Davis is a college town with relatively affordable off-campus housing"
+    },
+    "University of California, Irvine": {
+      "id": 120,
+      "shortName": "UC Irvine",
+      "tuition": 13146,
+      "fees": 1186,
+      "roomAndBoard": 19300,
+      "booksAndSupplies": 900,
+      "personalExpenses": 1600,
+      "transportation": 750,
+      "total": 36882,
+      "totalNonResident": 67908,
+      "source": "https://www.ofas.uci.edu/content/cost.aspx",
+      "notes": "Orange County cost of living is moderate; campus has extensive on-campus housing"
+    },
+    "University of California, Riverside": {
+      "id": 46,
+      "shortName": "UC Riverside",
+      "tuition": 13146,
+      "fees": 1079,
+      "roomAndBoard": 16736,
+      "booksAndSupplies": 1000,
+      "personalExpenses": 2200,
+      "transportation": 800,
+      "total": 34961,
+      "totalNonResident": 65987,
+      "source": "https://financialaid.ucr.edu/cost-of-attendance",
+      "notes": "Most affordable UC campus; Inland Empire has lower cost of living"
+    },
+    "University of California, Santa Cruz": {
+      "id": 132,
+      "shortName": "UC Santa Cruz",
+      "tuition": 13146,
+      "fees": 1055,
+      "roomAndBoard": 19468,
+      "booksAndSupplies": 900,
+      "personalExpenses": 1400,
+      "transportation": 600,
+      "total": 36569,
+      "totalNonResident": 67595,
+      "source": "https://financialaid.ucsc.edu/cost-of-attendance/",
+      "notes": "Santa Cruz housing is expensive; many students live in college residential buildings"
+    },
+    "University of California, Merced": {
+      "id": 144,
+      "shortName": "UC Merced",
+      "tuition": 13146,
+      "fees": 1090,
+      "roomAndBoard": 15536,
+      "booksAndSupplies": 800,
+      "personalExpenses": 1800,
+      "transportation": 600,
+      "total": 32972,
+      "totalNonResident": 63998,
+      "source": "https://financialaid.ucmerced.edu/cost-attendance",
+      "notes": "Least expensive UC campus; Central Valley has very low cost of living. Highest financial aid rates in the UC system."
+    }
+  },
+  "financialAidContext": {
+    "ucBlueAndGold": "California residents with family income under ~$80,000/year qualify for UC Blue and Gold, which covers tuition and fees (~$14,000/year) when combined with Cal Grant.",
+    "calGrant": "Cal Grant A covers up to $9,220/year in tuition for eligible CA residents (file FAFSA by March 2).",
+    "netCostNote": "Many students pay significantly less than sticker price. UC Merced and UC Riverside have the highest % of students receiving aid.",
+    "totalDebtNote": "Average UC transfer student graduates with ~$14,000-22,000 in debt (lower than national average for 4-year schools)."
+  }
+}

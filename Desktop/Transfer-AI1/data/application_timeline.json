@@ -1,0 +1,54 @@
+{
+  "annualCycle": {
+    "July-August": "Prepare your UC application, finalize your coursework plan",
+    "September 1-30": "Submit TAG application via UC TAP (uctap.universityofcalifornia.edu) \u2014 only for TAG-eligible campuses",
+    "October 1": "UC Application opens",
+    "October 1 - November 30": "Submit UC application at apply.universityofcalifornia.edu",
+    "November 15": "TAG decisions released (Davis, Merced, Santa Cruz)",
+    "December": "UC application closes, begin Transfer Academic Update (TAU)",
+    "January 31": "Transfer Academic Update (TAU) deadline \u2014 report fall grades and spring enrollment",
+    "February-March": "UC campuses review complete applications",
+    "March 1": "UC admission decisions released (most campuses)",
+    "April 30": "Review admission decisions and financial aid offers",
+    "May 1": "Statement of Intent to Register (SIR) deadline \u2014 commit to one UC",
+    "May-June": "Finalize spring coursework, maintain required GPA",
+    "July": "Complete any required orientation",
+    "August-September": "Begin classes at your UC"
+  },
+  "tagTimeline": {
+    "note": "TAG is optional \u2014 about 2/3 of transfers are admitted without a TAG.",
+    "September 1-30": "Submit TAG application at uctap.universityofcalifornia.edu",
+    "November 15": "TAG decisions released",
+    "October 1 - November 30": "Submit UC application (must match TAG major exactly)",
+    "January 31": "Submit TAU with fall grades"
+  },
+  "criticalDeadlines": [
+    {
+      "date": "September 30",
+      "event": "TAG application deadline",
+      "critical": true
+    },
+    {
+      "date": "November 30",
+      "event": "UC application deadline",
+      "critical": true
+    },
+    {
+      "date": "January 31",
+      "event": "Transfer Academic Update (TAU) deadline",
+      "critical": true
+    },
+    {
+      "date": "May 1",
+      "event": "Statement of Intent to Register (SIR) deadline",
+      "critical": true
+    }
+  ],
+  "requirements": {
+    "minimumUnits": "60 UC-transferable semester units (90 quarter units) by end of spring before transfer",
+    "minimumGPA": "2.4 overall UC-transferable GPA (higher for competitive campuses/majors)",
+    "sevenCoursePattern": "Complete English, Math, and 5 additional transferable courses from specific subject areas",
+    "majorPrep": "Complete as many major preparation courses as possible \u2014 critical for competitive majors",
+    "gradeRequirements": "C or better in all transferable courses; no more than 2 D/F grades in major prep"
+  }
+}

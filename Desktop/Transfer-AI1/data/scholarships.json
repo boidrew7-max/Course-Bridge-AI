@@ -1,0 +1,132 @@
+{
+  "ucSystemwide": [
+    {
+      "name": "UC Blue and Gold Opportunity Plan",
+      "description": "Covers UC tuition and fees for California residents whose total family income is below approximately $80,000/year. Combined with Cal Grant and other aid.",
+      "eligibility": "CA resident, family income under ~$80,000, demonstrate financial need",
+      "amount": "Full tuition and fees (varies ~$13,000-15,000/year)",
+      "application": "Apply for FAFSA or CA Dream Act by March 2",
+      "website": "https://admission.universityofcalifornia.edu/tuition-financial-aid/types-of-aid/blue-and-gold-opportunity-plan.html"
+    },
+    {
+      "name": "UC Regents Scholarship",
+      "description": "Prestigious merit-based scholarship offered by each UC campus to outstanding admitted students. Amount and eligibility varies by campus.",
+      "eligibility": "Outstanding academic achievement, typically top applicants \u2014 awarded automatically upon admission",
+      "amount": "$2,000-$20,000+ per year depending on campus",
+      "application": "Automatically considered upon admission \u2014 no separate application"
+    },
+    {
+      "name": "Cal Grant A",
+      "description": "California state grant covering tuition at UC for financially eligible students.",
+      "eligibility": "CA resident, financial need, GPA of 3.0+ (high school) or 2.4+ (transfer), apply by March 2",
+      "amount": "Up to $9,220/year at UC (2024-25)",
+      "application": "File FAFSA or CA Dream Act by March 2 of senior year at CC",
+      "website": "https://www.csac.ca.gov/cal-grants"
+    },
+    {
+      "name": "Cal Grant B",
+      "description": "Access award for low-income students. Includes living/education expense allowance plus tuition waiver after first year.",
+      "eligibility": "CA resident, very low income, GPA 2.0+",
+      "amount": "Up to $1,648 (access award) + tuition after year 1",
+      "application": "File FAFSA or CA Dream Act by March 2"
+    }
+  ],
+  "transferSpecific": [
+    {
+      "name": "Jack Kent Cooke Foundation Transfer Scholarship",
+      "description": "Highly competitive national scholarship for high-achieving CC transfer students with financial need.",
+      "eligibility": "CC student transferring to 4-year, 3.5+ GPA, financial need, demonstrated leadership",
+      "amount": "Up to $40,000/year",
+      "deadline": "Typically November of junior year at CC",
+      "website": "https://www.jkcf.org/our-scholarships/transfer-scholarship/"
+    },
+    {
+      "name": "STEM Scholarship Programs at UCs",
+      "description": "Various UC campuses offer STEM-specific transfer scholarships. Check each campus's financial aid page.",
+      "eligibility": "Varies by campus and major"
+    }
+  ],
+  "caResidentNote": "California residents have significant advantages: lower tuition, Cal Grant eligibility, and UC Blue and Gold. Out-of-state students pay approximately $31,000/year more in tuition.",
+  "fafsa": {
+    "deadline": "File FAFSA (or CA Dream Act) by March 2 for priority consideration",
+    "note": "File FAFSA at studentaid.gov or CA Dream Act at dream.csac.ca.gov for undocumented/AB 540 students"
+  },
+  "federal": [
+    {
+      "name": "Federal Pell Grant",
+      "description": "Federal need-based grant for undergraduate students. Does not need to be repaid. Amount depends on financial need and enrollment status.",
+      "eligibility": "U.S. citizen or eligible non-citizen, demonstrated financial need (low EFC on FAFSA), enrolled at least half-time, have not yet earned a bachelor's degree",
+      "amount": "$740–$7,395/year (2024-25); amount determined by FAFSA EFC",
+      "deadline": "File FAFSA by each UC campus priority deadline (typically Feb–March); federal deadline is June 30",
+      "renewable": "Yes — up to 12 semesters lifetime (6 years). Maintain satisfactory academic progress.",
+      "application": "Automatically considered when you file FAFSA at studentaid.gov",
+      "note": "Undocumented students (DACA/AB 540) are NOT eligible for Pell Grant — use CA Dream Act instead. File FAFSA as early as October 1 to maximize aid."
+    }
+  ],
+  "dreamActAB540": {
+    "name": "California Dream Act (AB 540)",
+    "description": "Allows eligible undocumented, DACA, and certain visa-holding students to apply for California state financial aid including Cal Grants, UC institutional grants, and community college fee waivers. NOT the same as DACA.",
+    "eligibility": [
+      "Attended a California high school for 3+ years",
+      "Graduated from a California high school, earned a GED in CA, or passed the California High School Proficiency Exam",
+      "Enrolled or will enroll in a California college",
+      "Undocumented, DACA recipient, T or U visa holder, or protected under VAWA",
+      "Must file CADAA instead of FAFSA"
+    ],
+    "amount": "Same as Cal Grant A or B — covers systemwide tuition/fees at UC",
+    "deadline": "March 2 (CADAA — California Dream Act Application at dream.csac.ca.gov)",
+    "note": "AB 540 students pay in-state tuition at all UC campuses. Cannot receive federal Pell Grant or federal loans, but can receive Cal Grants, UC Blue and Gold, UC institutional grants, and many private scholarships.",
+    "application": "File CADAA at dream.csac.ca.gov (same deadline as FAFSA: March 2)"
+  },
+  "privateAndIdentity": [
+    {
+      "name": "Jack Kent Cooke Foundation Transfer Scholarship",
+      "description": "One of the largest and most prestigious private scholarships for community college transfer students nationwide. Highly competitive.",
+      "eligibility": "Enrolled at CC, planning to transfer to a 4-year university, 3.5+ GPA, demonstrated financial need (typically family income under $95,000), strong academic achievement and leadership",
+      "amount": "Up to $55,000/year (covers tuition, living expenses, books)",
+      "deadline": "Early November (check jkcf.org each year for exact date)",
+      "renewable": "Yes — up to 3 years; must maintain 3.5+ GPA",
+      "note": "~70–80 scholarships awarded nationally per year. Includes coaching, networking events, and alumni community access beyond the money. Very competitive but worth applying.",
+      "website": "jkcf.org/our-scholarships/college-scholarship"
+    },
+    {
+      "name": "Hispanic Scholarship Fund (HSF)",
+      "description": "Large national scholarship program for Hispanic/Latino students. Awards thousands of scholarships per year.",
+      "eligibility": "Hispanic or Latino heritage, U.S. citizen or permanent resident or DACA, GPA 3.0+, enrolled or will enroll full-time at a 4-year college, financial need",
+      "amount": "$500–$5,000/year",
+      "deadline": "February (check hsf.net for exact date each year)",
+      "renewable": "Yes — must maintain 3.0+ GPA",
+      "note": "Apply during community college — award continues after transferring to UC.",
+      "website": "hsf.net"
+    },
+    {
+      "name": "Golden State Pathways Program (GSPP)",
+      "description": "California state grant for CC students enrolled in approved career pathway programs.",
+      "eligibility": "Enrolled at a California community college in an approved career education pathway program, meets income requirements",
+      "amount": "Up to $2,000/year",
+      "deadline": "Varies by college — check with your CC financial aid office",
+      "note": "For students still at CC. Helps cover costs while completing transfer prerequisites in career-connected pathways."
+    },
+    {
+      "name": "Garden State — UC Campus Scholarship Portals",
+      "description": "Every UC campus has a dedicated scholarship portal where one application feeds multiple campus awards. Most have February–March deadlines.",
+      "eligibility": "Varies by individual scholarship — major, GPA, financial need, background, identity",
+      "amount": "Varies widely — $500 to $20,000+",
+      "deadline": "February–March for most; some have rolling deadlines",
+      "campusLinks": {
+        "UCLA": "financialaid.ucla.edu/scholarships",
+        "UC Berkeley": "financialaid.berkeley.edu/scholarships",
+        "UC San Diego": "fas.ucsd.edu/scholarships",
+        "UC Davis": "financialaid.ucdavis.edu/scholarships",
+        "UC Santa Barbara": "finaid.ucsb.edu/scholarships",
+        "UC Irvine": "finaid.uci.edu/scholarships",
+        "UC Santa Cruz": "financialaid.ucsc.edu/scholarships",
+        "UC Riverside": "financialaid.ucr.edu/scholarships",
+        "UC Merced": "financialaid.ucmerced.edu/scholarships"
+      },
+      "note": "Students should apply to their intended campus scholarship portal as soon as they are admitted. One application typically feeds dozens of smaller awards."
+    }
+  ],
+  "aidStackingNote": "Financial aid at UC stacks: a student might receive Pell Grant + Cal Grant A + UC Blue and Gold + Regents Scholarship, covering most or all tuition and fees. Always file both FAFSA and, if eligible, CADAA. File as early as October 1.",
+  "undocumentedStudentNote": "Undocumented and DACA students at UC: pay in-state tuition (AB 540), are eligible for Cal Grants and UC institutional grants via CADAA, and can receive many private scholarships. Cannot receive federal Pell Grant or federal student loans. UC campuses have Undocumented Student Services offices — UCLA, UCB, UCSD, UCI, UCD, UCSB, UCSC, UCR, and UCM all have dedicated staff."
+}

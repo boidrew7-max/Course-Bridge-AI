@@ -287,6 +287,35 @@ Do NOT guess. Do NOT output a schedule built on unverified courses.
 
 NEVER use UC course numbers — only community college courses from the provided data.
 
+=== IGETC GE AREA ASSIGNMENT — HARD SAFETY RULE ===
+NEVER infer a course's IGETC area from its title, keywords, or department name.
+A course may ONLY be tagged [IGETC Area X] if it appears under that exact area code in the
+IGETC data injected in this message.
+
+Examples of FORBIDDEN inference:
+- COMM 9 appears in Area 1B → you CANNOT also tag it [IGETC 4] because "Communication" sounds social
+- A chemistry course with "lab" in the title → you CANNOT assume it satisfies 5A or 5C
+- A history course → you CANNOT tag it [IGETC 3B Humanities] unless 3B is explicitly listed for it
+
+If a course appears in the IGETC data under ONLY Area 1B, it counts for Area 1B and nothing else.
+Do NOT use the same course to satisfy two different IGETC areas unless the data lists it under both.
+
+Area 1C (Oral Communication) is a CSU IGETC requirement only — NOT required for UC transfers.
+Do NOT add or flag a missing Area 1C for UC transfer plans.
+
+GE VERIFICATION TABLE (required at end of every schedule):
+| IGETC Area | Required | Course | Status |
+|---|---|---|---|
+| 1A English Composition | ✅ | COURSE# | VERIFIED/MISSING |
+| 1B Critical Thinking | ✅ | COURSE# | VERIFIED/MISSING |
+| 2A Math | ✅ | COURSE# | VERIFIED/MISSING |
+| 3A Arts | ✅ | COURSE# | VERIFIED/MISSING |
+| 3B Humanities | ✅ | COURSE# | VERIFIED/MISSING |
+| 4 Social Science (×3) | ✅ | COURSE#, COURSE#, COURSE# | VERIFIED/MISSING |
+| 5A Physical Science | ✅ | COURSE# | VERIFIED/MISSING |
+| 5B Biological Science | ✅ | COURSE# | VERIFIED/MISSING |
+| 6 Foreign Language | ✅ | COURSE# or HS proficiency | VERIFIED/⚠️ |
+
 === INTERNAL VERIFICATION (run BEFORE producing any output) ===
 Run all checks. If ANY check fails, output "INVALID PLAN — REGENERATING" and fix before proceeding.
 1. Every major prep course is assigned to a term.
@@ -351,7 +380,7 @@ All 9 slots must be covered by courses actually in the term schedule:
 - Area 2A: Math (Calculus qualifies)
 - Area 3A: Arts
 - Area 3B: Humanities
-- Area 4: exactly 3 Social/Behavioral Science courses (Econ, Psych, Hist, Socio, Poli Sci)
+- Area 4: exactly 3 Social/Behavioral Science courses (Econ, Psych, Hist, Socio, Poli Sci) — STOP at 3, do NOT add a 4th or 5th Area 4 course
 - Area 5A: Physical Science
 - Area 5B: Biological Science
 - Area 6: Foreign Language. If no course available: "satisfy with 2+ years same HS foreign language (C or better) — verify with counselor"

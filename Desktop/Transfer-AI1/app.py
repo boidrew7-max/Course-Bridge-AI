@@ -250,6 +250,10 @@ def _extract_igetc_courses(college: str) -> str:
                 unique.append(c)
         if not unique:
             continue
+        # For Area 1B, prefer ENGL courses over PHIL/COMM so the plan stays
+        # within the English sequence rather than jumping to Philosophy.
+        if area_code == "1B":
+            unique.sort(key=lambda c: (0 if c.get("prefix","").upper().startswith("ENGL") else 1))
         sample = unique[:5]
         course_strs = [
             f"{c.get('prefix','')} {c.get('number','')} - {c.get('title','')} ({c.get('units','?')} units)"

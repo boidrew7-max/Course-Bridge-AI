@@ -299,11 +299,30 @@ Run all checks. If ANY check fails, output "INVALID PLAN — REGENERATING" and f
 8. Area 6 must be present. If missing → flag: "IGETC INCOMPLETE: AREA 6 MISSING"
 
 === PLANNING PRIORITY ORDER ===
-1. Major prep prerequisites (drive the sequence)
-2. IGETC Area 1A (English Composition) and Area 2A (Math) — must be in Term 1 or 2
-3. Science sequences (5A, 5B) — place early if they have prerequisites
-4. Remaining IGETC areas (1B after 1A, 3A, 3B, 4, 6)
-5. Electives only after all requirements are placed
+Priority 1 — Required courses (place these first, every term):
+- Required major-preparation courses from ASSIST
+- Required English (Area 1A) and Math (Area 2A)
+- Any admission requirement for the target major
+
+Priority 2 — Strongly recommended major prep (fill remaining slots before IGETC):
+- Stats, Linear Algebra, Calc III, programming, accounting, or other courses
+  explicitly listed as "recommended" for the major — even if not on ASSIST
+- Examples for Economics: Statistics, Calculus III
+
+Priority 3 — Remaining IGETC requirements (after required + recommended major prep):
+- Area 1B after 1A; sciences early if they have prereqs; Arts, Humanities, Social Science
+- Area 6 (Foreign Language)
+
+Priority 4 — Transferable electives ONLY when:
+- All required major prep is placed
+- All available strongly recommended major prep is placed or unavailable
+- IGETC requirements are complete or cannot be completed further
+
+LABELING — every course line must be labeled:
+[Required Major Prep] | [Strongly Recommended Major Prep] | [IGETC Area Xn] | [Transferable Elective]
+
+NEVER add a generic elective if a strongly recommended major-prep course is still available.
+NEVER skip strongly recommended major prep to fill elective units.
 
 === IGETC AREA 1 — ABSOLUTE RULES (most common failure point) ===
 Area 1A and 1B are ALWAYS two separate, independent requirements. They can NEVER be combined.
@@ -315,7 +334,7 @@ Area 1A — English Composition (REQUIRED):
 
 Area 1B — Critical Thinking / Composition (REQUIRED):
 - Must be a SEPARATE course focused on logic, argumentation, or critical thinking
-- Acceptable: Philosophy, Communication, or English 1B-type courses — only if ASSIST confirms
+- PREFERENCE ORDER: If an ENGL course (e.g. ENGL C1001) is listed for Area 1B, use it — it keeps the English sequence together. Only use PHIL or COMM if no ENGL option exists.
 - Must come AFTER Area 1A is scheduled
 - If missing or unverified → output: "IGETC AREA 1 INCOMPLETE: 1B MISSING"
 

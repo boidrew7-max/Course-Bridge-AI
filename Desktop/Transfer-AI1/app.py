@@ -198,6 +198,7 @@ _IGETC_REQUIRED = [
     ("4",  "Social & Behavioral Sciences",            3),
     ("5A", "Physical Sciences",                       1),
     ("5B", "Biological Sciences",                     1),
+    ("6",  "Languages Other Than English",            1),
 ]
 
 
@@ -227,6 +228,7 @@ def _extract_igetc_courses(college: str) -> str:
         f"=== IGETC COURSES AVAILABLE AT {college} ===",
         "The schedule MUST include courses covering ALL required IGETC areas below.",
         "Use ONLY courses listed here for IGETC slots — do not invent course numbers.",
+        "NOTE: Area 6 (Languages Other Than English) — if no course is listed, the student may satisfy this with 2+ years of the same HS foreign language (C or better). Include a note about this in Key Notes.",
         "",
     ]
 
@@ -431,7 +433,7 @@ def plan():
     major_prep_block = _extract_major_prep(college, school, major)
     igetc_block      = _extract_igetc_courses(college)
     completed_str    = completed if completed else "none"
-    honors_rule      = "" if accept_honors else "\n11. HONORS: Student declined honors. NEVER include any course with 'H', 'Honors', or 'HONORS' in its title or number."
+    honors_rule      = "" if accept_honors else "\n0. HONORS — HIGHEST PRIORITY RULE: The student has DECLINED honors courses. This overrides everything. NEVER include any course whose number ends in 'H' (e.g. ECON 1H, MATH 1AH, ENGL 1AH) or whose title contains 'Honors'. If the only option for a requirement is an honors course, use the non-honors equivalent instead."
 
     # Build background section (AP credit + HS math)
     background_lines = []
@@ -466,9 +468,9 @@ def plan():
 Already completed — EXCLUDE ENTIRELY: {completed_str}
 {ap_section}
 
-RULES (every rule is mandatory):
+RULES (every rule is mandatory):{honors_rule}
 1. MAJOR PREP: Include EVERY course from the articulation list. These are non-negotiable requirements. Do not skip any.
-2. IGETC: The schedule must cover all required IGETC areas (1A, 1B, 2A, 3A, 3B, 4, 5A or 5B). Use only courses from the IGETC list above for these slots.
+2. IGETC: The schedule must cover all required IGETC areas (1A, 1B, 2A, 3A, 3B, 4, 5A or 5B, 6). Use only courses from the IGETC list above for these slots.
 3. PREREQUISITES — HARD RULE: A course may only appear in Term N if every one of its prerequisites appears in an earlier term OR is already completed/covered by AP credit.{fresh_start_rule}
    - English sequence: Area 1A (first-year composition) → Area 1B (critical thinking/analysis). NEVER place 1B before 1A.
    - Math sequence: Calculus I → Calculus II → Calculus III. Never skip a step.
@@ -481,7 +483,7 @@ RULES (every rule is mandatory):
 9. IGETC NOTE: A course that satisfies major prep may also count toward IGETC (e.g., ECON courses count for Area 4). Do not double-count — list it once.
 10. NO DUPLICATES: Never include both a regular course and its honors variant (e.g., if ECON 1 is in the plan, do NOT also add ECON 1H). Pick one version only.
 11. AP CREDIT: Any course area covered by AP credit does not need to be retaken — skip it and fill that slot with the next needed course.
-12. NO PREAMBLE: Start directly with ## Term 1 (Fall).{honors_rule}
+12. NO PREAMBLE: Start directly with ## Term 1 (Fall).
 
 Output format:
 ## Term 1 (Fall)

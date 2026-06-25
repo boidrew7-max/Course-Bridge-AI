@@ -197,170 +197,107 @@ _UC_NAME_MAP = {
 }
 
 
-# Compact articulation index loaded once at startup
-_ART_INDEX = None
-_ART_INDEX_ENTRIES = []  # list of (cc_l, uc_l, major_l, key) for scoring
+# UC shard name → loaded shard dict (loaded lazily per UC)
+_ART_SHARDS: dict = {}
 
-def _load_art_index():
-    import gzip as _gzip
-    global _ART_INDEX, _ART_INDEX_ENTRIES
-    if _ART_INDEX is not None:
-        return
+# Maps canonical UC name → shard filename stem
+_UC_SHARD_MAP = {
+    "los angeles":   "Los_Angeles",
+    "berkeley":      "Berkeley",
+    "san diego":     "San_Diego",
+    "irvine":        "Irvine",
+    "santa barbara": "Santa_Barbara",
+    "davis":         "Davis",
+    "santa cruz":    "Santa_Cruz",
+    "riverside":     "Riverside",
+    "merced":        "Merced",
+}
+
+
+def _load_uc_shard(uc_canonical: str) -> dict:
+    """Load (and cache) the shard for the given canonical UC name. Returns {} on failure."""
+    import gzip as _gz
+    shard_name = _UC_SHARD_MAP.get(uc_canonical)
+    if not shard_name:
+        return {}
+    if shard_name in _ART_SHARDS:
+        return _ART_SHARDS[shard_name]
     base = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "data", "articulations_index.json")
+                        "data", f"articulations_{shard_name}.json")
     for path in (base + ".gz", base):
         if not os.path.exists(path):
             continue
         try:
-            opener = _gzip.open if path.endswith(".gz") else open
+            opener = _gz.open if path.endswith(".gz") else open
             with opener(path, "rt", encoding="utf-8") as f:
-                _ART_INDEX = json.load(f)
-            for key in _ART_INDEX:
-                parts = key.split("__")
-                if len(parts) >= 3:
-                    cc_l    = parts[0].replace("_", " ").lower()
-                    uc_l    = parts[1].replace("_", " ").lower()
-                    major_l = "__".join(parts[2:]).replace("_", " ").lower()
-                    _ART_INDEX_ENTRIES.append((cc_l, uc_l, major_l, key))
-            return
+                shard = json.load(f)
+            _ART_SHARDS[shard_name] = shard
+            return shard
         except Exception:
-            continue
-    _ART_INDEX = {}
+            break
+    _ART_SHARDS[shard_name] = {}
+    return {}
 
 
 def _extract_major_prep(college: str, uc: str, major: str) -> str:
     """
-    Find the best-matching agreement in the compact index and return a
-    structured articulation string the LLM must follow verbatim.
-    Falls back to the raw agreements/ directory if the compact index is absent.
+    Load only the UC-specific shard (<1 MB each) and find the best CC+major match.
     """
     college_l = college.lower()
     uc_l      = _UC_NAME_MAP.get(uc.lower().strip(), uc.lower())
     major_l   = major.lower()
 
-    # ── Try compact index first ──────────────────────────────────
-    _load_art_index()
-    if _ART_INDEX_ENTRIES:
-        best_score, best_key = 0.0, None
-        for (cc, uc_idx, maj, key) in _ART_INDEX_ENTRIES:
-            cc_words  = [w for w in cc.split()  if len(w) >= 3]
-            uc_words  = [w for w in uc_idx.split() if len(w) >= 3]
-            maj_words = [w for w in maj.split()  if len(w) >= 4]
-
-            cc_hit  = sum(1 for w in cc_words  if w in college_l) / max(len(cc_words), 1)
-            uc_hit  = sum(1 for w in uc_words  if w in uc_l)      / max(len(uc_words), 1)
-            maj_hit = sum(1 for w in maj_words if w in major_l)   / max(len(maj_words), 1)
-
-            score = cc_hit * 3 + uc_hit * 3 + maj_hit * 4
-            if score > best_score:
-                best_score = score
-                best_key   = key
-
-        if best_key and best_score >= 2.0:
-            arts = _ART_INDEX.get(best_key, [])
-            parts = best_key.split("__")
-            uc_display    = parts[1].replace("_", " ") if len(parts) > 1 else uc
-            major_display = "__".join(parts[2:]).replace("_", " ") if len(parts) > 2 else major
-
-            lines = [
-                f"=== VERIFIED ARTICULATION DATA: {college} → {uc_display} | {major_display} ===",
-                "Source: ASSIST.org (authoritative — do not deviate from this list)",
-                "",
-                "The student MUST complete the following courses at their community college.",
-                "Use ONLY these exact course numbers and titles. Do not substitute.",
-                "",
-            ]
-            for art in arts:
-                uc_c = art.get("uc", {})
-                uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} — {uc_c.get('t','')}"
-                lines.append(f"• UC requires: {uc_str}")
-                for grp in art.get("cc", []):
-                    parts_cc = []
-                    for c in grp:
-                        parts_cc.append(f"{c.get('p','')} {c.get('n','')} — {c.get('t','')} ({c.get('u','?')} units)")
-                    conj = grp[0].get("j", "Or") if grp else "Or"
-                    lines.append(f"  → Enroll in: {f' {conj} '.join(parts_cc)}")
-            lines.append("")
-            lines.append("=== END ARTICULATION DATA ===")
-            return "\n".join(lines)
-
-    # ── Fallback: raw agreements/ directory ──────────────────────
-    from search_agreements import _INDEX, _parse_agreement
-    if not _INDEX:
+    shard = _load_uc_shard(uc_l)
+    if not shard:
         return ""
 
-    best_score, best_entry = 0.0, None
-    for entry in _INDEX:
-        cc_words  = [w for w in entry["cc"].lower().split()  if len(w) >= 3]
-        uc_words  = [w for w in entry["uc"].lower().split()  if len(w) >= 3]
-        maj_words = [w for w in entry["major"].lower().split() if len(w) >= 4]
+    best_score, best_key = 0.0, None
+    for key in shard:
+        parts = key.split("__")
+        if len(parts) < 3:
+            continue
+        cc_l_k  = parts[0].replace("_", " ").lower()
+        maj_l_k = "__".join(parts[2:]).replace("_", " ").lower()
+
+        cc_words  = [w for w in cc_l_k.split()  if len(w) >= 3]
+        maj_words = [w for w in maj_l_k.split() if len(w) >= 4]
 
         cc_hit  = sum(1 for w in cc_words  if w in college_l) / max(len(cc_words), 1)
-        uc_hit  = sum(1 for w in uc_words  if w in uc_l)      / max(len(uc_words), 1)
         maj_hit = sum(1 for w in maj_words if w in major_l)   / max(len(maj_words), 1)
 
-        score = cc_hit * 3 + uc_hit * 3 + maj_hit * 4
+        score = cc_hit * 5 + maj_hit * 5
         if score > best_score:
             best_score = score
-            best_entry = entry
+            best_key   = key
 
-    if not best_entry or best_score < 2.0:
+    if not best_key or best_score < 2.0:
         return ""
 
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "agreements", best_entry["fname"])
-    try:
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception:
-        return ""
-
-    result   = data.get("result", {})
-    arts_raw = result.get("articulations", "[]")
-    arts     = json.loads(arts_raw) if isinstance(arts_raw, str) else (arts_raw or [])
+    arts = shard[best_key]
+    kparts = best_key.split("__")
+    uc_display    = kparts[1].replace("_", " ") if len(kparts) > 1 else uc
+    major_display = "__".join(kparts[2:]).replace("_", " ") if len(kparts) > 2 else major
 
     lines = [
-        f"=== VERIFIED ARTICULATION DATA: {college} → {best_entry['uc']} | {best_entry['major']} ===",
-        "Source: ASSIST.org (authoritative — do not deviate from this list)",
+        f"=== VERIFIED ARTICULATION DATA: {college} -> {uc_display} | {major_display} ===",
+        "Source: ASSIST.org (authoritative - do not deviate from this list)",
         "",
         "The student MUST complete the following courses at their community college.",
         "Use ONLY these exact course numbers and titles. Do not substitute.",
         "",
     ]
-    has_data = False
     for art in arts:
-        if not isinstance(art, dict):
-            continue
-        inner = art.get("articulation", {})
-        uc_c  = inner.get("course", {})
-        sa    = inner.get("sendingArticulation", {})
-        if sa.get("noArticulationReason"):
-            continue
-        items = sa.get("items", [])
-        cc_options = []
-        for grp in items:
-            if not isinstance(grp, dict):
-                continue
-            conj = grp.get("courseConjunction", "Or")
-            grp_courses = []
-            for c in grp.get("items", []):
-                if isinstance(c, dict) and c.get("courseNumber"):
-                    grp_courses.append(
-                        f"{c.get('prefix','')} {c.get('courseNumber','')} "
-                        f"— {c.get('courseTitle','')} ({c.get('maxUnits','?')} units)"
-                    )
-            if grp_courses:
-                cc_options.append(f" {conj} ".join(grp_courses))
-        if cc_options:
-            has_data = True
-            uc_str = (f"{uc_c.get('prefix','')} {uc_c.get('courseNumber','')} "
-                      f"— {uc_c.get('courseTitle','')}")
-            lines.append(f"• UC requires: {uc_str}")
-            for opt in cc_options:
-                lines.append(f"  → Enroll in: {opt}")
-
-    if not has_data:
-        return ""
+        uc_c   = art.get("uc", {})
+        uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+        lines.append(f"UC requires: {uc_str}")
+        for grp in art.get("cc", []):
+            parts_cc = []
+            for c in grp:
+                parts_cc.append(
+                    f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
+                )
+            conj = grp[0].get("j", "Or") if grp else "Or"
+            lines.append(f"  -> Enroll in: {f' {conj} '.join(parts_cc)}")
     lines.append("")
     lines.append("=== END ARTICULATION DATA ===")
     return "\n".join(lines)

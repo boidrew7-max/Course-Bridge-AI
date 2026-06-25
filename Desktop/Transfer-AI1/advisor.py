@@ -74,6 +74,14 @@ ANSWER RULES:
 7. Tone: direct, confident, helpful.
 8. NEVER invent statistics, GPA ranges, or admit rates that aren't listed above or provided in the data context. If you don't have a specific number, say so honestly.
 
+COURSE TITLE INTEGRITY — HARD RULE, NO EXCEPTIONS:
+When recommending courses from a specific community college, use the exact course number and title from the TRANSFERABLE COURSE DATA in the context below.
+- NEVER guess or infer a course title from the course number alone.
+- NEVER use a course title from your training knowledge when catalog data is provided.
+- Different colleges use the same course number for completely different courses. De Anza MATH 30A, CCSF MATH 30A, and Foothill MATH 30A are different courses. Never assume.
+- If a course appears in TRANSFERABLE COURSE DATA, use that exact school, prefix, number, and title verbatim.
+- If a course cannot be found in the provided data, write: "[NUMBER] — verify official title at [COLLEGE]" instead of guessing the title.
+
 ESSAY EVALUATION MODE:
 When a student pastes their own PIQ essay or asks you to review, check, grade, or give feedback on their essay:
 
@@ -95,14 +103,14 @@ If real admitted student essays are provided in the data context (real_admitted_
 def _format_courses(results):
     if not results:
         return ""
-    lines = []
-    for r in results[:15]:
+    lines = ["OFFICIAL CATALOG DATA — use these exact titles, never substitute your own:"]
+    for r in results[:40]:
         school = r.get("school", "")
         prefix = r.get("prefix", "")
         num = r.get("courseNumber", "")
         title = r.get("courseTitle", "")
         units = r.get("maxUnits", "")
-        lines.append(f"{school} | {prefix} {num} | {title} | {units} units")
+        lines.append(f"  [{school}] {prefix} {num} — {title} ({units} units)")
     return "\n".join(lines)
 
 

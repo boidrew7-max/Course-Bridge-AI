@@ -66,75 +66,53 @@ def search_courses(query):
                 school_detected = school_lower
                 break
 
-    # SUBJECT DETECTION
+    # SUBJECT DETECTION — collect ALL matching subjects, not just the first
     subjects = [
-        "math",
-        "biology",
-        "chemistry",
-        "physics",
-        "economics",
-        "business",
-        "computer",
-        "english",
-        "history",
-        "psychology"
+        "math", "biology", "chemistry", "physics", "economics",
+        "business", "computer", "english", "history", "psychology",
+        "statistics", "calculus", "accounting", "sociology", "political",
+        "engineering", "nursing", "kinesiology", "communications",
     ]
 
-    subject_detected = None
-
-    for subject in subjects:
-
-        if subject in query:
-
-            subject_detected = subject
-            break
+    subjects_detected = [s for s in subjects if s in query]
 
     # STRICT FILTERING
     for course in courses:
 
         searchable = ""
-
         for key, value in course.items():
-
             if isinstance(value, str):
-
                 searchable += value.lower() + " "
 
-        # REQUIRE SCHOOL MATCH
+        # REQUIRE SCHOOL MATCH when school is detected
         if school_detected:
-
             if (
                 "school" not in course
-                or course["school"].lower()
-                != school_detected
+                or course["school"].lower() != school_detected
             ):
                 continue
 
-        # REQUIRE SUBJECT MATCH
-        if subject_detected:
-
-            if subject_detected not in searchable:
+        # REQUIRE AT LEAST ONE SUBJECT MATCH when subjects are detected
+        if subjects_detected:
+            if not any(s in searchable for s in subjects_detected):
                 continue
 
         matches.append(course)
 
     # REMOVE DUPLICATES
     unique_matches = []
-
     seen = set()
 
     for match in matches:
-
         key = (
             match.get("school", ""),
             match.get("prefix", ""),
             match.get("courseNumber", "")
         )
-
         if key not in seen:
-
             seen.add(key)
-
             unique_matches.append(match)
 
-    return unique_matches[:20]
+    # Return more results when a specific school is detected (schedule building needs broad data)
+    limit = 40 if school_detected else 20
+    return unique_matches[:limit]

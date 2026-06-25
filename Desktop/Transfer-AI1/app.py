@@ -299,10 +299,12 @@ _MAJOR_RECS = [
       "Linear Algebra"]),
 
     (["computer science", "cs ", " cs,", "computing", "software engineering", "software eng"],
-     "Calculus I, Programming Fundamentals (CS1/Intro to CS), Discrete Mathematics",
-     ["Calculus II",
-      "Data Structures (CS2)",
-      "Linear Algebra",
+     "Calculus I, Calculus II, Calculus III (check ASSIST — many UCs require a full Calc I+II+III series), "
+     "Linear Algebra (required by most UC CS programs — verify exact course series on ASSIST), "
+     "Differential Equations (required for MATH 54 equivalent at Berkeley and other UCs — check ASSIST)",
+     ["Data Structures (CS2 / CIS 22C equivalent)",
+      "Discrete Mathematics",
+      "Introduction to Programming / CS1 (if articulated)",
       "Statistics"]),
 
     (["data science"],

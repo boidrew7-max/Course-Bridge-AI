@@ -287,6 +287,43 @@ Do NOT guess. Do NOT output a schedule built on unverified courses.
 
 NEVER use UC course numbers — only community college courses from the provided data.
 
+=== HOW TO READ THE ASSIST ARTICULATION BLOCK ===
+The VERIFIED ARTICULATION DATA block uses this format:
+
+  UC requires: [UC course]
+  -> Enroll in: [CC course A] And [CC course B]   ← one option
+  -> Enroll in: [CC course C] And [CC course D]   ← alternative option (OR between lines)
+
+PARSING RULES — follow exactly:
+1. Each "UC requires:" line is a REQUIRED admission course. Every one must appear in the term schedule.
+   Label ALL of them [Required Major Prep].
+
+2. "And" within a "-> Enroll in:" line means ALL listed courses are required together.
+   Example: "MATH 1B And MATH 1C" → you MUST schedule BOTH MATH 1B and MATH 1C.
+   NEVER schedule only the first course in an "And" group and treat the second as optional.
+
+3. Multiple "-> Enroll in:" lines under the same "UC requires:" are OR alternatives.
+   Pick ONE group (the most feasible), then schedule ALL courses in that group.
+
+4. A CC course that satisfies multiple UC requirements (e.g. MATH 1B appears in both
+   MATH 51 and MATH 52 groups) is scheduled ONCE — but counts toward both.
+
+5. The student must end up with every UC requirement covered. Run this check:
+   For each "UC requires:" entry → is every CC course in the chosen group scheduled?
+   If any CC course from a required group is missing → INVALID PLAN.
+
+EXAMPLE — correct interpretation for CS at UC Berkeley from De Anza:
+  UC requires: MATH 52 - Calculus II
+  -> Enroll in: MATH 1B And MATH 1C
+  CORRECT: schedule MATH 1B + MATH 1C both as [Required Major Prep]
+  WRONG: schedule MATH 1B as required, label MATH 1C as "Strongly Recommended" or omit it
+
+  UC requires: MATH 54 - Linear Algebra and Differential Equations
+  -> Enroll in: MATH 2A And MATH 2B
+  -> Enroll in: ENGR 37 And MATH 2A And MATH 2B  (alternative)
+  CORRECT: pick first group → schedule MATH 2A + MATH 2B both as [Required Major Prep]
+  WRONG: show these only in a "Major Prep Summary" footnote without scheduling them in any term
+
 === IGETC GE AREA ASSIGNMENT — HARD SAFETY RULE ===
 NEVER infer a course's IGETC area from its title, keywords, or department name.
 A course may ONLY be tagged [IGETC Area X] if it appears under that exact area code in the
@@ -324,7 +361,11 @@ GE VERIFICATION TABLE (required at end of every schedule):
 
 === INTERNAL VERIFICATION (run BEFORE producing any output) ===
 Run all checks. If ANY check fails, output "INVALID PLAN — REGENERATING" and fix before proceeding.
-1. Every major prep course is assigned to a term.
+1. ASSIST COMPLETENESS CHECK — for every "UC requires:" entry in the articulation block:
+   a. Identify which CC group you chose (the "-> Enroll in:" line).
+   b. Verify EVERY course in that group appears in a term. If any is missing → INVALID.
+   c. "And" courses are not optional. MATH 1C in "MATH 1B And MATH 1C" is just as required as MATH 1B.
+   d. Courses that only appear in a Major Prep Summary footnote but NOT in a term → INVALID.
 2. Every IGETC area (1A, 1B, 2A, 3A, 3B, 4×3, 5A, 5B, 5C, 6) has a course assigned to a term.
    Area 5C is satisfied if your 5A or 5B course is marked ★LAB — no extra course needed in that case.
 3. No course appears more than once across all 4 terms.

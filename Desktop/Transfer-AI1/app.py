@@ -1137,6 +1137,76 @@ def api_feedback():
     return ("", 204)
 
 
+@app.route("/tag-check", methods=["POST"])
+def tag_check():
+    data   = request.get_json() or {}
+    gpa    = float(data.get("gpa", 0))
+    major  = data.get("major", "").strip().lower()
+
+    tag_path = os.path.join(os.path.dirname(__file__), "data", "tag_requirements.json")
+    try:
+        with open(tag_path, encoding="utf-8") as f:
+            tag_data = json.load(f)
+    except Exception:
+        return jsonify({"error": "TAG data unavailable"}), 500
+
+    shared = tag_data.get("sharedCriteria", {})
+
+    def is_excluded(major_lower, excluded_list):
+        for excl in excluded_list:
+            el = excl.lower()
+            # Bidirectional substring: "economics" in "economics" or "all majors in..." contains keyword
+            if major_lower in el or el in major_lower:
+                return True
+            # Word-level: each significant word in major against the excluded string
+            for word in major_lower.split():
+                if len(word) > 3 and word in el:
+                    return True
+        return False
+
+    def get_required_gpa(major_lower, gpa_map):
+        best_gpa = gpa_map.get("default", 3.0)
+        # Try to find a school/program in the map that matches the major
+        for school_name, school_gpa in gpa_map.items():
+            if school_name == "default":
+                continue
+            sn = school_name.lower()
+            for word in major_lower.split():
+                if len(word) > 3 and word in sn:
+                    # Take the higher requirement (more conservative)
+                    if school_gpa > best_gpa:
+                        best_gpa = school_gpa
+                    break
+        return best_gpa
+
+    results = []
+    for campus in tag_data.get("campuses", []):
+        name        = campus.get("shortName", campus.get("name", ""))
+        excluded    = campus.get("excludedMajors", [])
+        major_excl  = is_excluded(major, excluded) if major else False
+        req_gpa     = get_required_gpa(major, campus.get("minGPA", {"default": 3.0}))
+        gpa_ok      = gpa >= req_gpa if gpa > 0 else None  # None = GPA not provided
+        eligible    = (not major_excl) and (gpa_ok is True)
+
+        results.append({
+            "campus":        name,
+            "eligible":      eligible,
+            "requiredGPA":   req_gpa,
+            "majorExcluded": major_excl,
+            "gpaOk":         gpa_ok,
+            "notes":         campus.get("notes", ""),
+            "tagWebsite":    campus.get("tagWebsite", ""),
+            "filingPeriod":  campus.get("filingPeriod", "September 1-30"),
+        })
+
+    return jsonify({
+        "results":            results,
+        "sharedRequirements": shared.get("requirements", [])[:5],
+        "filingPeriod":       shared.get("tagFilingPeriod", "September 1-30"),
+        "nonParticipating":   shared.get("nonParticipatingCampuses", []),
+    })
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)

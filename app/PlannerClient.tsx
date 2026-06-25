@@ -1233,45 +1233,50 @@ export default function PlannerClient() {
     setAiPlanLoading(true);
     setAiPlan("");
     const completedList = courses.trim() ? courses : "none";
-    const message = `You are building a 2-year semester-by-semester transfer schedule for a student at ${college} planning to transfer to ${school} for ${major}.
+    const message = `Build a 2-year transfer schedule for a student at ${college} transferring to ${school} for ${major}.
 
-Already completed courses (DO NOT include these anywhere in the schedule): ${completedList}
+Already completed (exclude entirely from schedule): ${completedList}
 
-Output format — use exactly these headers, nothing before them:
+═══ STEP 1 — IDENTIFY MAJOR PREP FIRST ═══
+Before building the schedule, look at the ARTICULATION AGREEMENT DATA in your context for ${school} ${major}.
+List the specific lower-division major preparation courses that ${school} requires for ${major}.
+These are non-negotiable. The schedule MUST include all of them.
+
+For Economics majors this typically means: the correct calculus series (NOT business calc unless the agreement specifically shows it), microeconomics, macroeconomics, and statistics. Use what the articulation data shows — do not guess.
+
+═══ STEP 2 — MATCH TO ${college} CATALOG ═══
+For each major prep requirement, find the matching ${college} course in the OFFICIAL CATALOG DATA.
+Use the exact course number and title from that data. Do not substitute.
+
+═══ STEP 3 — BUILD THE SCHEDULE ═══
+Place major prep courses in the correct prerequisite order across 4 terms. Fill remaining units with IGETC/GE courses from ${college}.
+
+Output using exactly these headers (start directly with ## Term 1, no preamble):
+
 ## Term 1 (Fall)
-- COURSE# — Full Course Title as listed at ${college} (X units)
+- COURSE# — Official Title from ${college} catalog (X units)
 
 ## Term 2 (Spring)
-- COURSE# — Full Course Title as listed at ${college} (X units)
+- COURSE# — Official Title from ${college} catalog (X units)
 
 ## Term 3 (Fall)
-- COURSE# — Full Course Title as listed at ${college} (X units)
+- COURSE# — Official Title from ${college} catalog (X units)
 
 ## Term 4 (Spring)
-- COURSE# — Full Course Title as listed at ${college} (X units)
-
-Example of correct format: "MATH 16A — Calculus for Business and Social Science (4 units)"
-
-CRITICAL: Every course listed must be a course offered at ${college}, not at ${school}. The student takes classes at ${college} — these community college courses articulate to satisfy ${school} requirements. Never list a ${school} course number. Only list courses the student would actually enroll in at ${college}.
+- COURSE# — Official Title from ${college} catalog (X units)
 
 ## Key Notes
-- TAG: [eligible or not and why]
+- Major prep: [list the ${school} requirements and which ${college} courses cover them]
+- TAG: [eligible/not and why]
 - IGETC: [complete or partial]
 - GPA target: [number]
 
-STRICT RULES — violating any of these is an error:
-
-1. PREREQUISITES: Never place a course and its prerequisite in the same term. If course B requires course A, course A MUST appear in an earlier term. Example: MATH 16A and MATH 16B can NEVER be in the same term — 16A must come first.
-
-2. COMPLETED COURSES: Do not list any course the student already completed. They are done. They do not appear anywhere in the schedule.
-
-3. BALANCE: Each term must have a mix of subject areas — do not stack all math or all econ courses in one term. Spread prerequisites across terms naturally.
-
-4. LOAD: 4–5 courses per term (13–17 units). Do not exceed this.
-
-5. COURSE TITLES: You will receive official catalog data in your context labeled "OFFICIAL CATALOG DATA." Every course title you write MUST come from that data exactly as listed. Never use a title from your training knowledge. If a course isn't in the catalog data, write: "COURSE# — verify official title at ${college}" and do not guess the title.
-
-6. NO PREAMBLE: Start your response directly with "## Term 1 (Fall)". No greeting, no intro paragraph.`;
+RULES:
+1. PREREQUISITES: A course and its prerequisite can NEVER be in the same term.
+2. COMPLETED: Never include already-completed courses anywhere.
+3. LOAD: 4–5 courses per term (13–17 units max).
+4. TITLES: Every title comes from OFFICIAL CATALOG DATA. If not found, write "COURSE# — verify at ${college}".
+5. CC ONLY: Every course must be from ${college}. Never list ${school} course numbers.`;
     try {
       await streamResponse("/api/chat", [{ role: "user", content: message }], (r) => {
         // Strip the model-switch notice from the displayed output

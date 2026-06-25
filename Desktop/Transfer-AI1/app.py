@@ -262,8 +262,8 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
         cc_words  = [w for w in cc_l_k.split()  if len(w) >= 3]
         maj_words = [w for w in maj_l_k.split() if len(w) >= 4]
 
-        cc_hit  = sum(1 for w in cc_words  if w in college_l) / max(len(cc_words), 1)
-        maj_hit = sum(1 for w in maj_words if w in major_l)   / max(len(maj_words), 1)
+        cc_hit  = sum(1 for w in cc_words  if w in college_l or college_l in w) / max(len(cc_words), 1)
+        maj_hit = sum(1 for w in maj_words if w in major_l  or major_l  in w)  / max(len(maj_words), 1)
 
         score = cc_hit * 5 + maj_hit * 5
         if score > best_score:

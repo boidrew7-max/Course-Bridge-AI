@@ -1087,13 +1087,13 @@ export default function PlannerClient() {
     }
   }, [chatOpen, chatMessages.length, runOnboardingMessage, onboardingDone]);
 
-  async function generateAIPlan(college: string, schools: string[], major: string, courses: string) {
+  async function generateAIPlan(college: string, school: string, major: string, courses: string) {
     setAiPlanLoading(true);
     setAiPlan("");
     const coursePart = courses.trim()
       ? `I've completed these courses: ${courses}.`
       : "I haven't completed any courses yet.";
-    const message = `I attend ${college} and want to transfer to ${schools.join(" and ")} for ${major}. ${coursePart} Please give me a complete personalized transfer plan — required courses, articulation agreements, TAG eligibility, IGETC, and what I should prioritize next.`;
+    const message = `I attend ${college} and want to transfer to ${school} for ${major}. ${coursePart} What courses from ${college} satisfy ${school}'s ${major} major requirements? What are the specific articulation agreements, TAG eligibility, IGETC requirements, and what should I prioritize taking next?`;
     try {
       await streamResponse("/api/chat", [{ role: "user", content: message }], (r) => setAiPlan(r));
     } catch {
@@ -1115,7 +1115,7 @@ export default function PlannerClient() {
     setTimeout(() => {
       document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
-    generateAIPlan(wizardCollege, wizardUCs, wizardMajor, courses);
+    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses);
   }
 
   const sendChatMessage = useCallback(async (text?: string) => {
@@ -1480,7 +1480,12 @@ export default function PlannerClient() {
           <div className="mt-16 flex flex-wrap gap-2">
             {planSchools.map(school => (
               <button key={school}
-                onClick={() => { setTargetSchool(school); setActiveSchoolTab(school); setResult(null); setTimeout(() => document.querySelector<HTMLButtonElement>("[data-generate-plan]")?.click(), 100); }}
+                onClick={() => {
+                  setTargetSchool(school);
+                  setActiveSchoolTab(school);
+                  setResult(null);
+                  generateAIPlan(communityCollege, school, targetMajor, completedCourses);
+                }}
                 className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:text-[#0b7f46]"}`}>
                 {school}
               </button>
@@ -1492,77 +1497,62 @@ export default function PlannerClient() {
           id="planner"
           className={`${planSchools.length > 1 ? "mt-4" : "mt-16"} grid gap-6 lg:grid-cols-[0.72fr_1.28fr]`}
         >
+          {/* Left panel: summary after wizard, form before */}
           <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] p-6 shadow-[0_18px_45px_rgba(67,54,36,0.08)]">
-            <h2 className="text-3xl font-bold text-[#303236]">
-              Build your plan
-            </h2>
-
-            <p className="mt-3 text-base leading-7 text-[#7b818b]">
-              Major prep comes first. If your schedule has room, CourseBridge
-              adds lighter GE filler classes.
-            </p>
-
-            <form className="mt-8 space-y-5">
-              <SelectField
-                label="Current college"
-                value={communityCollege}
-                options={collegeOptions}
-                onChange={(value) => {
-                  setCommunityCollege(value);
-                  setTargetSchool("");
-                  setTargetMajor("");
-                  resetResults();
-                }}
-              />
-
-              <SelectField
-                label="Target university"
-                value={targetSchool}
-                options={schoolOptions}
-                onChange={(value) => {
-                  setTargetSchool(value);
-                  setTargetMajor("");
-                  resetResults();
-                }}
-              />
-
-              <SelectField
-                label="Target major"
-                value={targetMajor}
-                options={majorOptions}
-                onChange={(value) => {
-                  setTargetMajor(value);
-                  resetResults();
-                }}
-              />
-
-              <label className="block">
-                <span className="mb-2 block text-sm font-bold text-[#303236]">
-                  Completed courses
-                </span>
-
-                <textarea
-                  value={completedCourses}
-                  onChange={(event) => {
-                    const v = event.target.value;
-                    setCompletedCourses(v);
-                    resetResults();
-                  }}
-                  className="min-h-40 w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition placeholder:text-[#a2a7af] focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
-                  placeholder="Example: econ1, math110a, math130, cs111c"
+            {onboardingDone ? (
+              <div className="flex flex-col gap-5">
+                <h2 className="text-2xl font-bold text-[#303236]">Your Profile</h2>
+                <div className="space-y-3">
+                  {[
+                    { label: "Community College", value: communityCollege },
+                    { label: "Target School(s)", value: planSchools.length > 1 ? planSchools.join(", ") : targetSchool },
+                    { label: "Major", value: targetMajor },
+                    { label: "Completed Courses", value: completedCourses || "None yet" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-2xl border border-[#d8d0c3] bg-white px-4 py-3">
+                      <p className="text-xs font-semibold text-[#7b818b] mb-1">{label}</p>
+                      <p className="text-sm text-[#303236]">{value || "—"}</p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => { setOnboardingDone(false); setWizardStep(1); setAiPlan(""); setPlanSchools([]); }}
+                  className="w-full rounded-2xl border border-[#d8d0c3] bg-white px-4 py-3 text-sm font-semibold text-[#7b818b] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
+                >
+                  Edit my info
+                </button>
+                <button
+                  type="button"
+                  data-generate-plan
+                  onClick={checkTransferPlan}
+                  className="hidden"
                 />
-
-              </label>
-
-              <button
-                type="button"
-                data-generate-plan
-                onClick={checkTransferPlan}
-                className="w-full rounded-2xl bg-[#0b7f46] px-5 py-4 text-lg font-bold text-white shadow-sm transition hover:bg-[#08683a]"
-              >
-                Generate Plan
-              </button>
-            </form>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-3xl font-bold text-[#303236]">Build your plan</h2>
+                <p className="mt-3 text-base leading-7 text-[#7b818b]">Major prep comes first.</p>
+                <form className="mt-8 space-y-5">
+                  <SelectField label="Current college" value={communityCollege} options={collegeOptions}
+                    onChange={(value) => { setCommunityCollege(value); setTargetSchool(""); setTargetMajor(""); resetResults(); }} />
+                  <SelectField label="Target university" value={targetSchool} options={schoolOptions}
+                    onChange={(value) => { setTargetSchool(value); setTargetMajor(""); resetResults(); }} />
+                  <SelectField label="Target major" value={targetMajor} options={majorOptions}
+                    onChange={(value) => { setTargetMajor(value); resetResults(); }} />
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-bold text-[#303236]">Completed courses</span>
+                    <textarea value={completedCourses}
+                      onChange={(e) => { setCompletedCourses(e.target.value); resetResults(); }}
+                      className="min-h-40 w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition placeholder:text-[#a2a7af] focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                      placeholder="Example: econ1, math110a, math130, cs111c" />
+                  </label>
+                  <button type="button" data-generate-plan onClick={checkTransferPlan}
+                    className="w-full rounded-2xl bg-[#0b7f46] px-5 py-4 text-lg font-bold text-white shadow-sm transition hover:bg-[#08683a]">
+                    Generate Plan
+                  </button>
+                </form>
+              </>
+            )}
           </div>
 
           <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] p-6 shadow-[0_18px_45px_rgba(67,54,36,0.08)]">

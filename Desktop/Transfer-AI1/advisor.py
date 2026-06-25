@@ -477,6 +477,9 @@ Rules:
 - Label every course: [Required Major Prep] or [Strongly Recommended Major Prep].
 - If ASSIST has no articulation data, use the injected major requirements as guidance and mark
   each course "(verify on ASSIST.org)".
+- In the Major Prep Summary, ONLY use UC course names that appear verbatim in the
+  VERIFIED ARTICULATION DATA block (e.g. "MATH 51", "MATH 52", "COMPSCI 61B", "EECS 16A").
+  NEVER invent UC course names like "MATH 53" — if a UC course isn't in the ASSIST data, don't list it.
 
 === HONORS RULE ===
 If student declined honors: NEVER include any course whose number ends in H (e.g. ECON 1H, MATH 1AH). Use non-honors equivalent.
@@ -520,52 +523,56 @@ If student declined honors: NEVER include any course whose number ends in H (e.g
 
 ## Transfer Strength Score
 
-Calculate the score step by step before printing the final number.
+Calculate the score step by step using ONLY the fixed values below. Do NOT invent new categories or point values.
 
 **Base:** 70
 
-**Major Prep (Required — FAIL if any missing):**
-- Microeconomics present? +0 (required, not bonus) — if MISSING → score = 0, output INVALID SCHEDULE
-- Macroeconomics present? +0 (required) — if MISSING → score = 0
-- Calculus I present? +0 (required) — if MISSING → score = 0
-- Calculus II present? +0 (required) — if MISSING → score = 0
-- All 4 required courses present? → +10
+**Major Prep — use the ASSIST articulation data and major requirements in this prompt:**
+- Are ALL courses listed under "UC requires:" (or Tier 1 Required) present in the schedule?
+  YES → +10 | NO (any missing) → score = 0, mark INVALID SCHEDULE, list what's missing
+- Do NOT check for Economics courses unless this is an Economics plan.
+- Do NOT check for CS courses unless this is a CS plan.
+- Use whatever required courses the ASSIST data specifies for THIS major.
 
-**Strongly Recommended Bonuses:**
-- Statistics included? → +12 (if not included: -0 but flag as missing strength)
-- Calculus III included? → +6
-- Linear Algebra included? → +5
+**Strongly Recommended Bonuses — use the Tier 2 list for THIS major:**
+- Each Tier 2 strongly recommended course included in the schedule → +4 each (max +12 total)
+- For quantitative majors (CS, Engineering, Math, Physics, Economics, Data Science, Statistics):
+  Statistics course included → additional +4
+- Do NOT award bonuses for courses not relevant to this major.
 
 **Academic Rigor:**
-- ≥2 STEM/math courses per term on average? → +5
-- Upper-division prep (Calc III or beyond) → +5
-- Balanced quant + writing load → +3
+- ≥2 STEM/math courses per term on average across all 4 terms → +5
+- Upper-division math or science sequence completed (Calc III, Diff Eq, Lin Alg, Orgo, etc.) → +4
+- Balanced load (no single term with all GE and no major prep) → +3
 
 **IGETC:**
-- Full IGETC complete (all 9 areas)? → +8
+- Full IGETC complete (all required areas covered) → +8
 - Each missing IGETC area → -15
 
 **Penalties:**
-- Filler elective used before Stats or Calc III were placed → -10
-- Missing lab science (no ★LAB course in 5A/5B and no standalone lab course for 5C) → -20
-- Misclassified GE area (ASSIST violation) → -25
+- GE filler course scheduled before a required major prep course that had room → -10
+- Missing lab science (no ★LAB in 5A/5B and no standalone lab for 5C) → -20
+- ASSIST violation (course used without articulation) → -25
+- Required major prep course missing from schedule → score = 0 (see above)
 
 **Schedule Balance:**
-- Even workload across terms → +5
-- Major prep completed by Term 3 → +5
+- Even workload across all 4 terms (no term >17 or <12 units) → +5
+- All required major prep scheduled by end of Term 4 → +5
 
 ---
 
-**Validity:** PASS or FAIL (FAIL = required major prep missing or ASSIST violation)
+**Validity:** PASS or FAIL (FAIL = any required major prep course missing, or ASSIST violation)
 
 SCORE CALCULATION RULE — FOLLOW EXACTLY:
-Step 1: Add all bonuses to base 70.
-Step 2: Subtract all penalties.
-Step 3: If the result is greater than 100, SET IT TO 100. Do not print any number above 100.
-Step 4: Print: **UC Transfer Strength Score:** [clamped result]/100
+Step 1: Start at 70.
+Step 2: Add ONLY the bonuses listed above using the fixed values. Do not invent new ones.
+Step 3: Subtract penalties.
+Step 4: If result > 100, write 100. Never print a number above 100.
+Step 5: Print: **UC Transfer Strength Score:** [result]/100
 
-YOU MAY NEVER PRINT A NUMBER ABOVE 100. 108/100, 116/100, 103/100 — ALL FORBIDDEN.
-The maximum possible score is 100. If your math exceeds 100, write 100.
+FORBIDDEN: inventing point values not listed above (+60 for major prep, +23 for recommended, etc.).
+FORBIDDEN: printing 184/100, 108/100, or any number above 100.
+The maximum possible score is 100.
 
 **Score interpretation:**
 - 90–100: 🔥 Highly competitive
@@ -575,7 +582,7 @@ The maximum possible score is 100. If your math exceeds 100, write 100.
 - Below 50: ❌ Poor preparation
 
 **Missing Strength Factors:** [list anything that cost points or wasn't included]
-**Recommended Improvements:** [ranked list of what would raise the score most]"""
+**Recommended Improvements:** [ranked list of what would most improve the score]"""
 
 
 def ask_plan_stream(prompt: str):

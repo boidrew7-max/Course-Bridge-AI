@@ -1433,19 +1433,8 @@ export default function PlannerClient() {
 
         <section
           id="planner"
-          className="relative mt-16 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]"
+          className="mt-16 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]"
         >
-          {!onboardingDone && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-3xl bg-white/80 backdrop-blur-sm">
-              <p className="text-lg font-semibold text-[#303236]">Chat with the AI first to unlock your plan</p>
-              <button
-                onClick={() => setChatOpen(true)}
-                className="mt-4 rounded-full bg-[#0b7f46] px-6 py-3 text-sm font-semibold text-white shadow hover:bg-[#08683a]"
-              >
-                Build My Plan with AI →
-              </button>
-            </div>
-          )}
           <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] p-6 shadow-[0_18px_45px_rgba(67,54,36,0.08)]">
             <h2 className="text-3xl font-bold text-[#303236]">
               Build your plan
@@ -1686,8 +1675,8 @@ export default function PlannerClient() {
       )}
 
       {chatOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6 pointer-events-none">
-          <div className="pointer-events-auto flex h-[600px] w-full max-w-md flex-col rounded-2xl border border-[#d8d0c3] bg-white shadow-2xl">
+        <div className={`fixed inset-0 z-50 flex ${onboardingDone ? "items-end justify-end p-4 sm:p-6 pointer-events-none" : "items-center justify-center bg-black/60 p-4"}`}>
+          <div className={`pointer-events-auto flex flex-col rounded-2xl border border-[#d8d0c3] bg-white shadow-2xl ${onboardingDone ? "h-[600px] w-full max-w-md" : "h-[600px] w-full max-w-lg"}`}>
             {/* Header */}
             <div className="flex items-center justify-between rounded-t-2xl bg-[#0b7f46] px-4 py-3">
               <div>
@@ -1697,9 +1686,15 @@ export default function PlannerClient() {
                   : <p className="text-xs text-white/80">{onboardingDone ? "Ask me anything" : "Setting up your plan…"}</p>
                 }
               </div>
-              <button onClick={() => setChatOpen(false)} className="rounded-full p-1 text-white/80 transition hover:bg-white/20 hover:text-white">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
+              {onboardingDone ? (
+                <button onClick={() => setChatOpen(false)} className="rounded-full p-1 text-white/80 transition hover:bg-white/20 hover:text-white">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              ) : (
+                <button onClick={() => { setOnboardingDone(true); setChatOpen(false); }} className="rounded-full px-3 py-1 text-xs text-white/70 transition hover:bg-white/20 hover:text-white">
+                  Skip
+                </button>
+              )}
             </div>
 
             {/* Messages */}

@@ -3,7 +3,7 @@ import os
 import time
 from collections import defaultdict
 from flask import Flask, request, Response, stream_with_context, session, jsonify
-from advisor import ask_advisor_stream, ask_advisor_stream_fallback
+from advisor import ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream
 from db import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     verify_password, email_exists, update_profile,
@@ -156,6 +156,28 @@ def chat():
 @app.route("/reset", methods=["POST"])
 def reset():
     return ("", 204)
+
+
+@app.route("/onboard", methods=["POST"])
+def onboard():
+    data    = request.json or {}
+    history = list(data.get("history", []))
+    if len(history) > 20:
+        history = history[-20:]
+
+    def generate():
+        try:
+            for chunk in ask_advisor_onboarding_stream(history):
+                yield f"data: {json.dumps(chunk)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps('Something went wrong. Please try again.')}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 # ── Auth routes ────────────────────────────────────────────────

@@ -812,40 +812,64 @@ The student wants to MAXIMIZE transfer admissions strength for {school} {major}.
 Already completed — EXCLUDE ENTIRELY: {completed_str}
 {ap_section}
 
-===== STEP 1: ASSEMBLE YOUR REQUIRED COURSE POOL =====
-Before writing any terms, you must identify every course that will appear in the schedule:
+===== STEP 0: PARSE THE ASSIST DATA (do this silently before building the schedule) =====
+For EVERY "UC requires:" entry in the VERIFIED ARTICULATION DATA above:
 
-A) MAJOR PREP — list every course from the articulation data above. These are mandatory.
+1. Pick a CC group: choose the FIRST non-honors "-> Enroll in:" option unless student accepts honors.
+   (If student declines honors: skip any group where ALL courses end in H.)
+
+2. "And" = ALL courses in that line are required — note every one.
+   Example: "MATH 1C And MATH 1B" → BOTH MATH 1C and MATH 1B must be scheduled.
+
+3. Multiple "-> Enroll in:" lines under the same "UC requires:" are OR options — pick ONE group only.
+
+4. Overlap rule: If two different "UC requires:" entries share the same CC courses
+   (e.g. MATH 54 needs MATH 2A+2B, and EECS 16A also needs MATH 2A+2B),
+   they are ALTERNATIVES for the same UC requirement — pick ONE entry, skip the other.
+   Either way, the shared CC courses (MATH 2A, MATH 2B) MUST be scheduled.
+
+5. Build a deduplicated list of CC courses to schedule:
+   - Every course from every chosen group = [Required Major Prep]
+   - Highly Recommended entries (CS programs: Data Structures course) = [Strongly Recommended Major Prep]
+   - Any CC course already in "completed" → skip
+
+6. UNIT COUNT CHECK: Sum the units of all required major prep + IGETC courses.
+   If total > 72 units, you may drop Tier 2 (Strongly Recommended) courses.
+   NEVER drop Tier 1 (Required Major Prep) courses — not even to stay under 70 units.
+   A valid plan can be 65–75 units if the major requires it.
+
+===== STEP 1: ASSEMBLE YOUR COURSE POOL =====
+From Step 0, you now have a concrete list of CC courses. Add IGETC on top:
+
+A) MAJOR PREP — every course from Step 0's deduplicated list. All Required ones are non-negotiable.
 
 B) IGETC — pick exactly ONE course per required area from the IGETC list above:
-   - Area 1A: one first-year English Composition course (NOT ESL)
-   - Area 1B: one Critical Thinking course (must come AFTER Area 1A)
-   - Area 2A: one Math course (Calculus counts if listed)
-   - Area 3A: one Arts course
-   - Area 3B: one Humanities course
-   - Area 4: three Social/Behavioral Science courses (ECON 1 and ECON 2 count here)
-   - Area 5A: one Physical Science course
-   - Area 5B: one Biological Science course
-   - Area 6: one foreign language course, OR note HS proficiency fallback
-{'' if accept_honors else '   DO NOT pick any course whose number ends in H (e.g. ECON 1H) — use non-honors only.'}
-If a major prep course satisfies an IGETC area, count it for both — do NOT add a separate IGETC course for that area.
+   - Area 1A: first-year English Composition (NOT ESL)
+   - Area 1B: Critical Thinking — MUST be an ENGL course if one is listed (check Area 1B list first)
+   - Area 2A: Math — if a major prep math course (Calculus) is listed here, use it; don't add a second
+   - Area 3A: Arts
+   - Area 3B: Humanities
+   - Area 4: exactly 3 Social/Behavioral Science courses
+   - Area 5A: Physical Science — prefer non-★LAB if 5B already has ★LAB
+   - Area 5B: Biological Science — prefer ★LAB to satisfy Area 5C
+   - Area 6: Foreign Language, or note HS proficiency fallback
+{'' if accept_honors else '   DO NOT pick any course whose number ends in H — use non-honors only.'}
+If a major prep course satisfies an IGETC area, it fills BOTH slots — do NOT add a separate IGETC course.
 Every course in the pool must appear exactly once in the final schedule.
 
 ===== STEP 2: DISTRIBUTE ACROSS 4 TERMS =====
 Rules:{honors_rule}
-- Each term: 12–16 units, 3–5 courses. Any term under 12 units is INVALID.
-- Prerequisites: Area 1A before 1B. Calculus I → II → III. No course before its prereq.
-- No ESL courses (prefix ESL or title containing "English as a Second Language").
-- No invented course numbers — use only exact courses from the data above.
-- No {school} course numbers — only {college} courses.
-- No already-completed courses.
-- Each course appears exactly ONCE across all 4 terms.
+- Each term: 12–17 units, 3–5 courses. Any term under 12 units is INVALID.
+- Prerequisites: Area 1A before 1B. Calc I → II → III → Diff Eq/Lin Alg. No course before its prereq.
+- No ESL courses. No invented course numbers. No {school} course numbers. Only {college} courses.
+- No already-completed courses. Each course appears exactly ONCE across all 4 terms.
+- Heavy math-sequence majors (CS, Engineering, Math, Physics) commonly need 65–72 units — that is normal and valid.
 
 ===== STEP 3: OUTPUT =====
 Start directly with ## Term 1 (Fall). No preamble.
 
 ## Term 1 (Fall)
-- COURSE# — Official Title (X units) [Area Xn / Major Prep if applicable]
+- COURSE# — Official Title (X units) [Area Xn / Required Major Prep]
 
 ## Term 2 (Spring)
 - COURSE# — Official Title (X units) [Area Xn]
@@ -857,7 +881,7 @@ Start directly with ## Term 1 (Fall). No preamble.
 - COURSE# — Official Title (X units) [Area Xn]
 
 ## Major Prep Summary
-- [Each UC requirement → which {college} course fulfills it]
+- [Each UC requirement → which {college} course fulfills it, one line per UC course]
 
 ## IGETC Completion
 (ONLY check ✅ if that course appears in the schedule above)
@@ -869,6 +893,7 @@ Start directly with ## Term 1 (Fall). No preamble.
 - Area 4: ✅/❌ COURSE#, COURSE#, COURSE#
 - Area 5A: ✅/❌ COURSE#
 - Area 5B: ✅/❌ COURSE#
+- Area 5C: ✅/❌ (satisfied by ★LAB above OR separate lab course)
 - Area 6: ✅/❌ COURSE# or ⚠️ satisfy with 2+ years HS foreign language
 
 ## Key Notes

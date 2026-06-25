@@ -297,6 +297,19 @@ _UC_NAME_MAP = {
 }
 
 
+# Real average transfer GPA ranges per UC (Fall 2025 official data)
+_UC_GPA_TARGETS = {
+    "los angeles":   ("3.7–3.9", "UCLA avg admitted transfer GPA is 3.5–3.9. Economics is highly competitive — target 3.7 minimum, aim for 3.9."),
+    "berkeley":      ("3.7–3.9", "UC Berkeley avg admitted transfer GPA is 3.5–3.9. Economics is competitive — target 3.7 minimum, aim for 3.9."),
+    "san diego":     ("3.7–3.9", "UCSD avg admitted transfer GPA is 3.55–3.94 — target 3.7+."),
+    "irvine":        ("3.6–3.7", "UCI avg admitted transfer GPA is 3.4–3.7 — target 3.6+."),
+    "santa barbara": ("3.6–3.7", "UCSB avg admitted transfer GPA is 3.4–3.7 — target 3.6+."),
+    "davis":         ("3.6–3.7", "UC Davis avg admitted transfer GPA is 3.4–3.7 — target 3.6+."),
+    "santa cruz":    ("3.5–3.6", "UCSC avg admitted transfer GPA is 3.3–3.6 — target 3.5+."),
+    "riverside":     ("3.3–3.5", "UCR avg admitted transfer GPA is 3.0–3.5 — target 3.3+."),
+    "merced":        ("3.2–3.4", "UC Merced avg admitted transfer GPA is 3.0–3.4 — target 3.2+."),
+}
+
 # UC shard name → loaded shard dict (loaded lazily per UC)
 _ART_SHARDS: dict = {}
 
@@ -461,6 +474,9 @@ def plan():
 
     igetc_section = f"\n\n{igetc_block}" if igetc_block else ""
 
+    uc_l_for_gpa = _UC_NAME_MAP.get(school.lower().strip(), school.lower())
+    gpa_range, gpa_note = _UC_GPA_TARGETS.get(uc_l_for_gpa, ("3.5+", f"Target 3.5+ for {school}."))
+
     prompt = f"""Build a complete 4-term transfer schedule for a student at {college} transferring to {school} for {major}.
 
 {articulation_section}{igetc_section}
@@ -479,7 +495,7 @@ RULES (every rule is mandatory):{honors_rule}
 5. COURSE TITLES: Use exact course numbers and titles from the data above. No invented courses.
 6. CC ONLY: Every course must be from {college}. Never list {school} course numbers.
 7. COMPLETED: Never include any course already listed under "Already completed" or covered by AP credit.
-8. LOAD: 4-5 courses per term, 13-17 units max.
+8. LOAD: Each term MUST have 12–16 units minimum and 3–5 courses. Any term below 12 units is invalid — rebuild it by adding another required or IGETC course.
 9. IGETC NOTE: A course that satisfies major prep may also count toward IGETC (e.g., ECON courses count for Area 4). Do not double-count — list it once.
 10. NO DUPLICATES: Never include both a regular course and its honors variant (e.g., if ECON 1 is in the plan, do NOT also add ECON 1H). Pick one version only.
 11. AP CREDIT: Any course area covered by AP credit does not need to be retaken — skip it and fill that slot with the next needed course.
@@ -504,7 +520,7 @@ Output format:
 ## Key Notes
 - TAG: [eligible/not and why]
 - IGETC: [complete/partial]
-- GPA target: [number]"""
+- GPA target: {gpa_range} — {gpa_note}"""
 
     def generate():
         try:

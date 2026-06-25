@@ -1377,7 +1377,7 @@ export default function PlannerClient() {
             </h1>
 
             <p className="mt-5 max-w-2xl text-lg leading-8 text-[#6f7680]">
-              CourseBridge helps community college students plan UC and CSU
+              CourseBridge helps community college students plan UC
               transfer requirements using their completed courses, target
               school, and major.
             </p>
@@ -1467,8 +1467,8 @@ export default function PlannerClient() {
             Enter your completed courses in plain text.
           </Step>
 
-          <Step number="2" title="Pick a UC/CSU and major">
-            Choose the campus and major you want to transfer into.
+          <Step number="2" title="Pick a UC and major">
+            Choose the UC campus and major you want to transfer into.
           </Step>
 
           <Step number="3" title="Get a clear plan">

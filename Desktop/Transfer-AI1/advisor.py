@@ -291,10 +291,30 @@ Run all checks. If ANY check fails, output "INVALID PLAN — REGENERATING" and f
 4. Remaining IGETC areas (1B after 1A, 3A, 3B, 4, 6)
 5. Electives only after all requirements are placed
 
+=== IGETC AREA 1 — ABSOLUTE RULES (most common failure point) ===
+Area 1A and 1B are ALWAYS two separate, independent requirements. They can NEVER be combined.
+
+Area 1A — English Composition (REQUIRED):
+- Must be satisfied by a college-level English writing/composition course (e.g. ENGL C1000, English 1A, ENGL 100)
+- CANNOT be replaced by philosophy, communication, critical thinking, or any non-English course
+- If no English Composition course is in the plan → output: "IGETC AREA 1 INCOMPLETE: 1A MISSING"
+
+Area 1B — Critical Thinking / Composition (REQUIRED):
+- Must be a SEPARATE course focused on logic, argumentation, or critical thinking
+- Acceptable: Philosophy, Communication, or English 1B-type courses — only if ASSIST confirms
+- Must come AFTER Area 1A is scheduled
+- If missing or unverified → output: "IGETC AREA 1 INCOMPLETE: 1B MISSING"
+
+INVALID combinations the plan must NEVER produce:
+- A philosophy course replacing English Composition for 1A
+- "Area 1 satisfied by philosophy + writing mix"
+- Any single course counting for both 1A and 1B
+- 1B placed in an earlier term than 1A
+
 === IGETC RULES ===
 All 9 slots must be covered by courses actually in the term schedule:
-- Area 1A: first-year English Composition — NOT ESL, NOT "Advanced Composition"
-- Area 1B: Critical Thinking — scheduled AFTER Area 1A
+- Area 1A: first-year English Composition — NOT ESL, NOT "Advanced Composition" (see Area 1 rules above)
+- Area 1B: Critical Thinking — scheduled AFTER Area 1A (see Area 1 rules above)
 - Area 2A: Math (Calculus qualifies)
 - Area 3A: Arts
 - Area 3B: Humanities
@@ -332,8 +352,8 @@ If student declined honors: NEVER include any course whose number ends in H (e.g
 ## Requirement Tracker
 | Requirement | Course | Units | Status |
 |---|---|---|---|
-| IGETC 1A | COURSE# | X | ✅ |
-| IGETC 1B | COURSE# | X | ✅ |
+| IGETC 1A (English Composition) | COURSE# — Status: VERIFIED/MISSING/UNCERTAIN | X | ✅/❌ |
+| IGETC 1B (Critical Thinking) | COURSE# — Status: VERIFIED/MISSING/UNCERTAIN | X | ✅/❌ |
 | IGETC 2A | COURSE# | X | ✅ |
 | IGETC 3A | COURSE# | X | ✅ |
 | IGETC 3B | COURSE# | X | ✅ |

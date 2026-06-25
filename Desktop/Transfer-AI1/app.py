@@ -299,12 +299,13 @@ _MAJOR_RECS = [
       "Linear Algebra"]),
 
     (["computer science", "cs ", " cs,", "computing", "software engineering", "software eng"],
-     "Calculus I, Calculus II, Calculus III (check ASSIST — many UCs require a full Calc I+II+III series), "
-     "Linear Algebra (required by most UC CS programs — verify exact course series on ASSIST), "
-     "Differential Equations (required for MATH 54 equivalent at Berkeley and other UCs — check ASSIST)",
-     ["Data Structures (CS2 / CIS 22C equivalent)",
-      "Discrete Mathematics",
-      "Introduction to Programming / CS1 (if articulated)",
+     "ONLY schedule courses that appear in the VERIFIED ARTICULATION DATA block above. "
+     "At UC Berkeley (and most UCs), COMPSCI 61A, COMPSCI 61C, and COMPSCI 70 have NO CC articulation "
+     "and must be taken at the UC campus post-transfer — do NOT schedule any CC substitute for these. "
+     "The articulated courses are typically: Calculus I, Calculus II, Calculus III, "
+     "Linear Algebra / Differential Equations (exact courses vary — use ASSIST data only).",
+     ["Data Structures (CIS 22C or equivalent — ONLY if it appears in ASSIST data for this CC)",
+      "Discrete Mathematics (ONLY if articulated — most CCs have no articulation for this)",
       "Statistics"]),
 
     (["data science"],
@@ -756,6 +757,20 @@ def plan():
     uc_l_for_gpa = _UC_NAME_MAP.get(school.lower().strip(), school.lower())
     gpa_range, gpa_note = _UC_GPA_TARGETS.get(uc_l_for_gpa, ("3.5+", f"Target 3.5+ for {school}."))
 
+    # TAG eligibility note — hardcoded based on school, never left to AI inference
+    _TAG_NON_PARTICIPATING = {"los angeles", "berkeley", "san diego"}
+    _TAG_PARTICIPATING     = {"davis", "irvine", "merced", "riverside", "santa barbara", "santa cruz"}
+    if uc_l_for_gpa in _TAG_NON_PARTICIPATING:
+        tag_note_line = (f"{school} does NOT participate in TAG. "
+                         "TAG is offered only by UC Davis, UC Irvine, UC Merced, UC Riverside, "
+                         "UC Santa Barbara, and UC Santa Cruz.")
+    elif uc_l_for_gpa in _TAG_PARTICIPATING:
+        tag_note_line = (f"{school} offers TAG — file Sept 1–30. "
+                         "Requirements: 60 transferable units by end of spring, minimum GPA (varies by major), "
+                         "no more than 2 attempts at a required course. Check the TAG website for this specific major.")
+    else:
+        tag_note_line = "Check if your target campus offers TAG — 6 UCs participate: Davis, Irvine, Merced, Riverside, UCSB, Santa Cruz."
+
     # Major-specific requirements block
     t1_note, t2_list = _get_major_recs(major)
     if t1_note:
@@ -830,8 +845,17 @@ For EVERY "UC requires:" entry in the VERIFIED ARTICULATION DATA above:
 
 5. Build a deduplicated list of CC courses to schedule:
    - Every course from every chosen group = [Required Major Prep]
-   - Highly Recommended entries (CS programs: Data Structures course) = [Strongly Recommended Major Prep]
+   - Highly Recommended entries (CS programs: Data Structures if in ASSIST) = [Strongly Recommended Major Prep]
    - Any CC course already in "completed" → skip
+   - IMPORTANT: do NOT add CIS 26B, CIS 26A, or any intro programming course for CS unless it
+     appears verbatim in the ASSIST data as a CC option. COMPSCI 61A has no CC articulation at most
+     schools — if it's not in the data, omit it entirely.
+
+5a. TERM PLACEMENT CHECK — for every course in your Step 5 list:
+   - That course MUST appear as a line item in Term 1, 2, 3, or 4.
+   - Writing a course only in "Major Prep Summary" does NOT count as scheduling it.
+   - Example: if your Step 5 list includes ENGR 37, it must be in a term (e.g. "ENGR 37 — X units [Required Major Prep]").
+   - If a course is in your list but not in any term → your plan is INVALID. Add it to a term before finalizing.
 
 6. UNIT COUNT CHECK: Sum the units of all required major prep + IGETC courses.
    If total > 72 units, you may drop Tier 2 (Strongly Recommended) courses.
@@ -897,7 +921,7 @@ Start directly with ## Term 1 (Fall). No preamble.
 - Area 6: ✅/❌ COURSE# or ⚠️ satisfy with 2+ years HS foreign language
 
 ## Key Notes
-- TAG: [eligible/not and why]
+- TAG: {tag_note_line}
 - GPA target: {gpa_range} — {gpa_note}"""
 
     def generate():

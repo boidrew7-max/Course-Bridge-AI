@@ -324,6 +324,16 @@ EXAMPLE — correct interpretation for CS at UC Berkeley from De Anza:
   CORRECT: pick first group → schedule MATH 2A + MATH 2B both as [Required Major Prep]
   WRONG: show these only in a "Major Prep Summary" footnote without scheduling them in any term
 
+NO COURSE ARTICULATED RULE:
+If a UC course (e.g. COMPSCI 61A, COMPSCI 61C, COMPSCI 70) does NOT appear anywhere
+in the VERIFIED ARTICULATION DATA block, it has NO community college articulation. This means:
+- Do NOT schedule any CC course as a substitute for it.
+- Do NOT label any CC course [Required Major Prep] or [Strongly Recommended Major Prep] for it.
+- In the Major Prep Summary, note: "COMPSCI 61A — No CC articulation: must take at Berkeley post-transfer"
+- CIS 26B (C programming) is NOT a substitute for COMPSCI 61A (Python/functional programming). Never equate them.
+- This is expected for Berkeley CS programs — COMPSCI 61A, 61C, and 70 have no CC equivalents.
+Only the courses that appear in the VERIFIED ARTICULATION DATA block can be scheduled as major prep.
+
 === IGETC GE AREA ASSIGNMENT — HARD SAFETY RULE ===
 NEVER infer a course's IGETC area from its title, keywords, or department name.
 A course may ONLY be tagged [IGETC Area X] if it appears under that exact area code in the
@@ -363,9 +373,10 @@ GE VERIFICATION TABLE (required at end of every schedule):
 Run all checks. If ANY check fails, output "INVALID PLAN — REGENERATING" and fix before proceeding.
 1. ASSIST COMPLETENESS CHECK — for every "UC requires:" entry in the articulation block:
    a. Identify which CC group you chose (the "-> Enroll in:" line).
-   b. Verify EVERY course in that group appears in a term. If any is missing → INVALID.
-   c. "And" courses are not optional. MATH 1C in "MATH 1B And MATH 1C" is just as required as MATH 1B.
-   d. Courses that only appear in a Major Prep Summary footnote but NOT in a term → INVALID.
+   b. Verify EVERY course in that group appears in a TERM (Term 1, 2, 3, or 4 course lines). If any is missing → INVALID.
+   c. "And" courses are not optional. ENGR 37 in "MATH 2B And ENGR 37" is just as required as MATH 2B. MATH 1C in "MATH 1B And MATH 1C" is just as required as MATH 1B.
+   d. Courses that only appear in a Major Prep Summary or Key Notes but NOT in a term course line → INVALID. Add them to a term.
+   e. EXPLICIT CHECK: go through your ASSIST data one entry at a time. For the group you chose, name every CC course. Confirm each appears as a course line in Term 1, 2, 3, or 4. If ENGR 37 is in your chosen group, find it in a term or the plan is INVALID.
 2. Every IGETC area (1A, 1B, 2A, 3A, 3B, 4×3, 5A, 5B, 5C, 6) has a course assigned to a term.
    Area 5C is satisfied if your 5A or 5B course is marked ★LAB — no extra course needed in that case.
 3. No course appears more than once across all 4 terms.
@@ -563,15 +574,25 @@ Calculate the score step by step using ONLY the fixed values below. Do NOT inven
 
 **Validity:** PASS or FAIL (FAIL = any required major prep course missing, or ASSIST violation)
 
+IGETC SCORING SELF-CHECK — run this BEFORE calculating the score:
+1. Look at your IGETC Completion section above (the one with ✅/❌ checkmarks).
+2. Count how many areas show ❌.
+3. If ZERO areas show ❌ (all are ✅ or ⚠️) → IGETC is complete → +8.
+4. If ANY area shows ❌ → IGETC is NOT complete. Do NOT give +8. Instead subtract 15 for EACH ❌ area.
+5. NEVER write "Full IGETC complete → +8" when your own IGETC Completion list shows ❌ for any area.
+   That is a direct contradiction in your output. Cross-reference the checklist every time.
+Example: if Area 3B shows ❌ → IGETC is incomplete → −15, NOT +8.
+
 SCORE CALCULATION RULE — FOLLOW EXACTLY:
 Step 1: Start at 70.
 Step 2: Add ONLY the bonuses listed above using the fixed values. Do not invent new ones.
-Step 3: Subtract penalties.
+Step 3: Subtract penalties (using IGETC Self-Check result above, not an assumed "+8").
 Step 4: If result > 100, write 100. Never print a number above 100.
 Step 5: Print: **UC Transfer Strength Score:** [result]/100
 
 FORBIDDEN: inventing point values not listed above (+60 for major prep, +23 for recommended, etc.).
 FORBIDDEN: printing 184/100, 108/100, or any number above 100.
+FORBIDDEN: writing "Full IGETC complete +8" when your IGETC Completion shows any ❌.
 The maximum possible score is 100.
 
 **Score interpretation:**

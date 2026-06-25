@@ -404,12 +404,13 @@ def plan():
         return Response(stream_with_context(rate_msg()), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache"})
 
-    data         = request.json or {}
-    college      = data.get("college", "").strip()
-    school       = data.get("school", "").strip()
-    major        = data.get("major", "").strip()
-    completed    = data.get("completedCourses", "").strip()
+    data          = request.json or {}
+    college       = data.get("college", "").strip()
+    school        = data.get("school", "").strip()
+    major         = data.get("major", "").strip()
+    completed     = data.get("completedCourses", "").strip()
     accept_honors = data.get("acceptHonors", True)
+    ap_credits    = data.get("apCredits", "").strip()
 
     if not college or not school or not major:
         def err():
@@ -422,7 +423,23 @@ def plan():
     major_prep_block = _extract_major_prep(college, school, major)
     igetc_block      = _extract_igetc_courses(college)
     completed_str    = completed if completed else "none"
-    honors_rule      = "" if accept_honors else "\n10. HONORS: Student declined honors. NEVER include any course with 'H', 'Honors', or 'HONORS' in its title or number."
+    honors_rule      = "" if accept_honors else "\n11. HONORS: Student declined honors. NEVER include any course with 'H', 'Honors', or 'HONORS' in its title or number."
+
+    # Build AP credit section
+    ap_section = ""
+    if ap_credits:
+        ap_section = f"\nAP EXAM CREDIT (treat these as already-completed prerequisites): {ap_credits}"
+    else:
+        ap_section = "\nAP EXAM CREDIT: None."
+
+    # Detect fresh-start student: no completed courses AND no AP credit
+    fresh_start = (not completed) and (not ap_credits)
+    fresh_start_rule = (
+        "\n   FRESH START: This student has ZERO prior college coursework and ZERO AP credit. "
+        "They cannot enroll in any course that lists another course as a prerequisite. "
+        "Term 1 may ONLY contain courses with no prerequisites (true entry-level courses). "
+        "Do NOT place Calculus II, Critical Thinking, or any other prereq-gated course in Term 1."
+    ) if fresh_start else ""
 
     if major_prep_block:
         articulation_section = major_prep_block
@@ -437,18 +454,20 @@ def plan():
 {articulation_section}{igetc_section}
 
 Already completed — EXCLUDE ENTIRELY: {completed_str}
+{ap_section}
 
 RULES (every rule is mandatory):
 1. MAJOR PREP: Include EVERY course from the articulation list. These are non-negotiable requirements. Do not skip any.
 2. IGETC: The schedule must cover all required IGETC areas (1A, 1B, 2A, 3A, 3B, 4, 5A or 5B). Use only courses from the IGETC list above for these slots.
-3. PREREQUISITES: Never place a course and its prerequisite in the same term — sequence them across terms. Specifically: English composition (Area 1A) must appear in Term 1 or Term 2 before any critical thinking, philosophy writing, or communications course. MATH sequence must be ordered: Calculus I before II before III.
+3. PREREQUISITES: Never place a course and its prerequisite in the same term — sequence them across terms. English composition (Area 1A) must come before critical thinking, philosophy writing, or communications courses. MATH must be ordered: Calculus I → II → III.{fresh_start_rule}
 4. COURSE TITLES: Use exact course numbers and titles from the data above. No invented courses.
 5. CC ONLY: Every course must be from {college}. Never list {school} course numbers.
-6. COMPLETED: Never include any already-completed course.
+6. COMPLETED: Never include any course already listed under "Already completed" or covered by AP credit.
 7. LOAD: 4-5 courses per term, 13-17 units max.
 8. IGETC NOTE: A course that satisfies major prep may also count toward IGETC (e.g., ECON courses count for Area 4). Do not double-count — list it once.
 9. NO DUPLICATES: Never include both a regular course and its honors variant (e.g., if ECON 1 is in the plan, do NOT also add ECON 1H). Pick one version only.
-10. NO PREAMBLE: Start directly with ## Term 1 (Fall).{honors_rule}
+10. AP CREDIT: Any course area covered by AP credit does not need to be retaken — skip it and fill that slot with the next needed course.
+11. NO PREAMBLE: Start directly with ## Term 1 (Fall).{honors_rule}
 
 Output format:
 ## Term 1 (Fall)

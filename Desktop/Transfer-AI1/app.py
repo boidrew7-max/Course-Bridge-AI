@@ -411,6 +411,7 @@ def plan():
     completed     = data.get("completedCourses", "").strip()
     accept_honors = data.get("acceptHonors", True)
     ap_credits    = data.get("apCredits", "").strip()
+    hs_math       = data.get("hsMath", "").strip()
 
     if not college or not school or not major:
         def err():
@@ -425,21 +426,41 @@ def plan():
     completed_str    = completed if completed else "none"
     honors_rule      = "" if accept_honors else "\n11. HONORS: Student declined honors. NEVER include any course with 'H', 'Honors', or 'HONORS' in its title or number."
 
-    # Build AP credit section
-    ap_section = ""
+    # Build background section (AP credit + HS math)
+    background_lines = []
     if ap_credits:
-        ap_section = f"\nAP EXAM CREDIT (treat these as already-completed prerequisites): {ap_credits}"
-    else:
-        ap_section = "\nAP EXAM CREDIT: None."
+        background_lines.append(f"AP EXAM CREDIT (treat as completed prerequisites): {ap_credits}")
+    if hs_math:
+        background_lines.append(f"HIGH SCHOOL MATH COMPLETED: {hs_math} — this satisfies the prerequisite for the next course in the math sequence (e.g. Pre-Calculus in HS → student is eligible for Calculus I at the CC).")
+    ap_section = ("\n" + "\n".join(background_lines)) if background_lines else "\nNo AP credit or HS math background provided."
 
-    # Detect fresh-start student: no completed courses AND no AP credit
-    fresh_start = (not completed) and (not ap_credits)
-    fresh_start_rule = (
-        "\n   FRESH START: This student has ZERO prior college coursework and ZERO AP credit. "
-        "They cannot enroll in any course that lists another course as a prerequisite. "
-        "Term 1 may ONLY contain courses with no prerequisites (true entry-level courses). "
-        "Do NOT place Calculus II, Critical Thinking, or any other prereq-gated course in Term 1."
-    ) if fresh_start else ""
+    # A student can take a prereq-gated course in Term 1 only if its prerequisite
+    # is already satisfied (completed course, AP credit, or HS math background).
+    # Determine if they have ANY math background that unlocks Calculus I.
+    hs_math_lower = hs_math.lower()
+    completed_lower = completed.lower()
+    ap_lower = ap_credits.lower()
+    has_calc1_prereq = any(kw in hs_math_lower or kw in completed_lower or kw in ap_lower
+                           for kw in ["pre-calc", "precalc", "pre calc", "calculus ab", "calculus bc",
+                                      "calc ab", "calc bc", "trigonometry", "trig", "calc 1", "calculus i",
+                                      "algebra ii", "algebra 2", "alg 2", "alg ii"])
+
+    # Detect fresh-start student: no completed courses AND no AP credit AND no HS math
+    fresh_start = (not completed) and (not ap_credits) and (not hs_math)
+    if fresh_start:
+        fresh_start_rule = (
+            "\n   FRESH START: This student has ZERO prior college or high school math background listed. "
+            "Term 1 may ONLY contain courses with no prerequisites (true entry-level courses). "
+            "Do NOT place Calculus I, Calculus II, Critical Thinking, or any other prereq-gated course in Term 1. "
+            "Place Calculus I in Term 1 ONLY if the student has Pre-Calculus in their completed or HS background."
+        )
+    elif not completed and not ap_credits and hs_math and not has_calc1_prereq:
+        fresh_start_rule = (
+            f"\n   HS BACKGROUND ONLY: Student's highest HS math is '{hs_math}'. "
+            "They are NOT yet eligible for Calculus I — place Pre-Calculus or the appropriate entry math course in Term 1 first."
+        )
+    else:
+        fresh_start_rule = ""
 
     if major_prep_block:
         articulation_section = major_prep_block

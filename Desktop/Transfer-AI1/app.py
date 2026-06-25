@@ -668,53 +668,69 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
     major_display = "__".join(kparts[2:]).replace("_", " ") if len(kparts) > 2 else major
 
     lines = [
-        f"=== VERIFIED ARTICULATION DATA: {college} -> {uc_display} | {major_display} ===",
-        "Source: ASSIST.org (authoritative - do not deviate from this list)",
-        "",
-        "The student MUST complete the following courses at their community college.",
-        "Use ONLY these exact course numbers and titles. Do not substitute.",
+        f"=== PRE-COMPUTED ARTICULATION STATUS: {college} -> {uc_display} | {major_display} ===",
+        "Source: ASSIST.org — labels below are computed by the external verification system.",
+        "RENDERER RULE: Do NOT change any [CC-COMPLETABLE] or [POST-TRANSFER] label.",
+        "Do NOT add courses. Do NOT infer equivalencies. Schedule only the CC courses listed below.",
         "",
     ]
     for art in arts:
         uc_c   = art.get("uc", {})
         uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
-        lines.append(f"UC requires: {uc_str}")
-        for grp in art.get("cc", []):
-            parts_cc = []
-            for c in grp:
-                parts_cc.append(
-                    f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
-                )
-            conj = grp[0].get("j", "Or") if grp else "Or"
-            lines.append(f"  -> Enroll in: {f' {conj} '.join(parts_cc)}")
+        cc_groups = art.get("cc", [])
+        # Pre-compute status: empty cc array = no articulation
+        has_articulation = any(len(grp) > 0 for grp in cc_groups)
+        if has_articulation:
+            lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
+            for grp in cc_groups:
+                if not grp:
+                    continue
+                parts_cc = []
+                for c in grp:
+                    parts_cc.append(
+                        f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
+                    )
+                conj = grp[0].get("j", "Or") if grp else "Or"
+                lines.append(f"  -> Schedule: {f' {conj} '.join(parts_cc)}")
+        else:
+            lines.append(f"[POST-TRANSFER] UC requires: {uc_str}")
+            lines.append(f"  -> No CC articulation found. Must be taken at UC after transfer.")
     lines.append("")
-    lines.append("=== END ARTICULATION DATA ===")
+    lines.append("NOTE: Any UC requirement for this major NOT listed above has no CC articulation")
+    lines.append("and is therefore a POST-TRANSFER requirement. Do not invent CC substitutes.")
+    lines.append("=== END PRE-COMPUTED ARTICULATION STATUS ===")
     return "\n".join(lines)
 
 
 def _format_arts_block(arts: list, college: str, uc: str, major: str, source: str = "ASSIST.org") -> str:
-    """Format a list of articulation entries (shard format) into a prompt block."""
+    """Format a list of articulation entries with pre-computed status labels."""
     lines = [
-        f"=== VERIFIED ARTICULATION DATA: {college} -> {uc} | {major} ===",
-        f"Source: {source} (authoritative - do not deviate from this list)",
-        "",
-        "The student MUST complete the following courses at their community college.",
-        "Use ONLY these exact course numbers and titles. Do not substitute.",
+        f"=== PRE-COMPUTED ARTICULATION STATUS: {college} -> {uc} | {major} ===",
+        f"Source: {source} — labels are pre-computed by the external verification system.",
+        "RENDERER RULE: Do NOT change [CC-COMPLETABLE] or [POST-TRANSFER] labels.",
         "",
     ]
     for art in arts:
         uc_c   = art.get("uc", {})
         uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
-        lines.append(f"UC requires: {uc_str}")
-        for grp in art.get("cc", []):
-            parts_cc = [
-                f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
-                for c in grp
-            ]
-            conj = grp[0].get("j", "Or") if grp else "Or"
-            lines.append(f"  -> Enroll in: {f' {conj} '.join(parts_cc)}")
+        cc_groups = art.get("cc", [])
+        has_articulation = any(len(grp) > 0 for grp in cc_groups)
+        if has_articulation:
+            lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
+            for grp in cc_groups:
+                if not grp:
+                    continue
+                parts_cc = [
+                    f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
+                    for c in grp
+                ]
+                conj = grp[0].get("j", "Or") if grp else "Or"
+                lines.append(f"  -> Schedule: {f' {conj} '.join(parts_cc)}")
+        else:
+            lines.append(f"[POST-TRANSFER] UC requires: {uc_str}")
+            lines.append(f"  -> No CC articulation. Must be taken at UC after transfer.")
     lines.append("")
-    lines.append("=== END ARTICULATION DATA ===")
+    lines.append("=== END PRE-COMPUTED ARTICULATION STATUS ===")
     return "\n".join(lines)
 
 

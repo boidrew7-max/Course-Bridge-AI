@@ -236,9 +236,9 @@ def _extract_igetc_courses(college: str) -> str:
         "The schedule MUST include courses covering ALL required IGETC areas below.",
         "Use ONLY courses listed here for IGETC slots — do not invent course numbers.",
         "NOTE: Area 6 (Languages Other Than English) — if no course is listed, the student may satisfy this with 2+ years of the same HS foreign language (C or better). Include a note about this in Key Notes.",
-        "LAB SCIENCE RULE: IGETC requires exactly ONE lab course total (5C). Pick ★LAB for ONE of",
-        "5A or 5B. The other science area should use a non-★LAB course if one is available.",
-        "Do NOT put ★LAB in both 5A and 5B — that wastes an extra lab when only one is required.",
+        "LAB SCIENCE RULE: Area 5C is satisfied AUTOMATICALLY when 5A or 5B has a ★LAB course.",
+        "Pick ★LAB for 5B. The 5A course should be a non-★LAB course.",
+        "5C = NO separate course ever. NEVER add GEOL 10, CHEM 10, or any second lab to the schedule.",
         "",
     ]
 
@@ -961,7 +961,7 @@ Start directly with ## Term 1 (Fall). No preamble.
 - Area 4: ✅/❌ COURSE#, COURSE#, COURSE#
 - Area 5A: ✅/❌ COURSE#
 - Area 5B: ✅/❌ COURSE#
-- Area 5C: ✅/❌ (satisfied by ★LAB above OR separate lab course)
+- Area 5C: ✅/❌ satisfied by ★LAB in 5B above — no separate course
 - Area 6: ✅/❌ COURSE# or ⚠️ satisfy with 2+ years HS foreign language
 
 ## Key Notes

@@ -395,18 +395,19 @@ All 9 slots must be covered by courses actually in the term schedule:
 A major prep course that also satisfies an IGETC area counts for both — listed once, checked off for both.
 The IGETC checklist may only show ✅ for a course that physically appears in a term above.
 
-=== ECONOMICS MAJOR REQUIREMENTS ===
-Required (must appear in the schedule):
-- Microeconomics (ECON 1 or equivalent): REQUIRED
-- Macroeconomics (ECON 2 or equivalent): REQUIRED
-- Calculus I: REQUIRED
-- Calculus II: REQUIRED
-Tier 2 strongly recommended — include ALL that are available at the college:
-- Statistics (STAT C1000, PSYC 15, or equivalent): ALWAYS include. Most important Tier 2 course for Economics. Label [Strongly Recommended Major Prep]. If it also satisfies IGETC 2A, label both — but it is in the plan because of major prep, not because of GE.
-- Calculus III (MATH 1C or equivalent): include unless already completed or no room after Tiers 1–2.
-- Linear Algebra (MATH 2B or equivalent): include if available and room permits.
+=== MAJOR REQUIREMENTS (from injected data) ===
+The MAJOR REQUIREMENTS section injected in the user message defines what is required and
+strongly recommended for this specific major. Use it as your Tier 1 and Tier 2 course list.
 
-CRITICAL: Area 2A being satisfied by Calculus I does NOT mean Statistics can be skipped. Statistics is a separate course that must appear in the schedule regardless of which course fills Area 2A.
+Rules:
+- Tier 1 required courses MUST all appear in the schedule. Schedule is INVALID without them.
+- Tier 2 strongly recommended courses MUST appear in Competitive mode before any GE filler.
+- In Efficiency mode, skip Tier 2 courses — only Tier 1 is required.
+- A GE area being satisfied by a Tier 1 course does NOT allow skipping Tier 2 courses.
+  Example: Calculus I satisfying Area 2A does NOT allow skipping Statistics for a quantitative major.
+- Label every course: [Required Major Prep] or [Strongly Recommended Major Prep].
+- If ASSIST has no articulation data, use the injected major requirements as guidance and mark
+  each course "(verify on ASSIST.org)".
 
 === HONORS RULE ===
 If student declined honors: NEVER include any course whose number ends in H (e.g. ECON 1H, MATH 1AH). Use non-honors equivalent.
@@ -486,7 +487,7 @@ Calculate the score step by step before printing the final number.
 ---
 
 **Validity:** PASS or FAIL (FAIL = required major prep missing or ASSIST violation)
-**UCLA Econ Strength Score:** [total]/100
+**UC Transfer Strength Score:** [total]/100
 
 **Score interpretation:**
 - 90–100: 🔥 Highly competitive

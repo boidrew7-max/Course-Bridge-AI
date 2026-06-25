@@ -269,6 +269,224 @@ def _extract_igetc_courses(college: str) -> str:
     lines.append("=== END IGETC DATA ===")
     return "\n".join(lines)
 
+# Major requirements lookup — (keywords, tier1_note, tier2_list)
+# keywords: list of lowercase strings; if ANY match major.lower(), use this entry
+# tier1_note: human-readable description of courses that must appear (ASSIST data is authoritative)
+# tier2_list: strongly recommended courses to add beyond ASSIST requirements
+_MAJOR_RECS = [
+    (["economics", "econ"],
+     "Microeconomics, Macroeconomics, Calculus I, Calculus II",
+     ["Statistics (intro stats, STAT C1000 or equivalent)",
+      "Calculus III",
+      "Linear Algebra"]),
+
+    (["computer science", "cs ", " cs,", "computing", "software engineering", "software eng"],
+     "Calculus I, Programming Fundamentals (CS1/Intro to CS), Discrete Mathematics",
+     ["Calculus II",
+      "Data Structures (CS2)",
+      "Linear Algebra",
+      "Statistics"]),
+
+    (["data science"],
+     "Calculus I, Programming Fundamentals, Statistics",
+     ["Calculus II",
+      "Linear Algebra",
+      "Data Structures",
+      "Probability"]),
+
+    (["biology", "biological science", "bioscience"],
+     "General Biology I (with lab), General Chemistry I (with lab)",
+     ["General Biology II (with lab)",
+      "General Chemistry II (with lab)",
+      "Statistics",
+      "Physics I (with lab)"]),
+
+    (["biochemistry"],
+     "General Chemistry I & II (with labs), General Biology I (with lab)",
+     ["Organic Chemistry I",
+      "Calculus I",
+      "Statistics",
+      "Physics I"]),
+
+    (["chemistry"],
+     "General Chemistry I (with lab), General Chemistry II (with lab)",
+     ["Organic Chemistry I (with lab)",
+      "Calculus I",
+      "Physics I",
+      "Statistics"]),
+
+    (["physics"],
+     "Calculus I, Calculus II, Physics I (with lab), Physics II (with lab)",
+     ["Calculus III",
+      "Differential Equations",
+      "Linear Algebra"]),
+
+    (["mechanical engineering", "mech eng", "me "],
+     "Calculus I, Calculus II, Physics I (with lab), Physics II (with lab), Chemistry I",
+     ["Calculus III",
+      "Differential Equations",
+      "Linear Algebra",
+      "Statics / Engineering Mechanics"]),
+
+    (["electrical engineering", "elec eng", "ee "],
+     "Calculus I, Calculus II, Physics I (with lab), Physics II (with lab)",
+     ["Calculus III",
+      "Differential Equations",
+      "Linear Algebra",
+      "Discrete Mathematics"]),
+
+    (["civil engineering"],
+     "Calculus I, Calculus II, Physics I (with lab), Chemistry I",
+     ["Calculus III",
+      "Differential Equations",
+      "Statics"]),
+
+    (["chemical engineering", "chem eng"],
+     "Calculus I, Calculus II, General Chemistry I & II (with labs), Physics I",
+     ["Calculus III",
+      "Differential Equations",
+      "Organic Chemistry I"]),
+
+    (["mathematics", "math "],
+     "Calculus I, Calculus II, Calculus III",
+     ["Linear Algebra",
+      "Differential Equations",
+      "Discrete Mathematics"]),
+
+    (["psychology", "psych"],
+     "Introduction to Psychology",
+     ["Statistics / Research Methods",
+      "Biological Bases of Behavior / Biopsychology",
+      "Abnormal Psychology"]),
+
+    (["nursing", "pre-nursing", "prenursing"],
+     "Anatomy (with lab), Physiology (with lab), Microbiology (with lab), General Chemistry I",
+     ["Statistics",
+      "Nutrition",
+      "Developmental Psychology"]),
+
+    (["business administration", "business admin", "management"],
+     "Microeconomics, Macroeconomics, Introduction to Accounting, Calculus or Statistics",
+     ["Accounting II",
+      "Business Law",
+      "Statistics",
+      "Introduction to Finance"]),
+
+    (["accounting", "finance"],
+     "Financial Accounting, Microeconomics, Statistics or Calculus",
+     ["Managerial Accounting",
+      "Macroeconomics",
+      "Business Law",
+      "Calculus or Mathematics for Business"]),
+
+    (["political science", "political economy", "poli sci", "polisci"],
+     "Introduction to Political Science or American Government",
+     ["Statistics or Research Methods",
+      "Comparative Politics",
+      "International Relations",
+      "Writing-intensive course"]),
+
+    (["sociology"],
+     "Introduction to Sociology",
+     ["Statistics / Research Methods",
+      "Social Problems",
+      "Cultural Anthropology"]),
+
+    (["history"],
+     "World History or US History (lower-division)",
+     ["Writing-intensive history course",
+      "Research Methods or Historiography",
+      "Additional regional/thematic history"]),
+
+    (["communication", "media studies"],
+     "Introduction to Communication",
+     ["Public Speaking",
+      "Mass Media / Media Studies",
+      "Statistics or Research Methods",
+      "Writing-intensive course"]),
+
+    (["english", "literature", "creative writing"],
+     "English Composition (1A-level), Introduction to Literature",
+     ["Creative Writing or Advanced Composition",
+      "Additional literature survey (British, American, World)",
+      "Writing-intensive upper-division prep"]),
+
+    (["philosophy"],
+     "Introduction to Philosophy, Logic or Critical Thinking",
+     ["Ethics",
+      "Epistemology or Metaphysics",
+      "Writing-intensive course"]),
+
+    (["kinesiology", "physical education", "exercise science", "sport science"],
+     "Anatomy (with lab), Physiology (with lab), Introduction to Kinesiology",
+     ["Statistics",
+      "Nutrition",
+      "Biomechanics or Physics",
+      "Exercise Physiology"]),
+
+    (["nutrition", "dietetics", "food science"],
+     "General Chemistry I, Introduction to Nutrition or Human Nutrition",
+     ["Biology I (with lab)",
+      "Chemistry II",
+      "Statistics",
+      "Physiology"]),
+
+    (["environmental science", "environmental studies", "env sci"],
+     "General Biology I (with lab), General Chemistry I (with lab)",
+     ["General Chemistry II",
+      "Statistics",
+      "Earth Science / Geology",
+      "Physics I"]),
+
+    (["art", "studio art", "fine art", "graphic design"],
+     "Drawing / Fundamentals of Drawing, 2D Design, Art History (survey)",
+     ["3D Design",
+      "Color Theory",
+      "Additional Art History",
+      "Painting or Sculpture"]),
+
+    (["film", "cinema"],
+     "Introduction to Film / Film History",
+     ["Film Analysis",
+      "Screenwriting",
+      "Media Production or Film Production"]),
+
+    (["music"],
+     "Music Theory I, Musicianship / Ear Training I",
+     ["Music Theory II",
+      "Music History (survey)",
+      "Applied instrument or voice"]),
+
+    (["anthropology"],
+     "Introduction to Cultural Anthropology or Physical Anthropology",
+     ["Statistics or Research Methods",
+      "Archaeological Methods",
+      "World Cultures course"]),
+
+    (["linguistics"],
+     "Introduction to Linguistics",
+     ["Phonetics / Phonology",
+      "Syntax",
+      "Statistics or Research Methods",
+      "Additional language coursework"]),
+
+    (["public health"],
+     "Introduction to Public Health, General Biology I (with lab)",
+     ["Statistics or Epidemiology",
+      "Chemistry I",
+      "Sociology or Psychology"]),
+]
+
+
+def _get_major_recs(major: str):
+    """Return (tier1_note, tier2_list) for the given major, or ('', []) if unknown."""
+    ml = major.lower()
+    for keywords, t1, t2 in _MAJOR_RECS:
+        if any(kw in ml for kw in keywords):
+            return t1, t2
+    return "", []
+
+
 _UC_NAME_MAP = {
     "ucla":          "los angeles",
     "uc la":         "los angeles",
@@ -518,27 +736,45 @@ def plan():
     uc_l_for_gpa = _UC_NAME_MAP.get(school.lower().strip(), school.lower())
     gpa_range, gpa_note = _UC_GPA_TARGETS.get(uc_l_for_gpa, ("3.5+", f"Target 3.5+ for {school}."))
 
+    # Major-specific requirements block
+    t1_note, t2_list = _get_major_recs(major)
+    if t1_note:
+        t2_str = "\n".join(f"- {c}" for c in t2_list)
+        major_req_block = f"""
+=== MAJOR REQUIREMENTS: {major.upper()} ===
+Tier 1 — Required (ASSIST articulation above is authoritative; these are the typical expectations):
+{t1_note}
+
+Tier 2 — Strongly Recommended Major Prep (include in Competitive mode before any GE filler):
+{t2_str}
+=== END MAJOR REQUIREMENTS ==="""
+    else:
+        major_req_block = f"""
+=== MAJOR REQUIREMENTS: {major.upper()} ===
+Required courses are defined by the ASSIST articulation data above.
+Include all articulated courses. For Tier 2, add any courses commonly expected for
+upper-division {major} coursework that are available at {college}.
+=== END MAJOR REQUIREMENTS ==="""
+
     if mode == "efficiency":
-        mode_block = """\n=== PLANNING MODE: EFFICIENCY ===
+        mode_block = f"""\n=== PLANNING MODE: EFFICIENCY ===
 The student wants the LOWEST WORKLOAD path that still satisfies all transfer requirements.
 - For each IGETC slot, pick the course with the least reading, writing, and exam difficulty.
 - Prefer arts, humanities, and social science GE over lab sciences when both are available.
-- Do NOT include Statistics, Calculus III, or Linear Algebra — they are not required and add difficulty.
-- Still complete all required major prep (Microeconomics, Macroeconomics, Calculus I, Calculus II).
-- Do NOT add any Tier 2 strongly recommended courses — efficiency mode skips them intentionally.
+- Do NOT include Tier 2 strongly recommended courses — efficiency mode skips them intentionally.
+- Still complete all Tier 1 required major prep from the ASSIST data and major requirements above.
 - Label every GE course as [IGETC Area Xn — Efficiency Pick].
 - Strength score will be lower; that is expected and intentional in this mode."""
     else:
-        mode_block = """\n=== PLANNING MODE: COMPETITIVE ===
-The student wants to MAXIMIZE UCLA admissions strength.
+        mode_block = f"""\n=== PLANNING MODE: COMPETITIVE ===
+The student wants to MAXIMIZE transfer admissions strength for {school} {major}.
 - Apply the full Tier 1 → Tier 2 → Tier 3 → Tier 4 priority model.
-- Include Statistics (STAT C1000 or equivalent) and Calculus III as Tier 2 mandatory courses.
-- Include Linear Algebra if units allow.
-- Choose rigorous GE courses that show academic strength.
+- Include ALL Tier 2 strongly recommended courses listed in the major requirements above.
+- Choose rigorous GE courses that demonstrate academic breadth.
 - Maximize the Transfer Strength Score."""
 
     prompt = f"""You are building a complete 4-term UC transfer schedule for a student at {college} transferring to {school} for {major}.{mode_block}
-
+{major_req_block}
 {articulation_section}{igetc_section}
 
 Already completed — EXCLUDE ENTIRELY: {completed_str}

@@ -751,9 +751,21 @@ Tier 2 — Strongly Recommended Major Prep (include in Competitive mode before a
     else:
         major_req_block = f"""
 === MAJOR REQUIREMENTS: {major.upper()} ===
-Required courses are defined by the ASSIST articulation data above.
-Include all articulated courses. For Tier 2, add any courses commonly expected for
-upper-division {major} coursework that are available at {college}.
+No preset requirement list exists for this major. Use your training knowledge of UC transfer
+expectations to fill in both tiers:
+
+Tier 1 — identify the courses typically REQUIRED for admission to {major} at {school}:
+Use the ASSIST articulation data above as the primary source. If ASSIST data is present,
+those courses are Tier 1. If not, list what is commonly required for this major at UC campuses.
+
+Tier 2 — identify courses STRONGLY RECOMMENDED for {major} that strengthen the application:
+Draw on your knowledge of what upper-division {major} coursework requires. Examples:
+- quantitative majors typically benefit from stats, linear algebra
+- science majors benefit from lab sequences beyond the minimum
+- humanities majors benefit from writing-intensive and research methods courses
+List the 2-4 most impactful Tier 2 courses for this specific major.
+
+Mark any course not confirmed in the ASSIST data above as "(verify on ASSIST.org)".
 === END MAJOR REQUIREMENTS ==="""
 
     if mode == "efficiency":

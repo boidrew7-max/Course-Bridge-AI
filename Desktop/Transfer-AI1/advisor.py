@@ -388,6 +388,11 @@ Your only active construction task:
    Example: MATH 1A is [Required Major Prep] AND appears in IGETC Area 2A →
    label it "[Required Major Prep / IGETC Area 2A]" and mark Area 2A ✅.
    NEVER leave Area 2A ❌ when a scheduled math course appears in the Area 2A IGETC list.
+5. HONORS DUPLICATE RULE: NEVER schedule both the honors (H suffix) and non-honors version
+   of the same course. CIS 22CH is the same course as CIS 22C — schedule ONE, not both.
+   If the student accepts honors, use the H version. If declined, use the non-honors version.
+   A course number ending in H (e.g. ENGL 1AH, CIS 22CH) is the same course as the non-H
+   version. They are mutually exclusive. Scheduling both is a critical error.
 
 🚨 OUTPUT FORMAT (STRICT — in this order)
 

@@ -343,23 +343,33 @@ def _extract_igetc_courses(college: str, scheduled_cc_keys: set = None) -> str:
                     lines.append("")
             continue
 
-        # Check if a scheduled major prep course already satisfies this IGETC area
+        # Check if any scheduled major prep course already satisfies this IGETC area.
+        # Note: scheduled_cc_keys contains ALL CC options from the articulation data,
+        # not just the one the LLM will pick. So we list ALL matches and instruct the
+        # LLM to label whichever one it actually schedules — never claim a specific course
+        # is satisfied if it might not be in the final plan.
         if scheduled_cc_keys:
-            match = next(
-                (c for c in courses if (c.get("prefix", ""), c.get("number", "")) in scheduled_cc_keys),
-                None
-            )
-            if match:
-                course_label = f"{match.get('prefix','')} {match.get('number','')} - {match.get('title','')}"
+            matches = [
+                c for c in courses
+                if (c.get("prefix", ""), c.get("number", "")) in scheduled_cc_keys
+            ]
+            if matches:
+                matched_labels = ", ".join(
+                    f"{m.get('prefix','')} {m.get('number','')}" for m in matches[:4]
+                )
                 lines.append(f"Area {area_code} — {area_name}:")
-                lines.append(f"  ✅ ALREADY SATISFIED by {course_label} — already scheduled as [Required Major Prep].")
-                lines.append(f"  This area is MET. Do NOT add a separate course for Area {area_code}.")
+                lines.append(f"  ✅ COVERED BY MAJOR PREP: {matched_labels}")
+                lines.append(f"  One or more of these courses is required major prep AND satisfies Area {area_code}.")
+                lines.append(f"  In the schedule, label whichever one you actually place with [IGETC Area {area_code}].")
+                lines.append(f"  Do NOT add a separate course for this area.")
                 lines.append("")
                 # Track lab for 5C suppression
                 if area_code in ("5A", "5B"):
-                    mk = (match.get("prefix", ""), match.get("number", ""))
-                    if mk in lab_keys:
-                        lab_already_presented = True
+                    for m in matches:
+                        mk = (m.get("prefix", ""), m.get("number", ""))
+                        if mk in lab_keys:
+                            lab_already_presented = True
+                            break
                 continue
 
         seen_nums = set()

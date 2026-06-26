@@ -71,6 +71,11 @@ def _is_obvious_offtopic(msg):
 
 # ── Routes ─────────────────────────────────────────────────────
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"}), 200
+
+
 @app.route("/")
 def home():
     return app.send_static_file("index.html")

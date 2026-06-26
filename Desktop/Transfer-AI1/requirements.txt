@@ -3,5 +3,5 @@ groq
 python-dotenv
 werkzeug
 gunicorn
-playwright
 requests
+psycopg2-binary

@@ -1164,6 +1164,24 @@ export default function PlannerClient() {
     if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, chatOpen]);
 
+  // Lock body scroll when wizard is open (fixes iOS Safari scroll-through)
+  useEffect(() => {
+    if (!onboardingDone) {
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
+    };
+  }, [onboardingDone]);
+
   // Persist IGETC and tracker to localStorage
   useEffect(() => {
     try { localStorage.setItem("igetc", JSON.stringify(igetcChecked)); } catch {}
@@ -2248,8 +2266,8 @@ export default function PlannerClient() {
         const steps = ["College","Target UCs","Major","Courses"];
         const toggleUC = (uc: string) => setWizardUCs(prev => prev.includes(uc) ? prev.filter(u => u !== uc) : [...prev, uc]);
         return (
-          <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
-            <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+            <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl flex flex-col" style={{maxHeight:"90vh"}}>
 
               {/* Green gradient header */}
               <div className="bg-gradient-to-br from-[#0a6e3d] to-[#0d9456] px-8 pt-7 pb-6">
@@ -2285,7 +2303,7 @@ export default function PlannerClient() {
                 </p>
               </div>
 
-              <div className="p-7 overflow-y-auto flex-1">
+              <div className="p-7 flex-1" style={{overflowY:"auto", WebkitOverflowScrolling:"touch"}}>
                 {/* Step 1 — College */}
                 {wizardStep === 1 && (
                   <div className="flex flex-col gap-4">
@@ -2385,75 +2403,66 @@ export default function PlannerClient() {
                         value={wizardCourses}
                         onChange={e => setWizardCourses(e.target.value)}
                         placeholder="e.g. Calc 1, English 1A, Intro to CS, Econ 1"
-                        rows={3}
+                        rows={4}
                         className="w-full rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 resize-none"
+                        autoFocus
                       />
                     )}
                     {wizardNoCourses && (
-                      <input
-                        type="text"
-                        value={wizardHsMath}
-                        onChange={e => setWizardHsMath(e.target.value)}
-                        placeholder="Highest HS math (e.g. Pre-Calculus) — optional"
-                        className="w-full rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
-                      />
+                      <div className="rounded-xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3">
+                        <p className="text-sm font-medium text-[#303236] mb-2">Highest math completed in high school? <span className="text-[#7b818b] font-normal">(optional)</span></p>
+                        <input type="text" value={wizardHsMath} onChange={e => setWizardHsMath(e.target.value)}
+                          placeholder="e.g. Pre-Calculus, Algebra II, Calculus AB"
+                          className="w-full rounded-lg border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10" />
+                      </div>
                     )}
-
-                    {/* Planning mode */}
-                    <div>
-                      <p className="text-sm font-semibold text-[#303236] mb-2">Planning mode</p>
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
+                      <p className="text-sm font-semibold text-[#303236] mb-3">Are you open to taking honors courses?</p>
+                      <div className="flex gap-3">
+                        <button onClick={() => setWizardHonors(true)}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHonors === true ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          Yes, include them
+                        </button>
+                        <button onClick={() => setWizardHonors(false)}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHonors === false ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          No, skip honors
+                        </button>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
+                      <p className="text-sm font-semibold text-[#303236] mb-3">Do you have any AP exam credit?</p>
+                      <div className="flex gap-3 mb-3">
+                        <button onClick={() => setWizardHasAp(true)}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHasAp === true ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          Yes
+                        </button>
+                        <button onClick={() => { setWizardHasAp(false); setWizardApCredits(""); }}
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHasAp === false ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          No
+                        </button>
+                      </div>
+                      {wizardHasAp === true && (
+                        <textarea value={wizardApCredits} onChange={e => setWizardApCredits(e.target.value)}
+                          placeholder="e.g. AP Calculus AB (score 4), AP English Language (score 5)"
+                          rows={2}
+                          className="w-full rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 resize-none" />
+                      )}
+                    </div>
+                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
+                      <p className="text-sm font-semibold text-[#303236] mb-1">Planning mode</p>
+                      <p className="text-xs text-[#7b818b] mb-3">Competitive maximizes your transfer strength. Efficiency minimizes workload.</p>
+                      <div className="flex gap-3">
                         <button onClick={() => setWizardMode("competitive")}
-                          className={`rounded-xl py-3 text-sm font-semibold transition border ${wizardMode === "competitive" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardMode === "competitive" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
                           🏆 Competitive
                         </button>
                         <button onClick={() => setWizardMode("efficiency")}
-                          className={`rounded-xl py-3 text-sm font-semibold transition border ${wizardMode === "efficiency" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
+                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardMode === "efficiency" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
                           ⚡ Efficiency
                         </button>
                       </div>
                     </div>
-
-                    {/* Honors + AP — compact row */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-xs font-semibold text-[#303236] mb-1.5">Honors courses?</p>
-                        <div className="flex gap-1.5">
-                          <button onClick={() => setWizardHonors(true)}
-                            className={`flex-1 rounded-lg py-2 text-xs font-semibold transition border ${wizardHonors === true ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8]"}`}>
-                            Yes
-                          </button>
-                          <button onClick={() => setWizardHonors(false)}
-                            className={`flex-1 rounded-lg py-2 text-xs font-semibold transition border ${wizardHonors === false ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8]"}`}>
-                            No
-                          </button>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-[#303236] mb-1.5">AP credit?</p>
-                        <div className="flex gap-1.5">
-                          <button onClick={() => setWizardHasAp(true)}
-                            className={`flex-1 rounded-lg py-2 text-xs font-semibold transition border ${wizardHasAp === true ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8]"}`}>
-                            Yes
-                          </button>
-                          <button onClick={() => { setWizardHasAp(false); setWizardApCredits(""); }}
-                            className={`flex-1 rounded-lg py-2 text-xs font-semibold transition border ${wizardHasAp === false ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8]"}`}>
-                            No
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    {wizardHasAp === true && (
-                      <textarea
-                        value={wizardApCredits}
-                        onChange={e => setWizardApCredits(e.target.value)}
-                        placeholder="e.g. AP Calculus AB (score 4), AP English (score 5)"
-                        rows={2}
-                        className="w-full rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 resize-none"
-                      />
-                    )}
-
-                    <div className="flex justify-between items-center pt-1">
+                    <div className="flex justify-between items-center pt-2">
                       <button onClick={() => setWizardStep(3)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                       <button onClick={completeWizard} disabled={(!wizardNoCourses && !wizardCourses.trim()) || wizardHonors === null || wizardHasAp === null || (wizardHasAp === true && !wizardApCredits.trim()) || wizardMode === null}
                         className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">

@@ -382,6 +382,12 @@ Your only active construction task:
    - 5A: use the first NON-★LAB course listed — 5C is already covered by 5B
    - No honors courses if student declined honors
 3. Do not add any course not present in the [CC-COMPLETABLE] or IGETC data
+4. DOUBLE-LABEL RULE (critical): If a [CC-COMPLETABLE] major prep course also appears in
+   the IGETC data for a given area, it satisfies BOTH. Label it with both tags and mark that
+   IGETC area as MET. Do NOT add a separate course for that IGETC area.
+   Example: MATH 1A is [Required Major Prep] AND appears in IGETC Area 2A →
+   label it "[Required Major Prep / IGETC Area 2A]" and mark Area 2A ✅.
+   NEVER leave Area 2A ❌ when a scheduled math course appears in the Area 2A IGETC list.
 
 🚨 OUTPUT FORMAT (STRICT — in this order)
 

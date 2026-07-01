@@ -18,7 +18,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder="static")
-app.secret_key = os.getenv("FLASK_SECRET", "transfer-ai-change-this-key-xyz")
+_flask_secret = os.getenv("FLASK_SECRET")
+if not _flask_secret:
+    raise RuntimeError(
+        "FLASK_SECRET environment variable is not set — "
+        "refusing to start with an insecure default."
+    )
+app.secret_key = _flask_secret
 app.config.update(
     SESSION_COOKIE_SECURE=os.getenv("FLASK_ENV") == "production",
     SESSION_COOKIE_HTTPONLY=True,

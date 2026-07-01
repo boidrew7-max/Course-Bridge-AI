@@ -1,5 +1,0 @@
-flask
-groq
-python-dotenv
-playwright
-requests

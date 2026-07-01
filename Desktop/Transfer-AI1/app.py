@@ -734,7 +734,7 @@ def _load_uc_shard(uc_canonical: str) -> dict:
     return {}
 
 
-def _extract_major_prep(college: str, uc: str, major: str) -> str:
+def _extract_major_prep(college: str, uc: str, major: str) -> tuple:
     """
     Load only the UC-specific shard (<1 MB each) and find the best CC+major match.
     """
@@ -744,10 +744,12 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
 
     shard = _load_uc_shard(uc_l)
     if not shard:
-        return "", set()
+        return "", set(), []
 
     best_score, best_key = 0.0, None
     for key in shard:
+        if key.startswith("_"):  # skip _meta and any other reserved keys
+            continue
         parts = key.split("__")
         if len(parts) < 3:
             continue
@@ -774,7 +776,7 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
                 return _format_arts_block(live_arts, college, uc, major, source="ASSIST.org (live)")
         except Exception:
             pass
-        return "", set()
+        return "", set(), []
 
     arts = shard[best_key]
     kparts = best_key.split("__")
@@ -782,6 +784,7 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
     major_display = "__".join(kparts[2:]).replace("_", " ") if len(kparts) > 2 else major
 
     cc_keys: set = set()
+    and_groups: list = []
     lines = [
         f"=== PRE-COMPUTED ARTICULATION STATUS: {college} -> {uc_display} | {major_display} ===",
         "Source: ASSIST.org — labels below are computed by the external verification system.",
@@ -800,6 +803,10 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
             for g in valid_groups:
                 for c in g:
                     cc_keys.add((c.get("p", ""), c.get("n", "")))
+            # Track AND-groups for post-generation validation
+            ag_or_groups = [[(c.get("p", ""), c.get("n", "")) for c in g] for g in valid_groups]
+            if any(len(g) >= 2 for g in ag_or_groups):
+                and_groups.append({"uc_label": uc_str, "or_groups": ag_or_groups})
             lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
             if len(valid_groups) == 1:
                 grp = valid_groups[0]
@@ -807,8 +814,13 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
                     f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
                     for c in grp
                 ]
-                conj = grp[0].get("j", "And") if grp else "And"
-                lines.append(f"  -> Must schedule: {f' {conj} '.join(parts_cc)}")
+                if len(parts_cc) > 1:
+                    lines.append(f"  -> Must schedule ALL of these (AND-group — every course is required):")
+                    for pc in parts_cc:
+                        lines.append(f"     • {pc}")
+                    lines.append(f"  ❗ Omitting ANY course from this AND-group makes the plan INVALID.")
+                else:
+                    lines.append(f"  -> Must schedule: {parts_cc[0]}")
             else:
                 lines.append(f"  ⚠️ PICK EXACTLY ONE OPTION — these are mutually exclusive alternatives:")
                 for idx, grp in enumerate(valid_groups):
@@ -817,11 +829,13 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
                         f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
                         for c in grp
                     ]
-                    conj = grp[0].get("j", "And") if grp else "And"
                     if len(parts_cc) == 1:
                         lines.append(f"  OPTION {letter}: {parts_cc[0]}")
                     else:
-                        lines.append(f"  OPTION {letter}: {f' {conj} '.join(parts_cc)}  ← ALL {len(parts_cc)} required if chosen")
+                        lines.append(f"  OPTION {letter}:")
+                        for pc in parts_cc:
+                            lines.append(f"    • {pc}")
+                        lines.append(f"    ← ALL {len(parts_cc)} courses are required if this option is chosen — do NOT schedule only some of them.")
                 lines.append(f"  ❌ Schedule courses from ONE option only — never mix options for this requirement.")
         else:
             lines.append(f"[POST-TRANSFER] UC requires: {uc_str}")
@@ -830,12 +844,13 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
     lines.append("NOTE: Any UC requirement for this major NOT listed above has no CC articulation")
     lines.append("and is therefore a POST-TRANSFER requirement. Do not invent CC substitutes.")
     lines.append("=== END PRE-COMPUTED ARTICULATION STATUS ===")
-    return "\n".join(lines), cc_keys
+    return "\n".join(lines), cc_keys, and_groups
 
 
 def _format_arts_block(arts: list, college: str, uc: str, major: str, source: str = "ASSIST.org") -> tuple:
-    """Format articulation entries with pre-computed labels. Returns (block_str, cc_keys_set)."""
+    """Format articulation entries with pre-computed labels. Returns (block_str, cc_keys_set, and_groups)."""
     cc_keys: set = set()
+    and_groups: list = []
     lines = [
         f"=== PRE-COMPUTED ARTICULATION STATUS: {college} -> {uc} | {major} ===",
         f"Source: {source} — labels are pre-computed by the external verification system.",
@@ -852,6 +867,9 @@ def _format_arts_block(arts: list, college: str, uc: str, major: str, source: st
             for g in valid_groups:
                 for c in g:
                     cc_keys.add((c.get("p", ""), c.get("n", "")))
+            ag_or_groups = [[(c.get("p", ""), c.get("n", "")) for c in g] for g in valid_groups]
+            if any(len(g) >= 2 for g in ag_or_groups):
+                and_groups.append({"uc_label": uc_str, "or_groups": ag_or_groups})
             lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
             if len(valid_groups) == 1:
                 grp = valid_groups[0]
@@ -859,8 +877,13 @@ def _format_arts_block(arts: list, college: str, uc: str, major: str, source: st
                     f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
                     for c in grp
                 ]
-                conj = grp[0].get("j", "And") if grp else "And"
-                lines.append(f"  -> Must schedule: {f' {conj} '.join(parts_cc)}")
+                if len(parts_cc) > 1:
+                    lines.append(f"  -> Must schedule ALL of these (AND-group — every course is required):")
+                    for pc in parts_cc:
+                        lines.append(f"     • {pc}")
+                    lines.append(f"  ❗ Omitting ANY course from this AND-group makes the plan INVALID.")
+                else:
+                    lines.append(f"  -> Must schedule: {parts_cc[0]}")
             else:
                 lines.append(f"  ⚠️ PICK EXACTLY ONE OPTION — these are mutually exclusive alternatives:")
                 for idx, grp in enumerate(valid_groups):
@@ -869,21 +892,23 @@ def _format_arts_block(arts: list, college: str, uc: str, major: str, source: st
                         f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
                         for c in grp
                     ]
-                    conj = grp[0].get("j", "And") if grp else "And"
                     if len(parts_cc) == 1:
                         lines.append(f"  OPTION {letter}: {parts_cc[0]}")
                     else:
-                        lines.append(f"  OPTION {letter}: {f' {conj} '.join(parts_cc)}  ← ALL {len(parts_cc)} required if chosen")
+                        lines.append(f"  OPTION {letter}:")
+                        for pc in parts_cc:
+                            lines.append(f"    • {pc}")
+                        lines.append(f"    ← ALL {len(parts_cc)} courses are required if this option is chosen — do NOT schedule only some of them.")
                 lines.append(f"  ❌ Schedule courses from ONE option only — never mix options for this requirement.")
         else:
             lines.append(f"[POST-TRANSFER] UC requires: {uc_str}")
             lines.append(f"  -> No CC articulation. Must be taken at UC after transfer.")
     lines.append("")
     lines.append("=== END PRE-COMPUTED ARTICULATION STATUS ===")
-    return "\n".join(lines), cc_keys
+    return "\n".join(lines), cc_keys, and_groups
 
 
-def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str) -> list:
+def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str, and_groups: list = None) -> list:
     """
     Post-generation sanity check. Returns a list of warning strings.
     Empty list means the plan looks complete. Called after full response is buffered.
@@ -923,14 +948,41 @@ def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str) -> 
                 warnings.append(f"IGETC Area {area_code} ({area_name}) missing from IGETC Completion section.")
 
     # 3. Coarse major-prep presence check: at least one CC key must appear in the term sections
+    term_end = plan_text.find("## Major Prep Summary")
+    term_text = plan_text[:term_end] if term_end != -1 else plan_text[:3000]
     if scheduled_cc_keys:
-        term_end = plan_text.find("## Major Prep Summary")
-        term_text = plan_text[:term_end] if term_end != -1 else plan_text[:3000]
         found_any = any(f"{p} {n}" in term_text for p, n in scheduled_cc_keys if p and n)
         if not found_any:
             warnings.append(
                 "No required major prep courses found in term schedule — "
                 "ASSIST articulation data may have been ignored."
+            )
+
+    # 4. AND-group completeness: verify no multi-course group was only partially scheduled
+    for req in (and_groups or []):
+        uc_label = req["uc_label"]
+        or_groups = req["or_groups"]
+        multi_groups = [g for g in or_groups if len(g) >= 2]
+        if not multi_groups:
+            continue
+        fully_satisfied = False
+        partial_infos = []
+        for group in multi_groups:
+            present = [(p, n) for p, n in group if f"{p} {n}" in term_text]
+            missing = [(p, n) for p, n in group if f"{p} {n}" not in term_text]
+            if not missing:
+                fully_satisfied = True
+                break
+            elif present:
+                partial_infos.append((group, present, missing))
+        if not fully_satisfied and partial_infos:
+            group, present, missing = partial_infos[0]
+            all_courses = " AND ".join(f"{p} {n}" for p, n in group)
+            present_str = ", ".join(f"{p} {n}" for p, n in present)
+            missing_str = " AND ".join(f"{p} {n}" for p, n in missing)
+            warnings.append(
+                f"Requirement '{uc_label}' needs {all_courses} together"
+                f" — only {present_str} was scheduled, missing: {missing_str}."
             )
 
     return warnings
@@ -966,7 +1018,7 @@ def plan():
                         headers={"Cache-Control": "no-cache"})
 
     # Pre-extract articulation data and IGETC courses for this CC
-    major_prep_block, scheduled_cc_keys = _extract_major_prep(college, school, major)
+    major_prep_block, scheduled_cc_keys, and_groups = _extract_major_prep(college, school, major)
     igetc_block = _extract_igetc_courses(college, scheduled_cc_keys)
     completed_str    = completed if completed else "none"
     honors_rule      = "" if accept_honors else "\n0. HONORS — HIGHEST PRIORITY RULE: The student has DECLINED honors courses. This overrides everything. NEVER include any course whose number ends in 'H' (e.g. ECON 1H, MATH 1AH, ENGL 1AH) or whose title contains 'Honors'. If the only option for a requirement is an honors course, use the non-honors equivalent instead."
@@ -1201,7 +1253,7 @@ Start directly with ## Term 1 (Fall). No preamble.
                 trunc_msg = "\n\n⚠️ **Plan appears cut off** — the Key Notes section is missing. Please regenerate."
                 yield f"data: {json.dumps(trunc_msg)}\n\n"
             else:
-                issues = _validate_plan(full_text, scheduled_cc_keys, igetc_block)
+                issues = _validate_plan(full_text, scheduled_cc_keys, igetc_block, and_groups)
                 if issues:
                     warning = "\n\n---\n⚠️ **Completeness Warning** — review these items:\n" + "\n".join(f"• {w}" for w in issues)
                     yield f"data: {json.dumps(warning)}\n\n"

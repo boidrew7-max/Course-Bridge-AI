@@ -10,11 +10,14 @@ Results are cached in SQLite (data/assist_cache.db) — scraped once, reused for
 """
 
 import json
+import logging
 import os
 import sqlite3
 import time
 import re
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_DB  = os.path.join(BASE_DIR, "data", "assist_cache.db")
@@ -62,6 +65,11 @@ def _scrape(cc_name: str, uc_name: str, major: str) -> Optional[list]:
     try:
         from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
     except ImportError:
+        logger.warning(
+            "Playwright is not installed — live ASSIST scraper unavailable. "
+            "Add 'playwright' to requirements.txt and run "
+            "'playwright install --with-deps chromium' in the container."
+        )
         return None
 
     captured: list[dict] = []  # {url, data}

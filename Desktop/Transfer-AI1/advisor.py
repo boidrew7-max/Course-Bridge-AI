@@ -374,10 +374,14 @@ Your only active construction task:
    - Prerequisite order: MATH 1A → 1B → 1C → 2A/2B; ENGL C1000 → C1001
    - 12–17 units per term, 3–5 courses
    - All [CC-COMPLETABLE] courses placed BEFORE any GE courses
-   - "-> Must schedule:" lines: ALL courses listed are required — schedule every one of them
+   - "-> Must schedule: COURSE" lines (single course): schedule that course.
+   - "-> Must schedule ALL of these (AND-group)" blocks: EVERY bullet (•) listed course is
+     required — schedule ALL of them across your terms. Omitting ANY bullet makes the plan INVALID.
+     Example: bullets listing MATH 1B and MATH 1C → both must appear in a term, not just one.
    - "PICK EXACTLY ONE OPTION" blocks: choose ONE option letter only. NEVER schedule courses
-     from multiple option letters for the same UC requirement. This is a critical error.
-     Example: If OPTION A = CIS 22CH and OPTION B = CIS 22C, schedule one of them, NOT both.
+     from multiple option letters for the same UC requirement.
+     CRITICAL: once you pick an option letter, you MUST schedule EVERY bullet (•) under it —
+     not just one. Scheduling only some bullets from a chosen option is INVALID.
    - A course needed by multiple UC requirements is scheduled ONCE
 2. Fill remaining slots with ONE course per IGETC area from the injected IGETC lists
    - 5B: use the ★LAB course listed first — satisfies both 5B and 5C

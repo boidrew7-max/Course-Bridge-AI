@@ -919,9 +919,25 @@ def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str, and
     if "## Key Notes" not in plan_text:
         return ["Plan appears truncated — Key Notes section missing. Please regenerate."]
 
+    # Build term_text: everything between ## Term 1 and ## IGETC Completion
+    term_start = plan_text.find("## Term 1")
+    igetc_start = plan_text.find("## IGETC Completion")
+    if term_start == -1:
+        term_text = plan_text
+    elif igetc_start == -1:
+        term_text = plan_text[term_start:]
+    else:
+        term_text = plan_text[term_start:igetc_start]
+
     # 2. IGETC completion: for every area that had real course data, verify ✅ in checklist
-    completion_start = plan_text.find("## IGETC Completion")
-    completion_text = plan_text[completion_start:completion_start + 700] if completion_start != -1 else ""
+    completion_start = igetc_start
+    key_notes_start = plan_text.find("## Key Notes")
+    if completion_start != -1 and key_notes_start != -1 and key_notes_start > completion_start:
+        completion_text = plan_text[completion_start:key_notes_start]
+    elif completion_start != -1:
+        completion_text = plan_text[completion_start:]
+    else:
+        completion_text = ""
     if not completion_text:
         warnings.append("IGETC Completion section missing from plan.")
     else:
@@ -948,8 +964,6 @@ def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str, and
                 warnings.append(f"IGETC Area {area_code} ({area_name}) missing from IGETC Completion section.")
 
     # 3. Coarse major-prep presence check: at least one CC key must appear in the term sections
-    term_end = plan_text.find("## Major Prep Summary")
-    term_text = plan_text[:term_end] if term_end != -1 else plan_text[:3000]
     if scheduled_cc_keys:
         found_any = any(f"{p} {n}" in term_text for p, n in scheduled_cc_keys if p and n)
         if not found_any:
@@ -984,6 +998,25 @@ def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str, and
                 f"Requirement '{uc_label}' needs {all_courses} together"
                 f" — only {present_str} was scheduled, missing: {missing_str}."
             )
+
+    # 5. Ghost-course check: every ✅ line in ## IGETC Completion must have its
+    #    course code(s) present in the term sections.
+    if completion_text:
+        import re
+        for line in completion_text.splitlines():
+            if "✅" not in line:
+                continue
+            # Skip area 5C (satisfied by lab) and area 6 HS-language fallback lines
+            if "satisfied by" in line.lower() or "HS foreign language" in line or "Area 6" in line:
+                continue
+            # Extract course codes: PREFIX NUM, e.g. MATH 1B, PHIL 3, CIS 22C
+            codes = re.findall(r'\b([A-Z]{2,6})\s+(\d+[A-Z]*)\b', line)
+            for prefix, num in codes:
+                if f"{prefix} {num}" not in term_text:
+                    warnings.append(
+                        f"Ghost course: {prefix} {num} is marked ✅ in IGETC Completion "
+                        f"but does not appear in any Term 1–4."
+                    )
 
     return warnings
 
@@ -1121,13 +1154,16 @@ Already completed — EXCLUDE ENTIRELY: {completed_str}
 ===== STEP 0: PARSE THE ASSIST DATA (do this silently before building the schedule) =====
 For EVERY "UC requires:" entry in the VERIFIED ARTICULATION DATA above:
 
-1. Pick a CC group: choose the FIRST non-honors "-> Enroll in:" option unless student accepts honors.
-   (If student declines honors: skip any group where ALL courses end in H.)
+1. For each "PICK EXACTLY ONE OPTION" block, pick ONE option letter (prefer non-honors unless
+   student accepts honors; skip any option where ALL courses end in H if honors declined).
+   Write down EVERY bullet (•) course under that chosen option — ALL are required.
 
-2. "And" = ALL courses in that line are required — note every one.
-   Example: "MATH 1C And MATH 1B" → BOTH MATH 1C and MATH 1B must be scheduled.
+2. For each "-> Must schedule ALL of these (AND-group)" block, note ALL bullet courses —
+   every single bullet must appear in a term. Omitting any one bullet makes the plan INVALID.
+   Example: bullets MATH 1B and MATH 1C → BOTH must be scheduled, not just one.
+   For "-> Must schedule: COURSE" (single course), note that one course.
 
-3. Multiple "-> Enroll in:" lines under the same "UC requires:" are OR options — pick ONE group only.
+3. "PICK EXACTLY ONE OPTION" blocks = OR alternatives — never mix bullets from different letters.
 
 4. Overlap rule: If two different "UC requires:" entries share the same CC courses
    (e.g. MATH 54 needs MATH 2A+2B, and EECS 16A also needs MATH 2A+2B),
@@ -1144,7 +1180,7 @@ For EVERY "UC requires:" entry in the VERIFIED ARTICULATION DATA above:
 
 5a. TERM PLACEMENT CHECK — for every course in your Step 5 list:
    - That course MUST appear as a line item in Term 1, 2, 3, or 4.
-   - Writing a course only in "Major Prep Summary" does NOT count as scheduling it.
+   - A course MUST appear as a line item in Term 1–4. Writing it only outside the term sections does NOT count.
    - Example: if your Step 5 list includes ENGR 37, it must be in a term (e.g. "ENGR 37 — X units [Required Major Prep]").
    - If a course is in your list but not in any term → your plan is INVALID. Add it to a term before finalizing.
 
@@ -1184,37 +1220,11 @@ Rules:{honors_rule}
 - Heavy math-sequence majors (CS, Engineering, Math, Physics) commonly need 65–72 units — that is normal and valid.
 
 ===== STEP 3: OUTPUT =====
-Start directly with ## Term 1 (Fall). No preamble.
+Follow the output format defined in your system instructions exactly.
+Use the ## Requirement Audit table first, then ## Post-Transfer Requirements,
+then ## Term 1 through ## Term 4, then ## IGETC Completion, then ## Key Notes.
 
-## Term 1 (Fall)
-- COURSE# — Official Title (X units) [Area Xn / Required Major Prep]
-
-## Term 2 (Spring)
-- COURSE# — Official Title (X units) [Area Xn]
-
-## Term 3 (Fall)
-- COURSE# — Official Title (X units) [Area Xn]
-
-## Term 4 (Spring)
-- COURSE# — Official Title (X units) [Area Xn]
-
-## Major Prep Summary
-- [Each UC requirement → which {college} course fulfills it, one line per UC course]
-
-## IGETC Completion
-(ONLY check ✅ if that course appears in the schedule above)
-- Area 1A: ✅/❌ COURSE#
-- Area 1B: ✅/❌ COURSE#
-- Area 2A: ✅/❌ COURSE#
-- Area 3A: ✅/❌ COURSE#
-- Area 3B: ✅/❌ COURSE#
-- Area 4: ✅/❌ COURSE#, COURSE#, COURSE#
-- Area 5A: ✅/❌ COURSE#
-- Area 5B: ✅/❌ COURSE#
-- Area 5C: ✅/❌ satisfied by ★LAB in 5B above — no separate course
-- Area 6: ✅/❌ COURSE# or ⚠️ satisfy with 2+ years HS foreign language
-
-## Key Notes
+In ## Key Notes include:
 - TAG: {tag_note_line}
 - GPA target: {gpa_range} — {gpa_note}"""
 

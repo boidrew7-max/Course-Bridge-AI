@@ -430,10 +430,11 @@ _MAJOR_RECS = [
      "ONLY schedule courses that appear in the VERIFIED ARTICULATION DATA block above. "
      "At UC Berkeley (and most UCs), COMPSCI 61A, COMPSCI 61C, and COMPSCI 70 have NO CC articulation "
      "and must be taken at the UC campus post-transfer — do NOT schedule any CC substitute for these. "
-     "The articulated courses are typically: Calculus I, Calculus II, Calculus III, "
-     "Linear Algebra / Differential Equations (exact courses vary — use ASSIST data only).",
-     ["Data Structures (CIS 22C or equivalent — ONLY if it appears in ASSIST data for this CC)",
-      "Discrete Mathematics (ONLY if articulated — most CCs have no articulation for this)",
+     "PREREQUISITE NOTE: If the ASSIST data includes a Data Structures course (e.g., CIS 22C), "
+     "the intro programming course at this CC (e.g., CIS 1A, CIS 22A, CS 1A, or equivalent) "
+     "is a required prerequisite — schedule it in Term 1 labeled [CC Prerequisite] even though "
+     "it has no direct UC articulation. CS 61C has no CC articulation — note it in Post-Transfer.",
+     ["Discrete Mathematics (ONLY if articulated — most CCs have no articulation for this)",
       "Statistics"]),
 
     (["data science"],
@@ -785,18 +786,33 @@ def _extract_major_prep(college: str, uc: str, major: str) -> str:
         # Pre-compute status: empty cc array = no articulation
         has_articulation = any(len(grp) > 0 for grp in cc_groups)
         if has_articulation:
-            lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
-            for grp in cc_groups:
-                if not grp:
-                    continue
-                parts_cc = []
-                for c in grp:
+            valid_groups = [g for g in cc_groups if g]
+            for g in valid_groups:
+                for c in g:
                     cc_keys.add((c.get("p", ""), c.get("n", "")))
-                    parts_cc.append(
+            lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
+            if len(valid_groups) == 1:
+                grp = valid_groups[0]
+                parts_cc = [
+                    f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
+                    for c in grp
+                ]
+                conj = grp[0].get("j", "And") if grp else "And"
+                lines.append(f"  -> Must schedule: {f' {conj} '.join(parts_cc)}")
+            else:
+                lines.append(f"  ⚠️ PICK EXACTLY ONE OPTION — these are mutually exclusive alternatives:")
+                for idx, grp in enumerate(valid_groups):
+                    letter = chr(ord('A') + idx)
+                    parts_cc = [
                         f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
-                    )
-                conj = grp[0].get("j", "Or") if grp else "Or"
-                lines.append(f"  -> Schedule: {f' {conj} '.join(parts_cc)}")
+                        for c in grp
+                    ]
+                    conj = grp[0].get("j", "And") if grp else "And"
+                    if len(parts_cc) == 1:
+                        lines.append(f"  OPTION {letter}: {parts_cc[0]}")
+                    else:
+                        lines.append(f"  OPTION {letter}: {f' {conj} '.join(parts_cc)}  ← ALL {len(parts_cc)} required if chosen")
+                lines.append(f"  ❌ Schedule courses from ONE option only — never mix options for this requirement.")
         else:
             lines.append(f"[POST-TRANSFER] UC requires: {uc_str}")
             lines.append(f"  -> No CC articulation found. Must be taken at UC after transfer.")
@@ -822,18 +838,33 @@ def _format_arts_block(arts: list, college: str, uc: str, major: str, source: st
         cc_groups = art.get("cc", [])
         has_articulation = any(len(grp) > 0 for grp in cc_groups)
         if has_articulation:
-            lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
-            for grp in cc_groups:
-                if not grp:
-                    continue
-                parts_cc = []
-                for c in grp:
+            valid_groups = [g for g in cc_groups if g]
+            for g in valid_groups:
+                for c in g:
                     cc_keys.add((c.get("p", ""), c.get("n", "")))
-                    parts_cc.append(
+            lines.append(f"[CC-COMPLETABLE] UC requires: {uc_str}")
+            if len(valid_groups) == 1:
+                grp = valid_groups[0]
+                parts_cc = [
+                    f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
+                    for c in grp
+                ]
+                conj = grp[0].get("j", "And") if grp else "And"
+                lines.append(f"  -> Must schedule: {f' {conj} '.join(parts_cc)}")
+            else:
+                lines.append(f"  ⚠️ PICK EXACTLY ONE OPTION — these are mutually exclusive alternatives:")
+                for idx, grp in enumerate(valid_groups):
+                    letter = chr(ord('A') + idx)
+                    parts_cc = [
                         f"{c.get('p','')} {c.get('n','')} - {c.get('t','')} ({c.get('u','?')} units)"
-                    )
-                conj = grp[0].get("j", "Or") if grp else "Or"
-                lines.append(f"  -> Schedule: {f' {conj} '.join(parts_cc)}")
+                        for c in grp
+                    ]
+                    conj = grp[0].get("j", "And") if grp else "And"
+                    if len(parts_cc) == 1:
+                        lines.append(f"  OPTION {letter}: {parts_cc[0]}")
+                    else:
+                        lines.append(f"  OPTION {letter}: {f' {conj} '.join(parts_cc)}  ← ALL {len(parts_cc)} required if chosen")
+                lines.append(f"  ❌ Schedule courses from ONE option only — never mix options for this requirement.")
         else:
             lines.append(f"[POST-TRANSFER] UC requires: {uc_str}")
             lines.append(f"  -> No CC articulation. Must be taken at UC after transfer.")

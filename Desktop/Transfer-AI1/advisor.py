@@ -370,18 +370,23 @@ Area 1C: NOT required for UC transfer. Never flag it.
 🚨 SCHEDULE BUILDING RULE
 
 Your only active construction task:
-1. Place every [CC-COMPLETABLE] course's "-> Schedule:" CC courses into terms 1–4
+1. Place every [CC-COMPLETABLE] course's CC courses into terms 1–4
    - Prerequisite order: MATH 1A → 1B → 1C → 2A/2B; ENGL C1000 → C1001
    - 12–17 units per term, 3–5 courses
    - All [CC-COMPLETABLE] courses placed BEFORE any GE courses
-   - "And" groups: ALL courses in the group must appear in a term — none are optional
-   - OR groups (multiple "-> Schedule:" lines): pick ONE group, schedule ALL its courses
+   - "-> Must schedule:" lines: ALL courses listed are required — schedule every one of them
+   - "PICK EXACTLY ONE OPTION" blocks: choose ONE option letter only. NEVER schedule courses
+     from multiple option letters for the same UC requirement. This is a critical error.
+     Example: If OPTION A = CIS 22CH and OPTION B = CIS 22C, schedule one of them, NOT both.
    - A course needed by multiple UC requirements is scheduled ONCE
 2. Fill remaining slots with ONE course per IGETC area from the injected IGETC lists
    - 5B: use the ★LAB course listed first — satisfies both 5B and 5C
    - 5A: use the first NON-★LAB course listed — 5C is already covered by 5B
    - No honors courses if student declined honors
 3. Do not add any course not present in the [CC-COMPLETABLE] or IGETC data
+   EXCEPTION: If a scheduled CC course requires a prerequisite that has no UC articulation
+   (e.g., an intro programming course before data structures), schedule that prerequisite
+   in an earlier term labeled [CC Prerequisite]. Use your knowledge of this CC's sequence.
 4. DOUBLE-LABEL RULE (critical): If a [CC-COMPLETABLE] major prep course also appears in
    the IGETC data for a given area, it satisfies BOTH. Label it with both tags and mark that
    IGETC area as MET. Do NOT add a separate course for that IGETC area.

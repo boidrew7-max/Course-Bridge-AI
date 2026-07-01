@@ -322,6 +322,10 @@ def _extract_igetc_courses(college: str, scheduled_cc_keys: set = None) -> str:
     for area_code, area_name, needed in _IGETC_REQUIRED:
         courses = by_area.get(area_code, [])
         if not courses and area_code != "5C":
+            lines.append(f"Area {area_code} — {area_name}:")
+            lines.append(f"  ⚠️ NO COURSES FOUND IN DATA for this college/area.")
+            lines.append(f"  You MUST mark this area NOT MET in the audit — do not invent a course.")
+            lines.append("")
             continue
 
         # Area 5C: if a ★LAB was already listed in 5A or 5B, 5C is satisfied — tell AI not to add another course

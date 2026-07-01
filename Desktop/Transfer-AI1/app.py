@@ -933,8 +933,15 @@ def plan():
     if major_prep_block:
         articulation_section = major_prep_block
     else:
-        articulation_section = (f"No exact agreement found for {college} -> {school} {major}. "
-                                f"Use your ASSIST knowledge — mark each suggestion '(verify on ASSIST.org)'.")
+        def _no_data_msg():
+            msg = (f"No articulation data found for **{college} → {school} | {major}**.\n\n"
+                   f"This combination may not be in the local dataset yet.\n"
+                   f"Please check [ASSIST.org](https://assist.org) directly for this articulation agreement, "
+                   f"or try a slightly different college or major name spelling.")
+            yield f"data: {json.dumps(msg)}\n\n"
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(_no_data_msg()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache"})
 
     igetc_section = f"\n\n{igetc_block}" if igetc_block else ""
 
@@ -970,21 +977,10 @@ Tier 2 — Strongly Recommended Major Prep (include in Competitive mode before a
     else:
         major_req_block = f"""
 === MAJOR REQUIREMENTS: {major.upper()} ===
-No preset requirement list exists for this major. Use your training knowledge of UC transfer
-expectations to fill in both tiers:
-
-Tier 1 — identify the courses typically REQUIRED for admission to {major} at {school}:
-Use the ASSIST articulation data above as the primary source. If ASSIST data is present,
-those courses are Tier 1. If not, list what is commonly required for this major at UC campuses.
-
-Tier 2 — identify courses STRONGLY RECOMMENDED for {major} that strengthen the application:
-Draw on your knowledge of what upper-division {major} coursework requires. Examples:
-- quantitative majors typically benefit from stats, linear algebra
-- science majors benefit from lab sequences beyond the minimum
-- humanities majors benefit from writing-intensive and research methods courses
-List the 2-4 most impactful Tier 2 courses for this specific major.
-
-Mark any course not confirmed in the ASSIST data above as "(verify on ASSIST.org)".
+No preset Tier-2 recommendation list exists for this major.
+Use ONLY the ASSIST articulation data above for Tier 1 requirements.
+Do NOT invent or guess any course not present in the ASSIST data above.
+If a UC requirement has no CC articulation, label it [POST-TRANSFER].
 === END MAJOR REQUIREMENTS ==="""
 
     if mode == "efficiency":

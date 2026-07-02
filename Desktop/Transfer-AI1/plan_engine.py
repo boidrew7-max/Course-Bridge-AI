@@ -658,7 +658,7 @@ def _assign_terms(
         """Return earliest allowed term for this IGETC slot."""
         for tag in slot.tags:
             if tag == "IGETC Area 1B":
-                return igetc_area_term.get("1A", 1)
+                return igetc_area_term.get("1A", 1) + 1  # 1B must come strictly after 1A
         return 1
 
     def _record_igetc_area(slot: CourseSlot, t: int):

@@ -307,7 +307,7 @@ _CC_PREREQ_CHAINS: dict = {
     # double-labels automatically once it's in scheduled_keys — no PHYS 10 needed.
     ("de anza college", "ENGR", "37"): {
         "inject": [
-            ("PHYS", "4A", "Physics for Scientists and Engineers: Mechanics", 5.0, []),
+            ("PHYS", "4A", "Physics for Scientists and Engineers: Mechanics", 5.0, ["MATH 1A"]),
             ("MATH", "1D", "Calculus IV", 5.0, []),
             ("PHYS", "4B", "Physics for Scientists and Engineers: Electricity and Magnetism", 5.0, []),
         ],

@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const upstream = await fetch(`${TRANSFER_AI_URL}/plan_v2`, {
+    const upstream = await fetch(`${TRANSFER_AI_URL}/plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

@@ -150,6 +150,7 @@ class CourseSlot:
     term: int = 0
     tags: list = field(default_factory=list)
     uc_reqs: list = field(default_factory=list)
+    explicit_prereqs: list = field(default_factory=list)
 
     @property
     def code(self) -> str:
@@ -254,6 +255,108 @@ def _cc_names_related(user_college: str, matched_cc: str) -> bool:
         if _prefix_hit(mw, user_l):
             return True
     return False
+
+
+# ── CC-side prerequisite chains ───────────────────────────────────────────────
+# When a CC course is chosen to satisfy a UC requirement, its own internal
+# prerequisite chain at the CC may not be captured in ASSIST data.  This table
+# records those chains for known colleges so plan_engine can inject the missing
+# courses automatically.
+#
+# Key:   (college_name_lower, prefix_upper, number_upper) of the UC-required CC course
+# Value: dict with two keys:
+#   "inject"         – ordered list of (prefix, number, title, units, [explicit_prereq_codes])
+#                      to inject before the trigger course.  Earlier entries in the
+#                      list are prerequisites of later ones unless explicit_prereq_codes
+#                      is set (cross-series dependency).
+#   "trigger_prereqs"– list of course codes to set as explicit_prereqs on the trigger
+#                      course itself (cross-prefix deps: e.g. PHYS → ENGR).
+_CC_PREREQ_CHAINS: dict = {
+    # De Anza CIS 22C: needs CIS 22A → CIS 22B first.
+    # same_sequence_base("22A","22B","22C") all True, so sequence detection
+    # handles 22A→22B→22C ordering automatically once they're injected.
+    ("de anza college", "CIS", "22C"): {
+        "inject": [
+            ("CIS", "22A", "Introduction to Programming (Python)", 4.5, []),
+            ("CIS", "22B", "C++ Programming and Data Structures", 4.5, []),
+        ],
+        "trigger_prereqs": [],
+    },
+    ("de anza college", "CIS", "22CH"): {
+        "inject": [
+            ("CIS", "22A", "Introduction to Programming (Python)", 4.5, []),
+            ("CIS", "22B", "C++ Programming and Data Structures", 4.5, []),
+        ],
+        "trigger_prereqs": [],
+    },
+    # De Anza CIS 26B: intro path is CIS 22A (intro Python) → CIS 26A (C programming).
+    # 22A→26A is cross-series (numeric 22 vs 26) so explicit_prereqs required on 26A.
+    # 26A→26B is same-series so sequence detection handles it.
+    ("de anza college", "CIS", "26B"): {
+        "inject": [
+            ("CIS", "22A", "Introduction to Programming (Python)", 4.5, []),
+            ("CIS", "26A", "C Programming Fundamentals", 4.5, ["CIS 22A"]),
+        ],
+        "trigger_prereqs": [],
+    },
+    # De Anza ENGR 37: requires PHYS 4B (concurrent) and MATH 1D (concurrent).
+    # PHYS 4A→4B: sequence detection handles ordering (same base 4, A<B).
+    # MATH 1C→1D: sequence detection handles ordering (same base 1, C<D).
+    # ENGR 37 itself needs explicit cross-prefix deps on PHYS 4B and MATH 1D.
+    # PHYS 4A also satisfies IGETC Area 5A (it IS in De Anza's 5A list), so it
+    # double-labels automatically once it's in scheduled_keys — no PHYS 10 needed.
+    ("de anza college", "ENGR", "37"): {
+        "inject": [
+            ("PHYS", "4A", "Physics for Scientists and Engineers: Mechanics", 5.0, []),
+            ("MATH", "1D", "Calculus IV", 5.0, []),
+            ("PHYS", "4B", "Physics for Scientists and Engineers: Electricity and Magnetism", 5.0, []),
+        ],
+        "trigger_prereqs": ["PHYS 4B", "MATH 1D"],
+    },
+}
+
+
+def _inject_cc_prereqs(
+    major_courses: list,
+    college: str,
+    completed_keys: set,
+) -> None:
+    """
+    For each course in major_courses, check whether it has a known CC-side
+    prerequisite chain.  Missing prerequisite courses are prepended to
+    major_courses and tagged 'CC Prerequisite'.  explicit_prereqs is set on
+    injected courses (for cross-series deps) and on the trigger course itself
+    (for cross-prefix deps like PHYS 4B → ENGR 37).
+    """
+    college_key = college.lower().strip()
+    existing = {(s.prefix.upper(), s.number.upper()) for s in major_courses}
+    new_slots: list = []
+
+    for slot in list(major_courses):
+        chain_key = (college_key, slot.prefix.upper(), slot.number.upper())
+        chain_data = _CC_PREREQ_CHAINS.get(chain_key)
+        if not chain_data:
+            continue
+
+        for prefix, number, title, units, slot_explicit_prereqs in chain_data["inject"]:
+            k = (prefix.upper(), number.upper())
+            if k in existing or (prefix, number) in completed_keys:
+                continue
+            prereq_slot = CourseSlot(
+                prefix=prefix, number=number, title=title, units=units,
+                tags=["CC Prerequisite"],
+                explicit_prereqs=list(slot_explicit_prereqs),
+            )
+            new_slots.append(prereq_slot)
+            existing.add(k)
+
+        for code in chain_data.get("trigger_prereqs", []):
+            if code not in slot.explicit_prereqs:
+                slot.explicit_prereqs.append(code)
+
+    # Prepend so injected courses are available to sequence detection
+    for s in reversed(new_slots):
+        major_courses.insert(0, s)
 
 
 # ── Option resolution ─────────────────────────────────────────────────────────
@@ -490,8 +593,9 @@ def _assign_terms(
         term = min(i + 1, 4)   # calc chain stays in terms 1-4
         _place(calc_assigned[role], term)
 
-    # Pass 2: remaining major prep — sequence-aware greedy
-    from collections import defaultdict
+    # Pass 2: remaining major prep — topological order respecting both
+    # sequence-based (same-prefix) and explicit (cross-prefix) prereqs.
+    from collections import defaultdict, deque
     seq_groups: dict = defaultdict(list)
     for slot in unassigned_major:
         key_order = infer_sequence_order(slot.number)
@@ -503,30 +607,85 @@ def _assign_terms(
     ordered_major: list = []
     for grp in seq_groups.values():
         ordered_major.extend(sorted(grp, key=lambda s: infer_sequence_order(s.number)))
-    ordered_major.sort(key=lambda s: (s.prefix, infer_sequence_order(s.number)))
+
+    # Topological sort within ordered_major so cross-prefix explicit deps
+    # (e.g. PHYS 4B must be placed before ENGR 37) are processed in the right order.
+    _code_map = {s.code: s for s in ordered_major}
+    _dep_in: dict = defaultdict(int)
+    _dep_adj: dict = defaultdict(list)
+    for slot in ordered_major:
+        for pc in slot.explicit_prereqs:
+            if pc in _code_map:
+                _dep_adj[pc].append(slot.code)
+                _dep_in[slot.code] += 1
+        for other in ordered_major:
+            if other.code == slot.code or other.prefix != slot.prefix:
+                continue
+            if not same_sequence_base(other.number, slot.number):
+                continue
+            o_ord = infer_sequence_order(other.number)[1]
+            s_ord = infer_sequence_order(slot.number)[1]
+            if 0 <= o_ord < s_ord:
+                _dep_adj[other.code].append(slot.code)
+                _dep_in[slot.code] += 1
+
+    _q = deque(s for s in ordered_major if _dep_in.get(s.code, 0) == 0)
+    topo_major: list = []
+    while _q:
+        s = _q.popleft()
+        topo_major.append(s)
+        for dep_code in _dep_adj.get(s.code, []):
+            _dep_in[dep_code] -= 1
+            if _dep_in[dep_code] == 0:
+                _q.append(_code_map[dep_code])
+    # Cycle guard: append any stragglers
+    _placed = {s.code for s in topo_major}
+    topo_major.extend(s for s in ordered_major if s.code not in _placed)
 
     # Include calc-assigned courses so successor detection works across the whole list
-    all_slots_for_pred = list(calc_assigned.values()) + ordered_major
+    all_slots_for_pred = list(calc_assigned.values()) + topo_major
 
-    for slot in ordered_major:
+    for slot in topo_major:
         preds = _find_predecessors(slot, all_slots_for_pred)
         t     = _earliest_valid_term(slot, preds, term_units, max_units, max_terms)
         _place(slot, t)
 
-    # Pass 3: IGETC courses — prefer standard terms (1-4) first, then extended
+    # Pass 3: IGETC courses — prefer standard terms (1-4) first, then extended.
+    # Track placed IGETC area terms to enforce 1A-before-1B ordering.
+    igetc_area_term: dict = {}   # area_code -> term where it was placed
+
+    def _igetc_min_term(slot: CourseSlot) -> int:
+        """Return earliest allowed term for this IGETC slot."""
+        for tag in slot.tags:
+            if tag == "IGETC Area 1B":
+                return igetc_area_term.get("1A", 1)
+        return 1
+
+    def _record_igetc_area(slot: CourseSlot, t: int):
+        for tag in slot.tags:
+            if tag.startswith("IGETC Area "):
+                igetc_area_term[tag.split("IGETC Area ")[1]] = t
+
     for slot in igetc_courses:
         placed = False
-        # Try standard terms in load order
+        min_t  = _igetc_min_term(slot)
+        # Try standard terms in load order, respecting min_t
         for t in sorted(range(1, 5), key=lambda t: term_units[t]):
+            if t < min_t:
+                continue
             if term_units[t] + slot.units <= max_units:
                 _place(slot, t)
+                _record_igetc_area(slot, t)
                 placed = True
                 break
         if not placed and max_terms > 4:
             # Try extended terms with cap
             for t in sorted(range(5, max_terms + 1), key=lambda t: term_units[t]):
+                if t < min_t:
+                    continue
                 if term_units[t] + slot.units <= max_units:
                     _place(slot, t)
+                    _record_igetc_area(slot, t)
                     placed = True
                     break
         if not placed:
@@ -536,18 +695,28 @@ def _assign_terms(
                 terms[max_terms] = []
                 term_units[max_terms] = 0.0
                 _place(slot, max_terms)
+                _record_igetc_area(slot, max_terms)
             else:
                 # At hard ceiling — put in least-loaded term (cap breached by ≤1 course)
                 t = min(range(1, max_terms + 1), key=lambda t: term_units[t])
                 _place(slot, t)
+                _record_igetc_area(slot, t)
 
     return terms, term_units
 
 
 def _find_predecessors(slot: CourseSlot, all_slots: list) -> list:
     preds = []
+    explicit = set(slot.explicit_prereqs)
     for other in all_slots:
-        if other.prefix != slot.prefix or other.code == slot.code:
+        if other.code == slot.code:
+            continue
+        # Explicit cross-prefix/cross-series dependency (e.g. PHYS 4B → ENGR 37)
+        if explicit and other.code in explicit:
+            preds.append(other)
+            continue
+        # Sequence-based within-prefix ordering (e.g. MATH 1C → MATH 1D)
+        if other.prefix != slot.prefix:
             continue
         if not same_sequence_base(other.number, slot.number):
             continue
@@ -655,6 +824,12 @@ def build_plan(
     # Use matched CC name from shard key for IGETC lookup so typos in the
     # user's college string still resolve to the correct IGETC school entry.
     matched_cc_name = best_key.split("__")[0].replace("_", " ")
+
+    # Inject CC-side prerequisite chains (e.g. CIS 22A→26A before CIS 26B,
+    # PHYS 4A→4B and MATH 1D before ENGR 37).  Must run before scheduled_keys
+    # is built so injected courses (like PHYS 4A) can double-label IGETC areas.
+    _inject_cc_prereqs(major_courses, matched_cc_name, completed_keys)
+
     scheduled_keys = {(s.prefix, s.number) for s in major_courses}
     igetc_courses, area_assignments = _select_igetc(matched_cc_name, scheduled_keys, accept_honors)
     result.igetc_completion = area_assignments

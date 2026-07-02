@@ -37,7 +37,16 @@ def parse_one(filepath):
             continue
         sa = inner.get("sendingArticulation", {})
         if sa.get("noArticulationReason"):
-            continue  # skip entries with no CC equivalent
+            # Preserve as post-transfer requirement (complete at UC after transfer)
+            rows.append({
+                "uc": {
+                    "p": uc_c.get("prefix", ""),
+                    "n": uc_c.get("courseNumber", ""),
+                    "t": uc_c.get("courseTitle", ""),
+                },
+                "cc": [[]],  # empty group = no CC equivalent
+            })
+            continue
 
         items = sa.get("items", [])
         cc_groups = []
@@ -96,7 +105,7 @@ def main():
         else:
             skipped += 1
 
-    print(f"Done: {processed} agreements indexed, {skipped} skipped (no CC equivalents)")
+    print(f"Done: {processed} agreements indexed, {skipped} skipped (parse error or empty)")
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(index, f, separators=(",", ":"))

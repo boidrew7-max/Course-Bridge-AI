@@ -3,7 +3,12 @@ import os
 import time
 from collections import defaultdict
 from flask import Flask, request, Response, stream_with_context, session, jsonify
-from advisor import ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream, ask_plan_stream, ask_plan_stream_fallback, ask_plan_stream_fallback2
+from advisor import (
+    ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream,
+    ask_plan_stream, ask_plan_stream_fallback, ask_plan_stream_fallback2,
+    _PLAN_SYSTEM_PROMPT,
+)
+from plan_engine import build_plan as _engine_build_plan, render_plan_stream as _engine_render_stream
 from db import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     verify_password, email_exists, update_profile,
@@ -682,7 +687,7 @@ _UC_NAME_MAP = {
 # Real average transfer GPA ranges per UC (Fall 2025 official data)
 _UC_GPA_TARGETS = {
     "los angeles":   ("3.7–3.9", "UCLA avg admitted transfer GPA is 3.5–3.9. Economics is highly competitive — target 3.7 minimum, aim for 3.9."),
-    "berkeley":      ("3.7–3.9", "UC Berkeley avg admitted transfer GPA is 3.5–3.9. Economics is competitive — target 3.7 minimum, aim for 3.9."),
+    "berkeley":      ("3.7–3.9", "UC Berkeley avg admitted transfer GPA is 3.5–3.9 — target 3.7 minimum, aim for 3.9 for competitive majors."),
     "san diego":     ("3.7–3.9", "UCSD avg admitted transfer GPA is 3.55–3.94 — target 3.7+."),
     "irvine":        ("3.6–3.7", "UCI avg admitted transfer GPA is 3.4–3.7 — target 3.6+."),
     "santa barbara": ("3.6–3.7", "UCSB avg admitted transfer GPA is 3.4–3.7 — target 3.6+."),
@@ -1001,8 +1006,8 @@ def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str, and
 
     # 5. Ghost-course check: every ✅ line in ## IGETC Completion must have its
     #    course code(s) present in the term sections.
+    import re
     if completion_text:
-        import re
         for line in completion_text.splitlines():
             if "✅" not in line:
                 continue
@@ -1017,6 +1022,88 @@ def _validate_plan(plan_text: str, scheduled_cc_keys: set, igetc_block: str, and
                         f"Ghost course: {prefix} {num} is marked ✅ in IGETC Completion "
                         f"but does not appear in any Term 1–4."
                     )
+
+    # 6. Prerequisite chain check: standard calc sequence must be in order.
+    #    Build a (prefix, number, term_number, title_lower) list from the term sections.
+    _entries = []
+    _cur_term = None
+    for _line in term_text.splitlines():
+        _hm = re.match(r'^##\s+Term\s+(\d+)', _line)
+        if _hm:
+            _cur_term = int(_hm.group(1))
+            continue
+        if _cur_term:
+            _cm = re.match(r'^-\s+([A-Z]{2,6})\s+(\d+[A-Z]*)\s+[-—]\s+(.+?)\s+\(', _line)
+            if _cm:
+                _entries.append((_cm.group(1), _cm.group(2), _cur_term, _cm.group(3).lower()))
+
+    def _find_entry(keyword_fn):
+        for p, n, t, title in _entries:
+            if keyword_fn(title):
+                return (p, n, t)
+        return None
+
+    calc1  = _find_entry(lambda t: bool(re.search(r'\bcalculus\s+i\b', t)) and 'ii' not in t and 'iii' not in t)
+    calc2  = _find_entry(lambda t: bool(re.search(r'\bcalculus\s+ii\b', t)) and 'iii' not in t)
+    calc3  = _find_entry(lambda t: bool(re.search(r'\bcalculus\s+iii\b', t)) or 'multivariable calculus' in t)
+    diffeq = _find_entry(lambda t: 'differential eq' in t)
+    linalg = _find_entry(lambda t: 'linear algebra' in t)
+
+    _prereq_pairs = [
+        (calc1,  calc2,  "Calculus I",   "Calculus II"),
+        (calc2,  calc3,  "Calculus II",  "Calculus III"),
+        (calc3,  diffeq, "Calculus III", "Differential Equations"),
+        (calc3,  linalg, "Calculus III", "Linear Algebra"),
+    ]
+    for prereq, course, prereq_name, course_name in _prereq_pairs:
+        if prereq and course and course[2] <= prereq[2]:
+            warnings.append(
+                f"Prerequisite violation: {course[0]} {course[1]} ({course_name}, Term {course[2]}) "
+                f"is scheduled before or same term as {prereq[0]} {prereq[1]} ({prereq_name}, Term {prereq[2]})."
+            )
+
+    # 7. Duplicate IGETC area label check: each area should be claimed by AT MOST one course
+    #    across all 4 terms. Two courses both tagged [IGETC Area 2A] in different terms is invalid.
+    #    Exception: Area 4 intentionally requires exactly 3 courses — skip it here.
+    _MULTI_COURSE_AREAS = {"4"}  # IGETC areas that legitimately have multiple courses
+    area_claimants: dict = {}
+    for _line in term_text.splitlines():
+        _course_m = re.match(r'^-\s+([A-Z]{2,6})\s+(\d+[A-Z]*)\b', _line)
+        if not _course_m:
+            continue
+        course_code = f"{_course_m.group(1)} {_course_m.group(2)}"
+        for _area_m in re.finditer(r'\bIGETC Area (\w+)\b', _line):
+            area_key = _area_m.group(1)
+            if area_key in _MULTI_COURSE_AREAS:
+                continue
+            area_claimants.setdefault(area_key, []).append(course_code)
+    for area_key, claimants in area_claimants.items():
+        unique = list(dict.fromkeys(claimants))  # preserve order, deduplicate
+        if len(unique) > 1:
+            warnings.append(
+                f"IGETC Area {area_key} claimed by multiple courses: {', '.join(unique)}. "
+                f"Only one course per area is allowed."
+            )
+
+    # 7b. Cross-section consistency: course labeled [IGETC Area 2A] in terms must match
+    #     Area 2A entry in IGETC Completion checklist.
+    if completion_text:
+        m_term_2a = re.search(
+            r'-\s+([A-Z]{2,6})\s+(\d+[A-Z]*)\s+[-—][^\n]*\bIGETC Area 2A\b',
+            term_text
+        )
+        m_comp_2a = re.search(
+            r'Area 2A[^\n]*✅\s+([A-Z]{2,6})\s+(\d+[A-Z]*)',
+            completion_text
+        )
+        if m_term_2a and m_comp_2a:
+            term_course = f"{m_term_2a.group(1)} {m_term_2a.group(2)}"
+            comp_course = f"{m_comp_2a.group(1)} {m_comp_2a.group(2)}"
+            if term_course != comp_course:
+                warnings.append(
+                    f"IGETC Area 2A inconsistency: term schedule labels {term_course} as Area 2A "
+                    f"but IGETC Completion lists {comp_course}. These must match."
+                )
 
     return warnings
 
@@ -1036,7 +1123,7 @@ def plan():
     school        = data.get("school", "").strip()
     major         = data.get("major", "").strip()
     completed     = data.get("completedCourses", "").strip()
-    accept_honors = data.get("acceptHonors", True)
+    accept_honors = data.get("acceptHonors", False)  # default non-honors; honors requires explicit opt-in
     ap_credits    = data.get("apCredits", "").strip()
     hs_math       = data.get("hsMath", "").strip()
     mode          = data.get("mode", "competitive").lower().strip()
@@ -1170,6 +1257,24 @@ For EVERY "UC requires:" entry in the VERIFIED ARTICULATION DATA above:
    they are ALTERNATIVES for the same UC requirement — pick ONE entry, skip the other.
    Either way, the shared CC courses (MATH 2A, MATH 2B) MUST be scheduled.
 
+4c. Honors-consistency rule: when multiple "UC requires:" entries each offer BOTH an honors
+   option and a non-honors option using overlapping course sets (e.g. MATH 54 OPTION A honors
+   uses MATH 2AH + MATH 2BH, and EECS 16A OPTION B honors also uses MATH 2AH + MATH 2BH),
+   you MUST choose the SAME track (all honors OR all non-honors) across every such requirement.
+   Mixing tracks — honors for MATH 54 but non-honors for EECS 16A when they share MATH 2A/2B —
+   creates two disjoint course sets that BOTH need scheduling, making the plan impossible.
+   Algorithm: scan all OPTION blocks for course-code overlap across requirements; if overlap
+   exists, commit to one track (honor or non-honor) and apply it consistently to all of them.
+{'   Since student accepted honors: prefer the honors track when it creates overlap-based savings.' if accept_honors else '   Since student declined honors: always pick the non-honors option — this avoids the mixing problem entirely.'}
+
+4b. Double-label rule: For any major prep course that also satisfies an IGETC area
+   (shown as "COVERED BY MAJOR PREP" in the IGETC section), decide NOW which specific
+   course you will schedule for that area. Use that SAME course in all three places:
+   - The Requirement Audit IGETC/GE Status table
+   - The term line label (e.g. [Required Major Prep / IGETC Area 2A])
+   - The IGETC Completion checklist
+   Inconsistency across these three = INVALID output. Commit to ONE course upfront.
+
 5. Build a deduplicated list of CC courses to schedule:
    - Every course from every chosen group = [Required Major Prep]
    - Highly Recommended entries (CS programs: Data Structures if in ASSIST) = [Strongly Recommended Major Prep]
@@ -1193,6 +1298,17 @@ For EVERY "UC requires:" entry in the VERIFIED ARTICULATION DATA above:
 ORDERING RULE: Never select GE courses until ALL major prep requirements are fully scheduled.
 GE fills remaining term slots only. Major prep is never trimmed to make room for GE.
 
+A0) LOCK THE CALCULUS CHAIN FIRST (do this before placing any other course):
+   If major prep includes a Calculus sequence (courses titled Calculus I / II / III,
+   Differential Equations, Linear Algebra), assign their terms NOW in this fixed order:
+     • Calculus I       → Term 1  (always first — cannot move)
+     • Calculus II      → Term 2  (requires Calc I done)
+     • Calculus III     → Term 3  (requires Calc II done; MUST finish before Diff Eq or Lin Alg)
+     • Diff Eq + Lin Alg → Term 4 ONLY  (cannot be before Term 4 if Calc III is in Term 3)
+   These four slots are FIXED. Every other course fills around them.
+   If a student has already completed some of these, shift remaining courses left accordingly.
+   NEVER place Differential Equations or Linear Algebra in the same term as or earlier than Calculus III.
+
 A) MAJOR PREP FIRST — place every course from Step 0's deduplicated list into terms.
    Every Tier 1 (Required) course must have a confirmed term slot before any GE is added.
    Every Tier 2 (Strongly Recommended) course must have a confirmed term slot before GE filler.
@@ -1213,10 +1329,26 @@ Every course in the pool must appear exactly once in the final schedule.
 
 ===== STEP 2: DISTRIBUTE ACROSS 4 TERMS =====
 Rules:{honors_rule}
-- Each term: 12–17 units, 3–5 courses. Any term under 12 units is INVALID.
-- Prerequisites: Area 1A before 1B. Calc I → II → III → Diff Eq/Lin Alg. No course before its prereq.
+- Each term target: 12–17 units, 3–5 courses. Any term under 12 units is INVALID.
+  UNIT LIMIT EXCEPTION: For CS, Engineering, Math, and Physics majors the full sequence
+  (Calc I → II → III → Diff Eq + Lin Alg + lab + programming) cannot always fit in 4 terms
+  at 17 units each. If you cannot schedule ALL required major prep courses within 17 units/term
+  while respecting prerequisite order, you MAY let the heaviest term reach up to 20 units.
+  It is ALWAYS better to have one 19-unit term than to drop a required course.
+  NEVER drop a Tier 1 (Required Major Prep) course to stay within unit limits.
+- Prerequisites — each of the following chains is STRICTLY enforced (each course must be in a
+  LATER term than its prerequisite — same term is also INVALID):
+    • ENGL C1000 (or equivalent Area 1A) → Area 1B course
+    • Calculus I → Calculus II → Calculus III
+    • Calculus III → Differential Equations       ← Diff Eq cannot be scheduled until Calc III is DONE
+    • Calculus III → Linear Algebra               ← Lin Alg cannot be scheduled until Calc III is DONE
+  Example of INVALID placement: Calculus III in Term 4, Differential Equations in Term 3 — REJECTED.
+  Example of VALID placement: Calculus III in Term 3, Differential Equations in Term 4 — OK.
 - No ESL courses. No invented course numbers. No {school} course numbers. Only {college} courses.
 - No already-completed courses. Each course appears exactly ONCE across all 4 terms.
+- IGETC area labels: each IGETC area may be claimed by AT MOST ONE course across all 4 terms.
+  If a major prep course already carries [IGETC Area 2A], no other course may also carry [IGETC Area 2A].
+  Area 4 is the exception — it requires exactly 3 courses, all labeled [IGETC Area 4].
 - Heavy math-sequence majors (CS, Engineering, Math, Physics) commonly need 65–72 units — that is normal and valid.
 
 ===== STEP 3: OUTPUT =====
@@ -1231,29 +1363,82 @@ In ## Key Notes include:
     def generate():
         buf = []
         had_error = False
+        est_tokens = (len(prompt) + len(_PLAN_SYSTEM_PROMPT)) // 4
+
+        # ── Primary: llama-3.3-70b-versatile ──────────────────────────────
         try:
             for chunk in ask_plan_stream(prompt):
                 buf.append(chunk)
                 yield f"data: {json.dumps(chunk)}\n\n"
+            app.logger.info(
+                "plan_ok college=%r school=%r major=%r model=llama-3.3-70b est_tokens=%d",
+                college, school, major, est_tokens,
+            )
         except Exception as e:
             err_str = str(e).lower()
-            if any(kw in err_str for kw in ["rate_limit", "429", "quota", "tokens per", "too large", "413"]):
+            is_too_large  = any(kw in err_str for kw in ["too large", "413"])
+            is_rate_limit = any(kw in err_str for kw in ["rate_limit", "429", "quota", "tokens per"])
+
+            if is_too_large or is_rate_limit:
                 buf.clear()
+                # 413/too-large → llama-4-scout first: separate quota, 131K context window.
+                # 429 rate-limit only → llama-3.1-8b first: same-cost tier, smaller model.
+                if is_too_large:
+                    f1, f1_name = ask_plan_stream_fallback2, "llama-4-scout"
+                    f2, f2_name = ask_plan_stream_fallback,  "llama-3.1-8b"
+                else:
+                    f1, f1_name = ask_plan_stream_fallback,  "llama-3.1-8b"
+                    f2, f2_name = ask_plan_stream_fallback2, "llama-4-scout"
+
+                app.logger.error(
+                    "plan_primary_fail college=%r school=%r major=%r "
+                    "reason=%s est_tokens=%d err=%.120s next=%s",
+                    college, school, major,
+                    "too_large" if is_too_large else "rate_limit",
+                    est_tokens, str(e), f1_name,
+                )
+
+                # ── First fallback ─────────────────────────────────────────
                 try:
-                    for chunk in ask_plan_stream_fallback(prompt):
+                    for chunk in f1(prompt):
                         buf.append(chunk)
                         yield f"data: {json.dumps(chunk)}\n\n"
-                except Exception:
+                    app.logger.info(
+                        "plan_ok college=%r school=%r major=%r model=%s est_tokens=%d",
+                        college, school, major, f1_name, est_tokens,
+                    )
+                except Exception as e2:
                     buf.clear()
+                    app.logger.error(
+                        "plan_fallback1_fail college=%r school=%r major=%r "
+                        "model=%s est_tokens=%d err=%.120s next=%s",
+                        college, school, major, f1_name, est_tokens, str(e2), f2_name,
+                    )
+
+                    # ── Second fallback ────────────────────────────────────
                     try:
-                        for chunk in ask_plan_stream_fallback2(prompt):
+                        for chunk in f2(prompt):
                             buf.append(chunk)
                             yield f"data: {json.dumps(chunk)}\n\n"
-                    except Exception:
+                        app.logger.info(
+                            "plan_ok college=%r school=%r major=%r model=%s est_tokens=%d",
+                            college, school, major, f2_name, est_tokens,
+                        )
+                    except Exception as e3:
                         had_error = True
+                        app.logger.error(
+                            "plan_all_fail college=%r school=%r major=%r "
+                            "est_tokens=%d final_err=%.120s",
+                            college, school, major, est_tokens, str(e3),
+                        )
                         yield f"data: {json.dumps('Something went wrong generating your plan. Please try again.')}\n\n"
             else:
                 had_error = True
+                app.logger.error(
+                    "plan_unexpected college=%r school=%r major=%r "
+                    "model=llama-3.3-70b est_tokens=%d err=%.120s",
+                    college, school, major, est_tokens, str(e),
+                )
                 yield f"data: {json.dumps('Something went wrong generating your plan. Please try again.')}\n\n"
 
         # Post-generation: truncation check + completeness validation
@@ -1267,6 +1452,133 @@ In ## Key Notes include:
                 if issues:
                     warning = "\n\n---\n⚠️ **Completeness Warning** — review these items:\n" + "\n".join(f"• {w}" for w in issues)
                     yield f"data: {json.dumps(warning)}\n\n"
+
+        yield "data: [DONE]\n\n"
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ── /plan_v2 — deterministic Python scheduler + compact LLM render ────────────
+# Identical request/response contract to /plan.
+# /plan is untouched; swap production traffic here only after manual QA.
+
+@app.route("/plan_v2", methods=["POST"])
+def plan_v2():
+    ip = _get_ip()
+    if not _check_rate(ip):
+        def _rate():
+            yield f"data: {json.dumps('Rate limit reached. Please wait a moment.')}\n\n"
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(_rate()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache"})
+
+    data          = request.json or {}
+    college       = data.get("college", "").strip()
+    school        = data.get("school", "").strip()
+    major         = data.get("major", "").strip()
+    accept_honors = data.get("acceptHonors", False)
+    ap_credits    = data.get("apCredits", "").strip()
+    mode          = data.get("mode", "competitive").lower().strip()
+    if mode not in ("competitive", "efficiency"):
+        mode = "competitive"
+
+    # completed courses: may be a string ("MATH 1A, ENGL C1000") or list
+    completed_raw = data.get("completedCourses", "")
+    if isinstance(completed_raw, list):
+        completed_set = set(completed_raw)
+    elif isinstance(completed_raw, str) and completed_raw.strip():
+        completed_set = set(completed_raw.split(","))
+    else:
+        completed_set = set()
+
+    if not college or not school or not major:
+        def _err():
+            yield f"data: {json.dumps('Missing college, school, or major.')}\n\n"
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(_err()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache"})
+
+    # ── Deterministic plan build ──────────────────────────────────────────────
+    try:
+        result = _engine_build_plan(
+            college=college, uc=school, major=major,
+            accept_honors=accept_honors,
+            completed=completed_set,
+            ap_credits=ap_credits,
+        )
+    except Exception as e:
+        app.logger.error("plan_v2_build_fail college=%r school=%r major=%r err=%.200s",
+                         college, school, major, str(e))
+        def _berr():
+            yield f"data: {json.dumps('Error building plan. Please try again.')}\n\n"
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(_berr()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache"})
+
+    if not result.all_courses():
+        msg = (f"No articulation data found for **{college} → {school} | {major}**.\n\n"
+               "This combination may not be in the local dataset yet.\n"
+               "Please check [ASSIST.org](https://assist.org) directly, "
+               "or try a slightly different college or major name spelling.")
+        def _nodata():
+            yield f"data: {json.dumps(msg)}\n\n"
+            yield "data: [DONE]\n\n"
+        return Response(stream_with_context(_nodata()), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache"})
+
+    # ── TAG / GPA metadata ────────────────────────────────────────────────────
+    uc_l_for_meta = _UC_NAME_MAP.get(school.lower().strip(), school.lower())
+    gpa_range, gpa_note = _UC_GPA_TARGETS.get(uc_l_for_meta, ("3.5+", f"Target 3.5+ for {school}."))
+
+    _TAG_NON  = {"los angeles", "berkeley", "san diego"}
+    _TAG_YES  = {"davis", "irvine", "merced", "riverside", "santa barbara", "santa cruz"}
+    if uc_l_for_meta in _TAG_NON:
+        tag_note = (f"{school} does NOT participate in TAG. "
+                    "TAG is offered only by UC Davis, UC Irvine, UC Merced, UC Riverside, "
+                    "UC Santa Barbara, and UC Santa Cruz.")
+    elif uc_l_for_meta in _TAG_YES:
+        tag_note = (f"{school} offers TAG — file Sept 1–30. "
+                    "Requirements: 60 transferable units by end of spring, minimum GPA (varies by "
+                    "major), no more than 2 attempts at a required course.")
+    else:
+        tag_note = "Check if your target campus offers TAG — 6 UCs participate."
+
+    est_tokens = len(result.__repr__()) // 2   # rough size proxy for logging
+
+    # ── Stream LLM render ─────────────────────────────────────────────────────
+    def generate():
+        buf = []
+        try:
+            for chunk in _engine_render_stream(result, tag_note, gpa_range, gpa_note, mode):
+                buf.append(chunk)
+                yield f"data: {json.dumps(chunk)}\n\n"
+            app.logger.info(
+                "plan_v2_ok college=%r school=%r major=%r terms=%d courses=%d est_tokens=%d",
+                college, school, major, result.active_terms, len(result.all_courses()), est_tokens,
+            )
+        except Exception as e:
+            app.logger.error(
+                "plan_v2_render_fail college=%r school=%r major=%r err=%.200s",
+                college, school, major, str(e),
+            )
+            yield f"data: {json.dumps('Something went wrong rendering your plan. Please try again.')}\n\n"
+
+        # Validation: ghost-course + truncation check on rendered output
+        if buf:
+            full_text = "".join(buf)
+            if "## Key Notes" not in full_text:
+                trunc = "\n\n⚠️ **Plan appears cut off** — Key Notes section missing. Please regenerate."
+                yield f"data: {json.dumps(trunc)}\n\n"
+            elif result.warnings:
+                ghost_warns = [w for w in result.warnings if w.startswith("Ghost:")]
+                if ghost_warns:
+                    warn_text = ("\n\n---\n⚠️ **Completeness Warning:**\n"
+                                 + "\n".join(f"• {w}" for w in ghost_warns))
+                    yield f"data: {json.dumps(warn_text)}\n\n"
 
         yield "data: [DONE]\n\n"
 

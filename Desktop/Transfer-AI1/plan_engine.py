@@ -315,6 +315,15 @@ _CC_PREREQ_CHAINS: dict = {
     },
 }
 
+# UC requirement OR groups — within each frozenset only ONE needs to be
+# satisfied.  When multiple members appear in a shard we keep the cheapest
+# CC path (fewest total units) and mark the rest as "satisfied via <winner>".
+# Key: normalized UC campus name (matches _UC_NAME_MAP values).
+_UC_REQ_OR_GROUPS: list[tuple[str, frozenset]] = [
+    # Berkeley CS / EECS: "MATH 54 or EECS 16A or MATH 56"
+    ("berkeley", frozenset({("MATH", "54"), ("EECS", "16A"), ("MATH", "56")})),
+]
+
 
 def _inject_cc_prereqs(
     major_courses: list,
@@ -365,19 +374,61 @@ def _resolve_major_prep(
     arts: list,
     accept_honors: bool,
     completed: set,
+    uc_normalized: str = "",
 ) -> tuple[list, list, list]:
     """
     For each UC articulation entry, pick one option group deterministically.
     Honors consistency is automatic: once a non-honors course is committed,
     later options with only the honors version have less overlap and lose.
+
+    OR-group pre-pass: when multiple UC requirements in the shard are genuine
+    alternatives (e.g. MATH 54 or EECS 16A at Berkeley), only the cheapest
+    CC path is scheduled; the rest are marked MET via the winner.
     """
+    # ── OR-group pre-pass ─────────────────────────────────────────────────────
+    skip_uc_keys: dict = {}   # (p,n) -> winner (p,n)
+    for group_uc, or_group in _UC_REQ_OR_GROUPS:
+        if group_uc != uc_normalized:
+            continue
+        members: list = []
+        for art in arts:
+            uc_c = art.get("uc", {})
+            key  = (uc_c.get("p","").upper(), uc_c.get("n","").upper())
+            if key not in or_group:
+                continue
+            valid = [g for g in art.get("cc", []) if g]
+            if not accept_honors:
+                nh = [g for g in valid if not all(
+                    c.get("n","").upper().endswith("H") for c in g
+                )]
+                if nh:
+                    valid = nh
+            cost = min(
+                (sum(float(c.get("u", 3) or 3) for c in g) for g in valid),
+                default=999.0,
+            )
+            members.append((key, cost))
+        if len(members) <= 1:
+            continue
+        winner = min(members, key=lambda x: x[1])[0]
+        for key, _ in members:
+            if key != winner:
+                skip_uc_keys[key] = winner
+    # ─────────────────────────────────────────────────────────────────────────
+
     committed: dict = {}
     audit_rows = []
     post_transfer = []
 
     for art in arts:
         uc_c      = art.get("uc", {})
+        uc_key    = (uc_c.get("p","").upper(), uc_c.get("n","").upper())
         uc_str    = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+
+        if uc_key in skip_uc_keys:
+            winner = skip_uc_keys[uc_key]
+            audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
+            continue
         cc_groups = art.get("cc", [])
         valid_groups = [g for g in cc_groups if g]
 
@@ -817,7 +868,9 @@ def build_plan(
     arts   = shard[best_key]
     result = PlanResult(college=college, uc=uc, major=major)
 
-    major_courses, audit_rows, post_transfer = _resolve_major_prep(arts, accept_honors, completed_keys)
+    major_courses, audit_rows, post_transfer = _resolve_major_prep(
+        arts, accept_honors, completed_keys, uc_normalized=uc_l
+    )
     result.requirement_audit = audit_rows
     result.post_transfer     = post_transfer
 

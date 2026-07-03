@@ -129,6 +129,8 @@ def check_and_groups(result: PlanResult) -> list:
     for uc_req, cc_code, status in result.requirement_audit:
         if status != "MET":
             continue
+        if cc_code.startswith("satisfied via"):  # OR-group: winner handles this requirement
+            continue
         required = [c.strip() for c in cc_code.split(" + ") if c.strip()]
         missing  = [c for c in required if c not in placed and "already completed" not in c]
         if missing:

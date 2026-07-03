@@ -177,6 +177,7 @@ class PlanResult:
     total_units: float = 0.0
     active_terms: int = 4      # how many terms actually have courses
     extended_plan: bool = False  # True when courses spill past term 4
+    summer_overflow: bool = False  # True when T5 is <10u (recommend as summer session, not extra year)
 
     def all_courses(self) -> list:
         out = []
@@ -928,16 +929,29 @@ def _sanity_check(result: PlanResult):
 
     # Extended plan warning
     if result.extended_plan:
-        extra = result.active_terms - 4
-        result.warnings.append(
-            f"EXTENDED PLAN: {result.major} at {result.uc} requires "
-            f"{result.active_terms} semesters of preparation ({extra} beyond the standard "
-            f"4-semester / 2-year timeline). This program is unusually heavy. "
-            f"Students typically need summer coursework or an extra year at CC."
-        )
+        t5_units = sum(s.units for s in result.terms.get(5, []))
+        overflow_light = result.active_terms == 5 and t5_units < 10.0
+        result.summer_overflow = overflow_light
+        if overflow_light:
+            courses_str = ", ".join(s.code for s in result.terms.get(5, []))
+            result.warnings.append(
+                f"SUMMER SESSION: This plan fits in 4 regular semesters plus one summer session "
+                f"({courses_str}, {t5_units:.0f}u). Most transfer students handle this as a single "
+                f"summer course between Year 1 and Year 2."
+            )
+        else:
+            extra = result.active_terms - 4
+            result.warnings.append(
+                f"EXTENDED PLAN: {result.major} at {result.uc} requires "
+                f"{result.active_terms} semesters of preparation ({extra} beyond the standard "
+                f"4-semester / 2-year timeline). This program is unusually heavy. "
+                f"Students typically need summer coursework or an extra year at CC."
+            )
 
     # Under-loaded term check (light GE-only semesters are suspicious)
     for t in range(1, result.active_terms + 1):
+        if result.summer_overflow and t == 5:
+            continue  # summer session can legitimately be 1-2 courses
         units = sum(s.units for s in result.terms.get(t, []))
         if units > 0 and units < 9.0:
             result.warnings.append(
@@ -961,7 +975,7 @@ def build_render_prompt(
         f"Student: {result.college} -> {result.uc} | {result.major}\n",
     ]
 
-    if result.extended_plan:
+    if result.extended_plan and not result.summer_overflow:
         extra = result.active_terms - 4
         lines.append(
             f"WARNING: This is an EXTENDED PLAN requiring {result.active_terms} semesters "
@@ -970,9 +984,19 @@ def build_render_prompt(
             "the standard 2-year CC timeline and students should plan for summer sessions "
             "or a 3rd year at CC.\n"
         )
+    elif result.summer_overflow:
+        t5_units = sum(s.units for s in result.terms.get(5, []))
+        courses_str = ", ".join(s.code for s in result.terms.get(5, []))
+        lines.append(
+            f"NOTE: Term 5 is a lightweight summer session ({courses_str}, {t5_units:.0f}u) — "
+            "NOT a full extra semester. Label Term 5 as 'Summer Session' in the schedule header. "
+            "In Key Notes, reassure the student: this plan fits in 4 regular semesters; "
+            "the one summer course is optional-but-recommended and most students complete it "
+            "between Year 1 and Year 2 without extending their timeline.\n"
+        )
 
     for t in range(1, result.active_terms + 1):
-        season  = _TERMS_PER_YEAR.get(t, f"Term {t}")
+        season = "Summer Session" if (result.summer_overflow and t == 5) else _TERMS_PER_YEAR.get(t, f"Term {t}")
         t_units = sum(s.units for s in result.terms.get(t, []))
         lines.append(f"## Term {t} ({season}) -- {t_units:.0f} units")
         for slot in result.terms.get(t, []):
@@ -1024,7 +1048,10 @@ def build_render_prompt(
     lines.append("## Key Notes")
     lines.append(f"- TAG: {tag_note}")
     lines.append(f"- GPA target: {gpa_range} -- {gpa_note}")
-    lines.append(f"- Total units: {result.total_units:.0f} across {result.active_terms} terms")
+    if result.summer_overflow:
+        lines.append(f"- Total units: {result.total_units:.0f} across 4 semesters + 1 summer session")
+    else:
+        lines.append(f"- Total units: {result.total_units:.0f} across {result.active_terms} terms")
     for w in result.warnings:
         lines.append(f"- NOTE: {w}")
 

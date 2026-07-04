@@ -957,9 +957,9 @@ def _sanity_check(result: PlanResult):
     if result.total_units < _UC_MIN_UNITS:
         shortfall = _UC_MIN_UNITS - result.total_units
         result.warnings.append(
-            f"UNIT SHORTFALL: This plan totals {result.total_units:.0f} transferable units, "
-            f"which is {shortfall:.0f}u below the UC minimum of 60 semester units required "
-            f"for transfer eligibility. Add {shortfall:.0f}u of transferable electives "
+            f"UNIT SHORTFALL: This plan totals {result.total_units:.1f} transferable units, "
+            f"which is {shortfall:.1f}u below the UC minimum of 60 semester units required "
+            f"for transfer eligibility. Add {shortfall:.1f}u of transferable electives "
             f"(e.g., additional GE courses, language courses, or major-adjacent electives) "
             f"before applying."
         )

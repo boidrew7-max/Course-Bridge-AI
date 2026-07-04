@@ -1,5 +1,5 @@
 """
-Test plan_engine.py against all known failing cases + new breadth cases.
+Test plan_engine.py against all known failing cases + breadth cases.
 
 Usage:
   python test_plan_engine.py            # run all cases
@@ -14,10 +14,23 @@ Fail criteria (hard errors):
   - AND-group incomplete: multiple CC courses required but not all scheduled
   - Match failure: no articulation data found (empty schedule)
   - Crash: any exception during build_plan()
+  - Completed course re-scheduled (when completedCourses provided)
+  - Missing UNIT SHORTFALL warning (for cases marked expect_shortfall=True)
 
 Soft observations (printed but don't fail the test):
   - EXTENDED PLAN: program needs >4 semesters (expected for heavy programs)
   - Under-loaded term: a term has <9u
+  - UNIT SHORTFALL: plan under 60u (informational; hard-checked only for
+    cases with {"expect_shortfall": True} in their extra dict)
+
+Case tuple formats:
+  (id, desc, college, uc, major, accept_honors)
+  (id, desc, college, uc, major, accept_honors, extra_dict)
+
+  extra_dict keys (all optional):
+    completed       set[str]  -- courses already done; must NOT appear in plan
+    ap_credits      str       -- AP exam string passed to build_plan
+    expect_shortfall bool     -- if True, plan MUST emit UNIT SHORTFALL warning
 """
 
 import sys
@@ -34,10 +47,10 @@ from plan_engine import (
 from course_sequence import infer_sequence_order, same_sequence_base
 
 # ── Test case definitions ─────────────────────────────────────────────────────
-# (id, description, college, uc, major, accept_honors)
+# See module docstring for tuple format.
 
 CASES = [
-    # Original 7 required cases
+    # ── Original 9 cases (unchanged) ─────────────────────────────────────────
     (1, "De Anza -> Berkeley -> CS [calc-chain prereq ordering]",
         "De Anza College", "Berkeley", "Computer Science B.S.", False),
     (2, "Foothill -> Berkeley -> CS [ENGL 8 ghost-course]",
@@ -53,12 +66,83 @@ CASES = [
         "Foothill College", "Merced", "Computer Science and Engineering B.S.", False),
     (7, "De Anza -> UCSD -> CS [was 413-trigger]",
         "De Anza College", "UCSD", "Computer Science B.S.", False),
-
-    # New breadth cases
     (8, "De Anza -> UC Davis -> Psychology B.A. [non-CS/Math]",
         "De Anza College", "Davis", "Psychology B.A.", False),
     (9, "Foothill -> Merced -> Electrical Engineering [high AND-group]",
         "Foothill College", "Merced", "Electrical Engineering B.S.", False),
+
+    # ── UCLA coverage (previously zero) ──────────────────────────────────────
+    (10, "De Anza -> UCLA -> Psychology B.A. [UCLA non-STEM]",
+         "De Anza College", "Los Angeles", "Psychology B.A.", False),
+    (11, "CCSF -> UCLA -> History B.A. [new CC: CCSF; shortfall expected]",
+         "City College of San Francisco", "Los Angeles", "History B.A.", False,
+         {"expect_shortfall": True}),
+
+    # ── UCI coverage ──────────────────────────────────────────────────────────
+    (12, "ARC -> UCI -> Psychology B.S. [new CC: ARC; shortfall expected]",
+         "American River College", "Irvine", "Psychology B.S.", False,
+         {"expect_shortfall": True}),
+    (13, "De Anza -> UCI -> Economics B.A. [UCI non-STEM, heavy major]",
+         "De Anza College", "Irvine", "Economics B.A.", False),
+
+    # ── UCSB coverage (previously zero) ──────────────────────────────────────
+    (14, "ARC -> UCSB -> Political Science B.A. [UCSB; shortfall expected]",
+         "American River College", "Santa Barbara", "Political Science B.A.", False,
+         {"expect_shortfall": True}),
+    (15, "De Anza -> UCSB -> Sociology B.A. [UCSB non-STEM]",
+         "De Anza College", "Santa Barbara", "Sociology B.A.", False),
+
+    # ── UCSC coverage (previously zero) ──────────────────────────────────────
+    (16, "ARC -> UCSC -> Psychology B.A. [UCSC; shortfall expected]",
+         "American River College", "Santa Cruz", "Psychology B.A.", False,
+         {"expect_shortfall": True}),
+    (17, "DVC -> UCSC -> History B.A. [new CC: Diablo Valley]",
+         "Diablo Valley College", "Santa Cruz", "History B.A.", False),
+
+    # ── Berkeley non-CS/Eng ───────────────────────────────────────────────────
+    (18, "ARC -> Berkeley -> Economics B.A. [Berkeley non-STEM; shortfall expected]",
+         "American River College", "Berkeley", "Economics B.A.", False,
+         {"expect_shortfall": True}),
+
+    # ── UCSD non-CS ───────────────────────────────────────────────────────────
+    (19, "ARC -> UCSD -> Psychology B.S. [UCSD non-CS, heavy]",
+         "American River College", "San Diego", "Psychology B.S.", False),
+    (20, "De Anza -> UCSD -> Economics B.A. [UCSD non-STEM]",
+         "De Anza College", "San Diego", "Economics B.A.", False),
+
+    # ── Merced non-CS ─────────────────────────────────────────────────────────
+    (21, "ARC -> Merced -> Sociology B.A. [Merced non-STEM; shortfall expected]",
+         "American River College", "Merced", "Sociology B.A.", False,
+         {"expect_shortfall": True}),
+
+    # ── Unit-shortfall regression (permanent 60u check tests) ─────────────────
+    (22, "Foothill -> Riverside -> English B.A. [60u shortfall regression ~50.5u]",
+         "Foothill College", "Riverside", "English B.A.", False,
+         {"expect_shortfall": True}),
+    (23, "De Anza -> Riverside -> Philosophy B.A. [60u shortfall regression ~57u]",
+         "De Anza College", "Riverside", "Philosophy B.A.", False,
+         {"expect_shortfall": True}),
+
+    # ── New CC: Pasadena City College ─────────────────────────────────────────
+    (24, "PCC -> UCI -> Sociology B.A. [new CC: Pasadena City College]",
+         "Pasadena City College", "Irvine", "Sociology B.A.", False),
+
+    # ── completedCourses parameter tests ─────────────────────────────────────
+    (25, "De Anza -> Berkeley -> CS [completedCourses=MATH 1A,ENGL C1000]",
+         "De Anza College", "Berkeley", "Computer Science B.S.", False,
+         {"completed": {"MATH 1A", "ENGL C1000"}}),
+    (26, "De Anza -> Davis -> Psychology B.A. [completedCourses=PSYC 2]",
+         "De Anza College", "Davis", "Psychology B.A.", False,
+         {"completed": {"PSYC 2"}}),
+
+    # ── apCredits parameter test ───────────────────────────────────────────────
+    (27, "De Anza -> Berkeley -> CS [apCredits=AP Calculus BC]",
+         "De Anza College", "Berkeley", "Computer Science B.S.", False,
+         {"ap_credits": "AP Calculus BC"}),
+
+    # ── Davis additional non-STEM coverage ───────────────────────────────────
+    (28, "De Anza -> Davis -> Sociology B.A. [Davis non-STEM breadth]",
+         "De Anza College", "Davis", "Sociology B.A.", False),
 ]
 
 TAG_NOTES = {
@@ -92,7 +176,7 @@ def check_ghost_courses(result: PlanResult) -> list:
     for area, course_code in result.igetc_completion.items():
         for code in course_code.split(", "):
             code = code.strip()
-            if not code or "via" in code or "satisfied" in code:
+            if not code or "via" in code or "satisfied" in code or "already completed" in code:
                 continue
             if code not in placed:
                 errors.append(f"Ghost in area {area}: {code!r} not placed in any term")
@@ -156,15 +240,49 @@ def check_token_size(prompt: str, threshold: int = 3000) -> list:
     return []
 
 
+def check_completed_excluded(result: PlanResult, completed: set) -> list:
+    """Completed courses must not appear anywhere in the scheduled plan."""
+    if not completed:
+        return []
+    placed = {s.code for s in result.all_courses()}
+    errors = []
+    for raw in completed:
+        code = raw.strip().upper()
+        if code in placed:
+            errors.append(
+                f"Completed course {code} was re-scheduled (should have been excluded)"
+            )
+    return errors
+
+
+def check_shortfall_fires(result: PlanResult) -> list:
+    """UNIT SHORTFALL warning must be present (hard check for known sub-60u cases)."""
+    if not any("UNIT SHORTFALL" in w for w in result.warnings):
+        return [
+            f"Expected UNIT SHORTFALL warning but none fired "
+            f"(plan has {result.total_units:.1f}u)"
+        ]
+    return []
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
-def run_case(case_id, desc, college, uc, major, accept_honors) -> dict:
+def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> dict:
+    extra = extra or {}
+    completed   = extra.get("completed", set())
+    ap_credits  = extra.get("ap_credits", "")
+    exp_short   = extra.get("expect_shortfall", False)
+
     print(f"\n{'-'*70}")
     print(f"CASE {case_id}: {desc}")
-    print(f"  {college} -> {uc} | {major}")
+    extra_note = ""
+    if completed:   extra_note += f"  completed={sorted(completed)}"
+    if ap_credits:  extra_note += f"  apCredits={ap_credits!r}"
+    print(f"  {college} -> {uc} | {major}{extra_note}")
 
     try:
-        result = build_plan(college, uc, major, accept_honors=accept_honors)
+        result = build_plan(college, uc, major, accept_honors=accept_honors,
+                            completed=completed, ap_credits=ap_credits)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -184,6 +302,9 @@ def run_case(case_id, desc, college, uc, major, accept_honors) -> dict:
     errors += check_prereq_violations(result)
     errors += check_and_groups(result)
     errors += check_unit_overload(result)
+    errors += check_completed_excluded(result, completed)
+    if exp_short:
+        errors += check_shortfall_fires(result)
 
     uc_l    = _UC_NAME_MAP_LOCAL.get(uc.lower().strip(), uc.lower())
     tag     = TAG_NOTES.get(uc_l, "Check UC TAG page for eligibility.")
@@ -234,7 +355,8 @@ def main():
 
     results = []
     for case in cases:
-        r = run_case(*case)
+        # Pad to 7 elements so run_case always receives extra dict (or None)
+        r = run_case(*case) if len(case) == 7 else run_case(*case, None)
         results.append(r)
 
     print(f"\n{'='*70}")

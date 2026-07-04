@@ -319,10 +319,36 @@ _CC_PREREQ_CHAINS: dict = {
 # UC requirement OR groups — within each frozenset only ONE needs to be
 # satisfied.  When multiple members appear in a shard we keep the cheapest
 # CC path (fewest total units) and mark the rest as "satisfied via <winner>".
-# Key: normalized UC campus name (matches _UC_NAME_MAP values).
-_UC_REQ_OR_GROUPS: list[tuple[str, frozenset]] = [
+#
+# Tuple formats:
+#   (uc_normalized, frozenset)               — applies to all majors at this campus
+#   (uc_normalized, major_substr, frozenset) — applies only when major name contains major_substr
+_UC_REQ_OR_GROUPS: list = [
     # Berkeley CS / EECS: "MATH 54 or EECS 16A or MATH 56"
     ("berkeley", frozenset({("MATH", "54"), ("EECS", "16A"), ("MATH", "56")})),
+
+    # Davis Sociology A.B. — breadth elective clusters ("pick one" per group).
+    # ASSIST lists the full GE elective menu as separate required entries, causing
+    # the engine to schedule all ~11 History, ~8 Ethnic Studies, etc. options.
+    # Each group below collapses to one representative course.
+    ("davis", "sociology", frozenset({
+        ("HIS","007A"), ("HIS","007B"), ("HIS","007C"),
+        ("HIS","009A"), ("HIS","009B"), ("HIS","010C"),
+        ("HIS","004A"), ("HIS","004B"), ("HIS","004C"),
+        ("HIS","017A"), ("HIS","017B"),
+    })),
+    ("davis", "sociology", frozenset({
+        ("NAS","001"), ("NAS","010"),
+        ("ASA","001"), ("ASA","002"), ("ASA","004"),
+        ("CHI","010"), ("CHI","050"), ("AAS","010"),
+    })),
+    ("davis", "sociology", frozenset({
+        ("PHI","005"), ("PHI","014"), ("PHI","024"),
+    })),
+    ("davis", "sociology", frozenset({
+        ("POL","001"), ("POL","002"), ("POL","003"), ("POL","004"),
+        ("PSC","001"), ("ECN","001B"), ("ANT","002"),
+    })),
 ]
 
 
@@ -376,6 +402,7 @@ def _resolve_major_prep(
     accept_honors: bool,
     completed: set,
     uc_normalized: str = "",
+    major: str = "",
 ) -> tuple[list, list, list]:
     """
     For each UC articulation entry, pick one option group deterministically.
@@ -386,9 +413,16 @@ def _resolve_major_prep(
     alternatives (e.g. MATH 54 or EECS 16A at Berkeley), only the cheapest
     CC path is scheduled; the rest are marked MET via the winner.
     """
+    major_l = major.lower()
     # ── OR-group pre-pass ─────────────────────────────────────────────────────
     skip_uc_keys: dict = {}   # (p,n) -> winner (p,n)
-    for group_uc, or_group in _UC_REQ_OR_GROUPS:
+    for group in _UC_REQ_OR_GROUPS:
+        if len(group) == 3:
+            group_uc, major_substr, or_group = group
+            if major_substr.lower() not in major_l:
+                continue
+        else:
+            group_uc, or_group = group
         if group_uc != uc_normalized:
             continue
         members: list = []
@@ -491,6 +525,7 @@ def _select_igetc(
     college: str,
     scheduled_keys: set,
     accept_honors: bool,
+    completed_keys: set | None = None,
 ) -> tuple[list, dict]:
     data = _load_igetc()
     if not data:
@@ -505,6 +540,7 @@ def _select_igetc(
 
     by_area = by_school[school_key].get("byArea", {})
     lab_keys = {(c.get("prefix",""), c.get("number","")) for c in by_area.get("5C", [])}
+    completed_set = completed_keys or set()
 
     igetc_courses: list[CourseSlot] = []
     area_assignments: dict = {}
@@ -518,6 +554,18 @@ def _select_igetc(
 
         courses = by_area.get(area_code, [])
         if not courses:
+            continue
+
+        # Completed-course double-label: area already satisfied, no new slot needed
+        completed_matches = [c for c in courses if (c.get("prefix",""), c.get("number","")) in completed_set]
+        if completed_matches:
+            m = completed_matches[0]
+            code = f"{m.get('prefix','')} {m.get('number','')}"
+            area_assignments[area_code] = f"{code} (already completed)"
+            if area_code in ("5A", "5B"):
+                mk = (m.get("prefix",""), m.get("number",""))
+                if mk in lab_keys:
+                    five_b_has_lab = True
             continue
 
         # Major prep double-label
@@ -547,6 +595,8 @@ def _select_igetc(
             if not _ok(c):
                 continue
             k = (c.get("prefix",""), c.get("number",""))
+            if k in completed_set:
+                continue
             if k not in seen:
                 seen.add(k)
                 unique.append(c)
@@ -870,7 +920,7 @@ def build_plan(
     result = PlanResult(college=college, uc=uc, major=major)
 
     major_courses, audit_rows, post_transfer = _resolve_major_prep(
-        arts, accept_honors, completed_keys, uc_normalized=uc_l
+        arts, accept_honors, completed_keys, uc_normalized=uc_l, major=major
     )
     result.requirement_audit = audit_rows
     result.post_transfer     = post_transfer
@@ -885,7 +935,8 @@ def build_plan(
     _inject_cc_prereqs(major_courses, matched_cc_name, completed_keys)
 
     scheduled_keys = {(s.prefix, s.number) for s in major_courses}
-    igetc_courses, area_assignments = _select_igetc(matched_cc_name, scheduled_keys, accept_honors)
+    igetc_courses, area_assignments = _select_igetc(matched_cc_name, scheduled_keys, accept_honors,
+                                                     completed_keys=completed_keys)
     result.igetc_completion = area_assignments
 
     # Sanity check: if major prep was found but IGETC is empty, the shard
@@ -922,7 +973,7 @@ def _sanity_check(result: PlanResult):
     for area_code, course_code in result.igetc_completion.items():
         for code in course_code.split(", "):
             code = code.strip()
-            if code and "via" not in code and "satisfied" not in code and code not in placed:
+            if code and "via" not in code and "satisfied" not in code and "already completed" not in code and code not in placed:
                 result.warnings.append(
                     f"Ghost: {code} listed in IGETC area {area_code} but not placed in any term."
                 )

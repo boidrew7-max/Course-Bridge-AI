@@ -933,11 +933,15 @@ def _sanity_check(result: PlanResult):
         overflow_light = result.active_terms == 5 and t5_units < 10.0
         result.summer_overflow = overflow_light
         if overflow_light:
-            courses_str = ", ".join(s.code for s in result.terms.get(5, []))
+            t5_slots = result.terms.get(5, [])
+            courses_str = ", ".join(s.code for s in t5_slots)
+            if len(t5_slots) == 1:
+                tail = "Most transfer students handle this as a single summer course between Year 1 and Year 2."
+            else:
+                tail = "Most transfer students handle these as summer courses between Year 1 and Year 2."
             result.warnings.append(
                 f"SUMMER SESSION: This plan fits in 4 regular semesters plus one summer session "
-                f"({courses_str}, {t5_units:.0f}u). Most transfer students handle this as a single "
-                f"summer course between Year 1 and Year 2."
+                f"({courses_str}, {t5_units:.0f}u). {tail}"
             )
         else:
             extra = result.active_terms - 4
@@ -985,14 +989,24 @@ def build_render_prompt(
             "or a 3rd year at CC.\n"
         )
     elif result.summer_overflow:
-        t5_units = sum(s.units for s in result.terms.get(5, []))
-        courses_str = ", ".join(s.code for s in result.terms.get(5, []))
+        t5_slots = result.terms.get(5, [])
+        t5_units = sum(s.units for s in t5_slots)
+        courses_str = ", ".join(s.code for s in t5_slots)
+        if len(t5_slots) == 1:
+            summer_tail = (
+                "the summer course is optional-but-recommended and most students complete it "
+                "between Year 1 and Year 2 without extending their timeline."
+            )
+        else:
+            summer_tail = (
+                "the summer session courses are optional-but-recommended and most students "
+                "complete them between Year 1 and Year 2 without extending their timeline."
+            )
         lines.append(
             f"NOTE: Term 5 is a lightweight summer session ({courses_str}, {t5_units:.0f}u) — "
             "NOT a full extra semester. Label Term 5 as 'Summer Session' in the schedule header. "
-            "In Key Notes, reassure the student: this plan fits in 4 regular semesters; "
-            "the one summer course is optional-but-recommended and most students complete it "
-            "between Year 1 and Year 2 without extending their timeline.\n"
+            f"In Key Notes, reassure the student: this plan fits in 4 regular semesters; "
+            f"{summer_tail}\n"
         )
 
     for t in range(1, result.active_terms + 1):

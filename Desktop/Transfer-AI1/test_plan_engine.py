@@ -28,9 +28,13 @@ Case tuple formats:
   (id, desc, college, uc, major, accept_honors, extra_dict)
 
   extra_dict keys (all optional):
-    completed       set[str]  -- courses already done; must NOT appear in plan
-    ap_credits      str       -- AP exam string passed to build_plan
-    expect_shortfall bool     -- if True, plan MUST emit UNIT SHORTFALL warning
+    completed        set[str]  -- courses already done; must NOT appear in plan
+    ap_credits       str       -- AP exam string passed to build_plan
+    expect_shortfall bool      -- if True, plan MUST emit UNIT SHORTFALL warning
+    must_include     set[str]  -- course codes (e.g. "MATH 1A") that MUST appear
+    must_not_include set[str]  -- course codes that must NOT appear (regression guard)
+    min_courses      int       -- plan must have at least this many courses
+    max_courses      int       -- plan must have at most this many courses
 """
 
 import sys
@@ -67,23 +71,33 @@ CASES = [
     (7, "De Anza -> UCSD -> CS [was 413-trigger]",
         "De Anza College", "UCSD", "Computer Science B.S.", False),
     (8, "De Anza -> UC Davis -> Psychology B.A. [non-CS/Math]",
-        "De Anza College", "Davis", "Psychology B.A.", False),
+        "De Anza College", "Davis", "Psychology B.A.", False,
+        {"must_include": {"PSYC C1000", "ANTH 1", "PSYC 2"},
+         "min_courses": 10}),
     (9, "Foothill -> Merced -> Electrical Engineering [high AND-group]",
         "Foothill College", "Merced", "Electrical Engineering B.S.", False),
 
     # ── UCLA coverage (previously zero) ──────────────────────────────────────
     (10, "De Anza -> UCLA -> Psychology B.A. [UCLA non-STEM]",
-         "De Anza College", "Los Angeles", "Psychology B.A.", False),
+         "De Anza College", "Los Angeles", "Psychology B.A.", False,
+         {"must_include": {"PSYC C1000"},
+          "must_not_include": {"MATH 1BH"},   # regression: wrong major ghost
+          "max_courses": 35}),
     (11, "CCSF -> UCLA -> History B.A. [new CC: CCSF; shortfall expected]",
          "City College of San Francisco", "Los Angeles", "History B.A.", False,
-         {"expect_shortfall": True}),
+         {"expect_shortfall": True,
+          "must_include": {"HIST 4A"},           # Western Civ must appear
+          "must_not_include": {"ART 101"}}),     # regression: Art History wrong match
 
     # ── UCI coverage ──────────────────────────────────────────────────────────
     (12, "ARC -> UCI -> Psychology B.S. [new CC: ARC; shortfall expected]",
          "American River College", "Irvine", "Psychology B.S.", False,
          {"expect_shortfall": True}),
     (13, "De Anza -> UCI -> Economics B.A. [UCI non-STEM, heavy major]",
-         "De Anza College", "Irvine", "Economics B.A.", False),
+         "De Anza College", "Irvine", "Economics B.A.", False,
+         {"must_include": {"MATH 1A", "ECON 1", "ECON 2", "MATH 1B"},
+          "must_not_include": {"PHTG 1", "PHTG 4", "ARTS 4A"},  # regression: Art major ghost
+          "max_courses": 20}),
 
     # ── UCSB coverage (previously zero) ──────────────────────────────────────
     (14, "ARC -> UCSB -> Political Science B.A. [UCSB; shortfall expected]",
@@ -97,7 +111,8 @@ CASES = [
          "American River College", "Santa Cruz", "Psychology B.A.", False,
          {"expect_shortfall": True}),
     (17, "DVC -> UCSC -> History B.A. [new CC: Diablo Valley]",
-         "Diablo Valley College", "Santa Cruz", "History B.A.", False),
+         "Diablo Valley College", "Santa Cruz", "History B.A.", False,
+         {"must_include": {"HIST 124"}}),  # regression: HIST 124 was scheduled twice
 
     # ── Berkeley non-CS/Eng ───────────────────────────────────────────────────
     (18, "ARC -> Berkeley -> Economics B.A. [Berkeley non-STEM; shortfall expected]",
@@ -255,6 +270,44 @@ def check_completed_excluded(result: PlanResult, completed: set) -> list:
     return errors
 
 
+def check_no_duplicates(result: PlanResult) -> list:
+    """No course should appear in more than one term."""
+    seen: dict = {}
+    errors = []
+    for s in result.all_courses():
+        if s.code in seen:
+            errors.append(
+                f"Duplicate: {s.code} scheduled in term {seen[s.code]} AND term {s.term}"
+            )
+        else:
+            seen[s.code] = s.term
+    return errors
+
+
+def check_content(
+    result: PlanResult,
+    must_include: set,
+    must_not_include: set,
+    min_courses: int | None,
+    max_courses: int | None,
+) -> list:
+    """Validate course-content expectations from the extra_dict."""
+    all_codes = {s.code for s in result.all_courses()}
+    errors = []
+    for code in sorted(must_include or set()):
+        if code not in all_codes:
+            errors.append(f"Required course missing from plan: {code}")
+    for code in sorted(must_not_include or set()):
+        if code in all_codes:
+            errors.append(f"Forbidden course present in plan: {code}")
+    total = len(result.all_courses())
+    if min_courses is not None and total < min_courses:
+        errors.append(f"Plan has {total} courses but needs at least {min_courses}")
+    if max_courses is not None and total > max_courses:
+        errors.append(f"Plan has {total} courses but max allowed is {max_courses}")
+    return errors
+
+
 def check_shortfall_fires(result: PlanResult) -> list:
     """UNIT SHORTFALL warning must be present (hard check for known sub-60u cases)."""
     if not any("UNIT SHORTFALL" in w for w in result.warnings):
@@ -303,6 +356,14 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
     errors += check_and_groups(result)
     errors += check_unit_overload(result)
     errors += check_completed_excluded(result, completed)
+    errors += check_no_duplicates(result)
+    errors += check_content(
+        result,
+        must_include=extra.get("must_include", set()),
+        must_not_include=extra.get("must_not_include", set()),
+        min_courses=extra.get("min_courses"),
+        max_courses=extra.get("max_courses"),
+    )
     if exp_short:
         errors += check_shortfall_fires(result)
 

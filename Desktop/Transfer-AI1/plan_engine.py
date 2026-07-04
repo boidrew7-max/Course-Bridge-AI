@@ -178,6 +178,7 @@ class PlanResult:
     active_terms: int = 4      # how many terms actually have courses
     extended_plan: bool = False  # True when courses spill past term 4
     summer_overflow: bool = False  # True when T5 is <10u (recommend as summer session, not extra year)
+    multi_track: bool = False  # True when agreement has duplicate OR-menus (emphasis tracks detected)
 
     def all_courses(self) -> list:
         out = []
@@ -236,6 +237,20 @@ def _prefix_hit(key_word: str, user_str: str) -> bool:
     if key_word in user_str:
         return True
     if len(key_word) >= 5 and key_word[:5] in user_str:
+        return True
+    return False
+
+
+def _major_word_hit(key_word: str, user_str: str) -> bool:
+    """Conservative substring match for major-name words.
+
+    Uses an 8-char prefix threshold (vs 5 for CC names) to prevent false matches
+    between related majors, e.g. 'psychobiology' vs 'psychology' both start with
+    'psych' (5 chars) but differ at char 7 ('psycholo' vs 'psychobi').
+    """
+    if key_word in user_str:
+        return True
+    if len(key_word) >= 8 and key_word[:8] in user_str:
         return True
     return False
 
@@ -403,19 +418,30 @@ def _resolve_major_prep(
     completed: set,
     uc_normalized: str = "",
     major: str = "",
-) -> tuple[list, list, list]:
+) -> tuple[list, list, list, bool]:
     """
     For each UC articulation entry, pick one option group deterministically.
-    Honors consistency is automatic: once a non-honors course is committed,
-    later options with only the honors version have less overlap and lose.
 
-    OR-group pre-pass: when multiple UC requirements in the shard are genuine
-    alternatives (e.g. MATH 54 or EECS 16A at Berkeley), only the cheapest
-    CC path is scheduled; the rest are marked MET via the winner.
+    Two processing modes, selected per shard entry by the "g"/"k" fields
+    added during the ASSIST pipeline build:
+
+    NFromArea (k > 0):  entries that share a RequirementGroup (same "g") are
+        alternatives — only the cheapest k CC paths are scheduled; the rest
+        are marked MET via winner.  Duplicate groups (same UC-code set
+        appearing in multiple emphasis tracks) are deduped.
+
+    Following / legacy (k == 0 or g == ""):  each entry is an independent
+        AND requirement.  Falls back to the legacy _UC_REQ_OR_GROUPS list for
+        old shards that predate the "g"/"k" fields.
+
+    Returns (major_courses, audit_rows, post_transfer, multi_track) where
+    multi_track is True when duplicate NFromArea menus were detected (indicating
+    the agreement covers multiple emphasis tracks and this plan is a superset).
     """
     major_l = major.lower()
-    # ── OR-group pre-pass ─────────────────────────────────────────────────────
-    skip_uc_keys: dict = {}   # (p,n) -> winner (p,n)
+
+    # ── Legacy OR-group pre-pass (fallback for shards without g/k) ───────────
+    skip_uc_keys: dict = {}
     for group in _UC_REQ_OR_GROUPS:
         if len(group) == 3:
             group_uc, major_substr, or_group = group
@@ -449,47 +475,74 @@ def _resolve_major_prep(
         for key, _ in members:
             if key != winner:
                 skip_uc_keys[key] = winner
-    # ─────────────────────────────────────────────────────────────────────────
+
+    # ── Partition entries into NFromArea groups vs AND entries ────────────────
+    # group_map: gid -> {"pick_n": int, "arts": list, "uc_codes": frozenset}
+    group_map: dict = {}
+    and_arts: list = []      # Following (k==0) or legacy (g=="")
+
+    for art in arts:
+        gid    = art.get("g", "")
+        pick_n = art.get("k", 0)
+        if gid and pick_n > 0:
+            if gid not in group_map:
+                group_map[gid] = {"pick_n": pick_n, "arts": []}
+            group_map[gid]["arts"].append(art)
+        else:
+            and_arts.append(art)
+
+    # Attach frozenset of UC keys to each group (needed for dedup + explosion detection)
+    for gid, gdata in group_map.items():
+        gdata["uc_codes"] = frozenset(
+            (a.get("uc", {}).get("p","").upper(), a.get("uc", {}).get("n","").upper())
+            for a in gdata["arts"]
+        )
+
+    # ── Detect emphasis-track explosion (duplicate OR-menus) ─────────────────
+    # Two groups with ≥3-course menus that share ≥50% of UC codes = same elective
+    # slot appearing in multiple tracks → this is a multi-track agreement.
+    multi_track = False
+    glist = [gd for gd in group_map.values() if len(gd["uc_codes"]) >= 3]
+    for i, g1 in enumerate(glist):
+        for g2 in glist[i+1:]:
+            overlap = len(g1["uc_codes"] & g2["uc_codes"])
+            if overlap >= 3 and overlap / min(len(g1["uc_codes"]), len(g2["uc_codes"])) >= 0.5:
+                multi_track = True
+                break
+        if multi_track:
+            break
 
     committed: dict = {}
     audit_rows = []
     post_transfer = []
 
-    for art in arts:
-        uc_c      = art.get("uc", {})
-        uc_key    = (uc_c.get("p","").upper(), uc_c.get("n","").upper())
-        uc_str    = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+    # ── Process NFromArea groups ───────────────────────────────────────────────
+    seen_uc_sets: set = set()   # deduplicate groups with identical UC-code menus
 
-        if uc_key in skip_uc_keys:
-            winner = skip_uc_keys[uc_key]
-            audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
-            continue
-        cc_groups = art.get("cc", [])
-        valid_groups = [g for g in cc_groups if g]
-
-        if not valid_groups:
-            post_transfer.append(uc_str)
-            audit_rows.append((uc_str, "-", "POST-TRANSFER"))
-            continue
-
+    def _pick_cc(valid_groups):
+        """Select the best CC option group from a list of alternatives."""
         if not accept_honors:
             filtered = [g for g in valid_groups if not all(
-                c.get("n", "").upper().endswith("H") for c in g
+                c.get("n","").upper().endswith("H") for c in g
             )]
             if filtered:
                 valid_groups = filtered
-
         def _overlap(grp):
             return sum(1 for c in grp if (c.get("p",""), c.get("n","")) in committed)
-
-        def _honors_count(grp):
-            return sum(1 for c in grp if c.get("n", "").upper().endswith("H"))
-
+        def _honors_cnt(grp):
+            return sum(1 for c in grp if c.get("n","").upper().endswith("H"))
         if accept_honors:
-            chosen = max(valid_groups, key=lambda grp: (_overlap(grp), _honors_count(grp)))
-        else:
-            chosen = max(valid_groups, key=_overlap)
+            return max(valid_groups, key=lambda g: (_overlap(g), _honors_cnt(g)))
+        return max(valid_groups, key=_overlap)
 
+    def _cc_cost(chosen):
+        return sum(
+            float(c.get("u", 3) or 3)
+            for c in chosen
+            if (c.get("p",""), c.get("n","")) not in completed
+        )
+
+    def _commit_chosen(chosen, uc_str):
         cc_codes = []
         for c in chosen:
             key = (c.get("p",""), c.get("n",""))
@@ -501,22 +554,91 @@ def _resolve_major_prep(
                     units = float(c.get("u", 3) or 3)
                 except (TypeError, ValueError):
                     units = 3.0
-                slot = CourseSlot(
-                    prefix=c.get("p",""),
-                    number=c.get("n",""),
-                    title=c.get("t",""),
-                    units=units,
-                    tags=["Required Major Prep"],
-                    uc_reqs=[uc_str],
+                committed[key] = CourseSlot(
+                    prefix=c.get("p",""), number=c.get("n",""),
+                    title=c.get("t",""), units=units,
+                    tags=["Required Major Prep"], uc_reqs=[uc_str],
                 )
-                committed[key] = slot
             else:
                 committed[key].uc_reqs.append(uc_str)
             cc_codes.append(f"{key[0]} {key[1]}")
+        audit_rows.append((uc_str, " + ".join(cc_codes) if cc_codes else "-", "MET"))
 
-        audit_rows.append((uc_str, " + ".join(cc_codes), "MET"))
+    for gid, gdata in group_map.items():
+        uc_codes_fs = gdata["uc_codes"]
 
-    return list(committed.values()), audit_rows, post_transfer
+        if uc_codes_fs in seen_uc_sets:
+            # Duplicate track menu — skip, just record as satisfied
+            for art in gdata["arts"]:
+                uc_c   = art.get("uc", {})
+                uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+                audit_rows.append((uc_str, "satisfied via alternate track", "MET"))
+            continue
+        seen_uc_sets.add(uc_codes_fs)
+
+        pick_n     = gdata["pick_n"]
+        candidates = []   # (cost, uc_str, chosen_cc_group, uc_key)
+
+        for art in gdata["arts"]:
+            uc_c   = art.get("uc", {})
+            uc_key = (uc_c.get("p","").upper(), uc_c.get("n","").upper())
+            uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+
+            if uc_key in skip_uc_keys:
+                winner = skip_uc_keys[uc_key]
+                audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
+                continue
+
+            valid = [g for g in art.get("cc", []) if g]
+            if not valid:
+                continue  # no CC articulation — post-transfer, skip from OR selection
+
+            chosen = _pick_cc(list(valid))
+            candidates.append((_cc_cost(chosen), uc_str, chosen, uc_key))
+
+        if not candidates:
+            continue
+
+        candidates.sort(key=lambda x: x[0])
+        winners = candidates[:pick_n]
+        losers  = candidates[pick_n:]
+
+        for _cost, uc_str, chosen, _key in winners:
+            _commit_chosen(chosen, uc_str)
+
+        # Record winner description for "satisfied via" on losers
+        winner_cc_desc = (
+            " or ".join(
+                "/".join(c.get("p","") + " " + c.get("n","") for c in w[2])
+                for w in winners
+            ) if winners else "selected option"
+        )
+        for _cost, uc_str, _chosen, _key in losers:
+            audit_rows.append((uc_str, f"satisfied via {winner_cc_desc}", "MET"))
+
+    # ── Process AND entries (Following / legacy) ──────────────────────────────
+    for art in and_arts:
+        uc_c   = art.get("uc", {})
+        uc_key = (uc_c.get("p","").upper(), uc_c.get("n","").upper())
+        uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+
+        if uc_key in skip_uc_keys:
+            winner = skip_uc_keys[uc_key]
+            audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
+            continue
+
+        cc_groups = art.get("cc", [])
+        valid_groups = [g for g in cc_groups if g]
+
+        if not valid_groups:
+            post_transfer.append(uc_str)
+            audit_rows.append((uc_str, "-", "POST-TRANSFER"))
+            continue
+
+        chosen = _pick_cc(list(valid_groups))
+        _commit_chosen(chosen, uc_str)
+
+    return list(committed.values()), audit_rows, post_transfer, multi_track
 
 
 # ── IGETC selection ───────────────────────────────────────────────────────────
@@ -545,6 +667,7 @@ def _select_igetc(
     igetc_courses: list[CourseSlot] = []
     area_assignments: dict = {}
     five_b_has_lab = False
+    placed_igetc_keys: set = set()  # prevent same course from satisfying two IGETC areas
 
     for area_code, area_name, _needed in _IGETC_REQUIRED:
         if area_code == "5C":
@@ -597,6 +720,8 @@ def _select_igetc(
             k = (c.get("prefix",""), c.get("number",""))
             if k in completed_set:
                 continue
+            if k in placed_igetc_keys:  # already used for another IGETC area
+                continue
             if k not in seen:
                 seen.add(k)
                 unique.append(c)
@@ -625,6 +750,7 @@ def _select_igetc(
                 )
                 igetc_courses.append(slot)
                 codes.append(slot.code)
+                placed_igetc_keys.add((c.get("prefix",""), c.get("number","")))
             area_assignments["4"] = ", ".join(codes)
             continue
 
@@ -643,6 +769,7 @@ def _select_igetc(
         )
         igetc_courses.append(slot)
         area_assignments[area_code] = slot.code
+        placed_igetc_keys.add(pk)
         if area_code in ("5A","5B") and pk in lab_keys:
             five_b_has_lab = True
 
@@ -901,11 +1028,15 @@ def build_plan(
         if len(parts) < 3:
             continue
         cc_l_k  = parts[0].replace("_", " ").lower()
-        maj_l_k = "__".join(parts[2:]).replace("_", " ").lower()
+        # Replace both underscores and hyphens so "Psychology-B.A." → "psychology b.a."
+        maj_l_k = "__".join(parts[2:]).replace("_", " ").replace("-", " ").lower()
         cc_words  = [w for w in cc_l_k.split()  if len(w) >= 3 and w not in _CC_STOP_WORDS]
-        maj_words = [w for w in maj_l_k.split() if len(w) >= 4]
-        cc_hit  = sum(1 for w in cc_words  if _prefix_hit(w, college_l)) / max(len(cc_words), 1)
-        maj_hit = sum(1 for w in maj_words if _prefix_hit(w, major_l))   / max(len(maj_words), 1)
+        # Exclude degree suffixes (e.g. "b.a.", "b.s.") — they contain dots and match
+        # any major with the same suffix, causing short-named majors like "Art B.A."
+        # to score 10.0 against unrelated queries like "Economics B.A.".
+        maj_words = [w for w in maj_l_k.split() if len(w) >= 3 and "." not in w]
+        cc_hit  = sum(1 for w in cc_words  if _prefix_hit(w, college_l))     / max(len(cc_words), 1)
+        maj_hit = sum(1 for w in maj_words if _major_word_hit(w, major_l))   / max(len(maj_words), 1)
         score = cc_hit * 5 + maj_hit * 5
         if score > best_score:
             best_score = score
@@ -919,10 +1050,11 @@ def build_plan(
     arts   = shard[best_key]
     result = PlanResult(college=college, uc=uc, major=major)
 
-    major_courses, audit_rows, post_transfer = _resolve_major_prep(
+    major_courses, audit_rows, post_transfer, multi_track = _resolve_major_prep(
         arts, accept_honors, completed_keys, uc_normalized=uc_l, major=major
     )
     result.requirement_audit = audit_rows
+    result.multi_track = multi_track
     result.post_transfer     = post_transfer
 
     # Use matched CC name from shard key for IGETC lookup so typos in the
@@ -968,6 +1100,14 @@ def build_plan(
 
 
 def _sanity_check(result: PlanResult):
+    # Multi-track note
+    if result.multi_track:
+        result.warnings.append(
+            "MULTI-TRACK: This major's ASSIST agreement lists requirements for multiple "
+            "emphasis tracks simultaneously. This plan is a superset — selecting a specific "
+            "emphasis with a counselor may reduce the total course load."
+        )
+
     # Ghost course check
     placed = {s.code for s in result.all_courses()}
     for area_code, course_code in result.igetc_completion.items():
@@ -1041,6 +1181,17 @@ def build_render_prompt(
         "status, or IGETC assignment. Copy all values verbatim.\n",
         f"Student: {result.college} -> {result.uc} | {result.major}\n",
     ]
+
+    if result.multi_track:
+        lines.append(
+            "NOTE: MULTI-TRACK MAJOR — The ASSIST agreement for this major lists requirements "
+            "for multiple emphasis tracks (e.g. General, Global, Law & Society, etc.) simultaneously. "
+            "This plan covers the union of requirements across all tracks, which may be more courses "
+            "than a student who selects one specific track needs. In Key Notes, add: "
+            "'This major has multiple emphasis tracks. This plan covers requirements across "
+            "all tracks — meeting with a counselor to choose a specific emphasis may reduce "
+            "the total course load.'\n"
+        )
 
     if result.extended_plan and not result.summer_overflow:
         extra = result.active_terms - 4

@@ -28,9 +28,18 @@ Case tuple formats:
   (id, desc, college, uc, major, accept_honors, extra_dict)
 
   extra_dict keys (all optional):
-    completed       set[str]  -- courses already done; must NOT appear in plan
-    ap_credits      str       -- AP exam string passed to build_plan
-    expect_shortfall bool     -- if True, plan MUST emit UNIT SHORTFALL warning
+    completed        set[str]  -- courses already done; must NOT appear in plan
+    ap_credits       str       -- AP exam string passed to build_plan
+    expect_shortfall bool      -- if True, plan MUST emit UNIT SHORTFALL warning
+    must_include     set[str]        -- course codes (e.g. "MATH 1A") that MUST appear
+    must_not_include set[str]        -- course codes that must NOT appear (regression guard)
+    min_courses      int             -- plan must have at least this many courses
+    max_courses      int             -- plan must have at most this many courses
+    must_not_all     list[set[str]]  -- each set: having ALL courses in it is an error
+    expect_overreq   bool            -- if True, must_not_all violations are KNOWN_ISSUE
+                                        (prints clearly, doesn't FAIL the suite; clears
+                                        automatically once Conjunction=Or section-awareness
+                                        is implemented)
 """
 
 import sys
@@ -67,23 +76,42 @@ CASES = [
     (7, "De Anza -> UCSD -> CS [was 413-trigger]",
         "De Anza College", "UCSD", "Computer Science B.S.", False),
     (8, "De Anza -> UC Davis -> Psychology B.A. [non-CS/Math]",
-        "De Anza College", "Davis", "Psychology B.A.", False),
+        "De Anza College", "Davis", "Psychology B.A.", False,
+        {"must_include": {"PSYC C1000", "ANTH 1", "PSYC 2"},
+         "min_courses": 10}),
     (9, "Foothill -> Merced -> Electrical Engineering [high AND-group]",
         "Foothill College", "Merced", "Electrical Engineering B.S.", False),
 
     # ── UCLA coverage (previously zero) ──────────────────────────────────────
     (10, "De Anza -> UCLA -> Psychology B.A. [UCLA non-STEM]",
-         "De Anza College", "Los Angeles", "Psychology B.A.", False),
+         "De Anza College", "Los Angeles", "Psychology B.A.", False,
+         {"must_include": {"PSYC C1000"},
+          "must_not_include": {"MATH 1BH"},        # regression: wrong major ghost
+          "max_courses": 35,
+          # KNOWN ISSUE — Conjunction=Or group c2af6f45 is section-based (pick one track)
+          # but conservative k=0 requires all entries.  Until section-awareness is added,
+          # these alternative science tracks are co-scheduled when only one should appear.
+          # Investigate: sectionAdvisements / group position in raw ASSIST templateAssets.
+          "must_not_all": [
+              {"PHYS 10", "PHYS 4A"},    # conceptual vs calc-based physics are alternative tracks
+              {"CHEM 10", "CHEM 1A"},    # intro vs general chemistry are alternative tracks
+          ],
+          "expect_overreq": True}),
     (11, "CCSF -> UCLA -> History B.A. [new CC: CCSF; shortfall expected]",
          "City College of San Francisco", "Los Angeles", "History B.A.", False,
-         {"expect_shortfall": True}),
+         {"expect_shortfall": True,
+          "must_include": {"HIST 4A"},           # Western Civ must appear
+          "must_not_include": {"ART 101"}}),     # regression: Art History wrong match
 
     # ── UCI coverage ──────────────────────────────────────────────────────────
     (12, "ARC -> UCI -> Psychology B.S. [new CC: ARC; shortfall expected]",
          "American River College", "Irvine", "Psychology B.S.", False,
          {"expect_shortfall": True}),
     (13, "De Anza -> UCI -> Economics B.A. [UCI non-STEM, heavy major]",
-         "De Anza College", "Irvine", "Economics B.A.", False),
+         "De Anza College", "Irvine", "Economics B.A.", False,
+         {"must_include": {"MATH 1A", "ECON 1", "ECON 2", "MATH 1B"},
+          "must_not_include": {"PHTG 1", "PHTG 4", "ARTS 4A"},  # regression: Art major ghost
+          "max_courses": 20}),
 
     # ── UCSB coverage (previously zero) ──────────────────────────────────────
     (14, "ARC -> UCSB -> Political Science B.A. [UCSB; shortfall expected]",
@@ -97,7 +125,8 @@ CASES = [
          "American River College", "Santa Cruz", "Psychology B.A.", False,
          {"expect_shortfall": True}),
     (17, "DVC -> UCSC -> History B.A. [new CC: Diablo Valley]",
-         "Diablo Valley College", "Santa Cruz", "History B.A.", False),
+         "Diablo Valley College", "Santa Cruz", "History B.A.", False,
+         {"must_include": {"HIST 124"}}),  # regression: HIST 124 was scheduled twice
 
     # ── Berkeley non-CS/Eng ───────────────────────────────────────────────────
     (18, "ARC -> Berkeley -> Economics B.A. [Berkeley non-STEM; shortfall expected]",
@@ -255,6 +284,59 @@ def check_completed_excluded(result: PlanResult, completed: set) -> list:
     return errors
 
 
+def check_no_duplicates(result: PlanResult) -> list:
+    """No course should appear in more than one term."""
+    seen: dict = {}
+    errors = []
+    for s in result.all_courses():
+        if s.code in seen:
+            errors.append(
+                f"Duplicate: {s.code} scheduled in term {seen[s.code]} AND term {s.term}"
+            )
+        else:
+            seen[s.code] = s.term
+    return errors
+
+
+def check_content(
+    result: PlanResult,
+    must_include: set,
+    must_not_include: set,
+    min_courses: int | None,
+    max_courses: int | None,
+) -> list:
+    """Validate course-content expectations from the extra_dict."""
+    all_codes = {s.code for s in result.all_courses()}
+    errors = []
+    for code in sorted(must_include or set()):
+        if code not in all_codes:
+            errors.append(f"Required course missing from plan: {code}")
+    for code in sorted(must_not_include or set()):
+        if code in all_codes:
+            errors.append(f"Forbidden course present in plan: {code}")
+    total = len(result.all_courses())
+    if min_courses is not None and total < min_courses:
+        errors.append(f"Plan has {total} courses but needs at least {min_courses}")
+    if max_courses is not None and total > max_courses:
+        errors.append(f"Plan has {total} courses but max allowed is {max_courses}")
+    return errors
+
+
+def check_must_not_all(result: PlanResult, must_not_all: list) -> list:
+    """Each set in must_not_all: if ALL courses in that set are present, it's an error.
+    Used to flag Conjunction=Or over-requirement where alternative tracks are co-scheduled."""
+    all_codes = {s.code for s in result.all_courses()}
+    errors = []
+    for course_set in (must_not_all or []):
+        present = sorted(c for c in course_set if c in all_codes)
+        if len(present) == len(course_set):
+            errors.append(
+                f"Alternative tracks co-scheduled (Conjunction=Or over-requirement): "
+                f"{present} — student should pick only one track"
+            )
+    return errors
+
+
 def check_shortfall_fires(result: PlanResult) -> list:
     """UNIT SHORTFALL warning must be present (hard check for known sub-60u cases)."""
     if not any("UNIT SHORTFALL" in w for w in result.warnings):
@@ -303,6 +385,25 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
     errors += check_and_groups(result)
     errors += check_unit_overload(result)
     errors += check_completed_excluded(result, completed)
+    errors += check_no_duplicates(result)
+    errors += check_content(
+        result,
+        must_include=extra.get("must_include", set()),
+        must_not_include=extra.get("must_not_include", set()),
+        min_courses=extra.get("min_courses"),
+        max_courses=extra.get("max_courses"),
+    )
+
+    # Known-issue check: Conjunction=Or over-requirement (alternative tracks co-scheduled)
+    overreq_errors = check_must_not_all(result, extra.get("must_not_all", []))
+    if overreq_errors and extra.get("expect_overreq"):
+        for e in overreq_errors:
+            print(f"  KNOWN ISSUE (Conjunction=Or): {e[:120]}")
+        known_issue_flag = True
+    else:
+        errors += overreq_errors
+        known_issue_flag = False
+
     if exp_short:
         errors += check_shortfall_fires(result)
 
@@ -334,6 +435,10 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
             print(f"    * {e}")
         return {"id": case_id, "desc": desc, "status": "FAIL", "errors": errors,
                 "result": result}
+    elif known_issue_flag:
+        print(f"  KNOWN_ISSUE")
+        return {"id": case_id, "desc": desc, "status": "KNOWN_ISSUE", "errors": [],
+                "result": result, "prompt": prompt}
     else:
         print(f"  PASS")
         return {"id": case_id, "desc": desc, "status": "PASS", "errors": [],
@@ -362,12 +467,20 @@ def main():
     print(f"\n{'='*70}")
     print("SUMMARY")
     print("="*70)
-    passed  = [r for r in results if r["status"] == "PASS"]
-    failed  = [r for r in results if r["status"] == "FAIL"]
-    errored = [r for r in results if r["status"] == "ERROR"]
-    print(f"  PASS:  {len(passed)}")
-    print(f"  FAIL:  {len(failed)}")
-    print(f"  ERROR: {len(errored)}")
+    passed       = [r for r in results if r["status"] == "PASS"]
+    known_issues = [r for r in results if r["status"] == "KNOWN_ISSUE"]
+    failed       = [r for r in results if r["status"] == "FAIL"]
+    errored      = [r for r in results if r["status"] == "ERROR"]
+    print(f"  PASS:         {len(passed)}")
+    if known_issues:
+        print(f"  KNOWN_ISSUE:  {len(known_issues)}  (tracked bugs — not regressions)")
+    print(f"  FAIL:         {len(failed)}")
+    print(f"  ERROR:        {len(errored)}")
+
+    if known_issues:
+        print("\nKnown issues (tracked, non-blocking):")
+        for r in known_issues:
+            print(f"  Case {r['id']}: {r['desc']}")
 
     if failed or errored:
         print("\nFailed cases:")

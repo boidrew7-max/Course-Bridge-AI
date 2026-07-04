@@ -205,7 +205,7 @@ def check_ghost_courses(result: PlanResult) -> list:
     for area, course_code in result.igetc_completion.items():
         for code in course_code.split(", "):
             code = code.strip()
-            if not code or "via" in code or "satisfied" in code or "already completed" in code:
+            if not code or "via" in code or "satisfied" in code or "already completed" in code or "NOT ASSIGNED" in code:
                 continue
             if code not in placed:
                 errors.append(f"Ghost in area {area}: {code!r} not placed in any term")

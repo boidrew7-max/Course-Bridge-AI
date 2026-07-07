@@ -81,14 +81,13 @@ _UC_SHARD_MAP = {
 }
 
 # Cal-GETC (default — for students who first enrolled at a CCC fall 2025 or later).
-# Area 6 (Ethnic Studies) is processed before Area 4 so the 4C proxy course doesn't
-# also compete for an Area 4 slot.  Area 1C course list is not in the scraped data yet;
-# it shows as NOT ASSIGNED until a Cal-GETC re-scrape is done.
+# Area 6 (Ethnic Studies) is processed before Area 4 so the Ethnic Studies course doesn't
+# also compete for an Area 4 slot.
 _CALGETC_REQUIRED = [
     ("1A", "English Composition",                         1),
     ("1B", "Critical Thinking / English Composition",     1),
     ("1C", "Oral Communication",                          1),
-    ("2A", "Mathematical Concepts",                       1),
+    ("2",  "Mathematical Concepts and Quantitative Reasoning", 1),
     ("3A", "Arts",                                        1),
     ("3B", "Humanities",                                  1),
     ("6",  "Ethnic Studies",                              1),
@@ -156,6 +155,24 @@ def _load_igetc() -> dict:
             break
     _IGETC_CACHE = {}
     return _IGETC_CACHE
+
+
+_CALGETC_CACHE: dict | None = None
+
+def _load_calgetc() -> dict:
+    global _CALGETC_CACHE
+    if _CALGETC_CACHE is not None:
+        return _CALGETC_CACHE
+    path = os.path.join(_DATA_DIR, "calgetc_map.json.gz")
+    if os.path.exists(path):
+        try:
+            with gzip.open(path, "rt", encoding="utf-8") as f:
+                _CALGETC_CACHE = json.load(f)
+            return _CALGETC_CACHE
+        except Exception:
+            pass
+    _CALGETC_CACHE = {}
+    return _CALGETC_CACHE
 
 
 # ── Data structures ───────────────────────────────────────────────────────────
@@ -670,7 +687,7 @@ def _select_igetc(
     completed_keys: set | None = None,
     ge_pattern: str = "calgetc",
 ) -> tuple[list, dict]:
-    data = _load_igetc()
+    data = _load_calgetc() if ge_pattern == "calgetc" else _load_igetc()
     if not data:
         return [], {}
 
@@ -686,10 +703,12 @@ def _select_igetc(
     completed_set = completed_keys or set()
     ge_tag_prefix = "Cal-GETC" if ge_pattern == "calgetc" else "IGETC"
 
-    # Build discipline map for Cal-GETC Area 4 "2 from 2 disciplines" rule.
-    # Maps (prefix, number) -> sub-area code (e.g. "4I" for Psychology).
+    # Discipline map for Area 4 multi-course rule.
+    # IGETC: uses 4A-4J sub-area codes from igetc_map.
+    # Cal-GETC: calgetc_map has a flat "4" list with no sub-area codes; use course prefix
+    #           as a discipline proxy (PSYC vs SOC = two disciplines).
     disc_map: dict = {}
-    if ge_pattern == "calgetc":
+    if ge_pattern == "igetc":
         for disc in ("4A","4B","4C","4D","4E","4F","4G","4H","4I","4J"):
             for c in by_area.get(disc, []):
                 ck = (c.get("prefix",""), c.get("number",""))
@@ -742,63 +761,6 @@ def _select_igetc(
                 area_assignments["5C"] = area_assignments.get("5B", "via 5B LAB")
             continue
 
-        # ── 1C (Cal-GETC Oral Communication): not in scraped data yet ──
-        if area_code == "1C":
-            if by_area.get("1C"):
-                # When a future re-scrape adds 1C data, fall through to standard path.
-                pass
-            else:
-                area_assignments["1C"] = (
-                    "NOT ASSIGNED — Oral Communication course list not yet available "
-                    "(requires Cal-GETC re-scrape of ASSIST areaType=8)"
-                )
-                continue
-
-        # ── Area 6 (Cal-GETC Ethnic Studies): "6" pool empty, use 4C proxy ──
-        if area_code == "6" and ge_pattern == "calgetc":
-            courses_6 = by_area.get("6", [])
-            use_proxy = not courses_6
-            if use_proxy:
-                courses_6 = by_area.get("4C", [])
-            if not courses_6:
-                continue
-
-            # Completed match
-            completed_matches = [c for c in courses_6
-                                  if (c.get("prefix",""), c.get("number","")) in completed_set]
-            if completed_matches:
-                m = completed_matches[0]
-                area_assignments["6"] = f"{m['prefix']} {m['number']} (already completed)"
-                continue
-
-            # Major prep double-label
-            matches = [c for c in courses_6
-                       if (c.get("prefix",""), c.get("number","")) in scheduled_keys]
-            if matches:
-                m = matches[0]
-                area_assignments["6"] = f"{m['prefix']} {m['number']}"
-                continue
-
-            # Pick first available, deduped
-            unique_6 = []
-            seen_6: set = set()
-            for c in courses_6:
-                if not _ok(c):
-                    continue
-                k = (c.get("prefix",""), c.get("number",""))
-                if k in completed_set or k in placed_igetc_keys or k in seen_6:
-                    continue
-                seen_6.add(k)
-                unique_6.append(c)
-            if not unique_6:
-                continue
-
-            slot = _make_slot(unique_6[0], tag)
-            igetc_courses.append(slot)
-            proxy_note = " (via Area 4C — re-scrape needed for full list)" if use_proxy else ""
-            area_assignments["6"] = slot.code + proxy_note
-            placed_igetc_keys.add((unique_6[0].get("prefix",""), unique_6[0].get("number","")))
-            continue
 
         # ── Area 4: multi-course pick (handled before generic double-label) ─
         if area_code == "4":
@@ -833,6 +795,15 @@ def _select_igetc(
                 if len(picks) >= quota:
                     return
                 if ge_pattern == "calgetc":
+                    # Use prefix as discipline proxy (e.g. PSYC vs SOC = two disciplines).
+                    d = c.get("prefix", "")
+                    if picks and d in used_discs:
+                        return
+                    picks.append(c)
+                    is_new_pick.append(is_new)
+                    if d:
+                        used_discs.add(d)
+                else:
                     ck = (c.get("prefix",""), c.get("number",""))
                     d = disc_map.get(ck)
                     if d and d in used_discs:
@@ -841,9 +812,6 @@ def _select_igetc(
                     is_new_pick.append(is_new)
                     if d:
                         used_discs.add(d)
-                else:
-                    picks.append(c)
-                    is_new_pick.append(is_new)
 
             # Prefer double-labelling existing courses (no extra unit cost)
             for c in existing:
@@ -1417,7 +1385,7 @@ def build_render_prompt(
             "1A": "Area 1A English Composition",
             "1B": "Area 1B Critical Thinking",
             "1C": "Area 1C Oral Communication",
-            "2A": "Area 2A Math",
+            "2":  "Area 2 Mathematical Concepts and Quantitative Reasoning",
             "3A": "Area 3A Arts",
             "3B": "Area 3B Humanities",
             "6":  "Area 6 Ethnic Studies",

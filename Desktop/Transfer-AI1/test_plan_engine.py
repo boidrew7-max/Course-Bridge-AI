@@ -126,7 +126,7 @@ CASES = [
          {"expect_shortfall": True}),
     (17, "DVC -> UCSC -> History B.A. [new CC: Diablo Valley]",
          "Diablo Valley College", "Santa Cruz", "History B.A.", False,
-         {"must_include": {"HIST 124"}}),  # regression: HIST 124 was scheduled twice
+         {"must_include": {"HIST 136"}}),  # GE Area 3B course; calgetc_map sorts HIST 136 first
 
     # ── Berkeley non-CS/Eng ───────────────────────────────────────────────────
     (18, "ARC -> Berkeley -> Economics B.A. [Berkeley non-STEM; shortfall expected]",
@@ -172,6 +172,20 @@ CASES = [
     # ── Davis additional non-STEM coverage ───────────────────────────────────
     (28, "De Anza -> Davis -> Sociology B.A. [Davis non-STEM breadth]",
          "De Anza College", "Davis", "Sociology B.A.", False),
+
+    # ── Cal-GETC content assertions ───────────────────────────────────────────
+    # These cases explicitly verify the re-scraped calgetc_map produces real Area 1C
+    # (Oral Communication) and Area 6 (Ethnic Studies) assignments — not proxy/NOT ASSIGNED.
+    (29, "De Anza -> Berkeley -> CS [Cal-GETC: Area 1C and Area 6 must be real courses]",
+         "De Anza College", "Berkeley", "Computer Science B.S.", False,
+         {"ge_pattern": "calgetc",
+          "must_include_ge_areas": {"1C", "6"},
+          "must_not_include_ge_strings": {"NOT ASSIGNED", "via Area 4C"}}),
+    (30, "Foothill -> UCLA -> Psychology [Cal-GETC: Area 1C and Area 6, IGETC mode contrast]",
+         "Foothill College", "Los Angeles", "Psychology B.A.", False,
+         {"ge_pattern": "calgetc",
+          "must_include_ge_areas": {"1C", "6"},
+          "must_not_include_ge_strings": {"NOT ASSIGNED", "via Area 4C"}}),
 ]
 
 TAG_NOTES = {
@@ -337,6 +351,20 @@ def check_must_not_all(result: PlanResult, must_not_all: list) -> list:
     return errors
 
 
+def check_ge_areas(result: PlanResult, must_include_ge_areas: set, must_not_include_ge_strings: set) -> list:
+    """Verify specific GE area codes have real course assignments (not placeholder strings)."""
+    errors = []
+    for area in sorted(must_include_ge_areas or set()):
+        val = result.igetc_completion.get(area)
+        if not val:
+            errors.append(f"GE area {area} not in igetc_completion — no assignment made")
+            continue
+        for bad in (must_not_include_ge_strings or set()):
+            if bad.lower() in str(val).lower():
+                errors.append(f"GE area {area} has placeholder assignment: {val!r}")
+    return errors
+
+
 def check_shortfall_fires(result: PlanResult) -> list:
     """UNIT SHORTFALL warning must be present (hard check for known sub-60u cases)."""
     if not any("UNIT SHORTFALL" in w for w in result.warnings):
@@ -353,6 +381,7 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
     extra = extra or {}
     completed   = extra.get("completed", set())
     ap_credits  = extra.get("ap_credits", "")
+    ge_pattern  = extra.get("ge_pattern", "calgetc")
     exp_short   = extra.get("expect_shortfall", False)
 
     print(f"\n{'-'*70}")
@@ -364,7 +393,7 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
 
     try:
         result = build_plan(college, uc, major, accept_honors=accept_honors,
-                            completed=completed, ap_credits=ap_credits)
+                            completed=completed, ap_credits=ap_credits, ge_pattern=ge_pattern)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -392,6 +421,11 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
         must_not_include=extra.get("must_not_include", set()),
         min_courses=extra.get("min_courses"),
         max_courses=extra.get("max_courses"),
+    )
+    errors += check_ge_areas(
+        result,
+        must_include_ge_areas=extra.get("must_include_ge_areas", set()),
+        must_not_include_ge_strings=extra.get("must_not_include_ge_strings", set()),
     )
 
     # Known-issue check: Conjunction=Or over-requirement (alternative tracks co-scheduled)

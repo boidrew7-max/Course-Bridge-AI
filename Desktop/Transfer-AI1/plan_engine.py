@@ -1008,6 +1008,127 @@ def _apply_double_labels(result: PlanResult):
                     slot.tags.append(f"IGETC Area {area_code}")
 
 
+# ── Elective filling ──────────────────────────────────────────────────────────
+
+def _fill_electives(result: PlanResult, college: str) -> None:
+    """
+    Fill unit shortfall with UC-transferable courses from the school's IGETC pool.
+
+    Picks courses from varied disciplines (round-robin by prefix), respects per-term
+    caps, and tags each added course [Elective — transfer unit minimum].
+    If the pool is exhausted before the minimum is reached, the remaining shortfall
+    is left for _sanity_check to report.
+    """
+    min_units = 90.0 if result.is_quarter else 60.0
+    if result.total_units >= min_units:
+        return
+
+    igetc = _load_igetc()
+    school_data = igetc.get("bySchool", {}).get(college, {})
+    if not school_data:
+        return
+
+    placed_codes = {s.code for s in result.all_courses()}
+
+    # Aggregate deduplicated pool from byArea
+    seen_keys: set = set()
+    pool = []
+    for area_courses in school_data.get("byArea", {}).values():
+        for c in area_courses:
+            ck = (c.get("prefix", ""), c.get("number", ""))
+            if ck in seen_keys:
+                continue
+            code = f"{ck[0]} {ck[1]}".strip()
+            if code in placed_codes:
+                continue
+            units = float(c.get("units") or 0)
+            if units <= 0:
+                continue
+            seen_keys.add(ck)
+            pool.append(c)
+
+    if not pool:
+        return
+
+    # Group by prefix; within each group sort by sequence order (low numbers first)
+    from collections import defaultdict
+    by_prefix: dict = defaultdict(list)
+    for c in pool:
+        by_prefix[c.get("prefix", "OTHER")].append(c)
+    for pfx in by_prefix:
+        by_prefix[pfx].sort(key=lambda c: infer_sequence_order(c.get("number", "")))
+
+    # Round-robin across prefixes for discipline variety
+    sorted_prefixes = sorted(by_prefix.keys())
+    candidates: list = []
+    while any(by_prefix[p] for p in sorted_prefixes):
+        for p in sorted_prefixes:
+            if by_prefix[p]:
+                candidates.append(by_prefix[p].pop(0))
+
+    cap        = _MAX_QUARTER_UNITS_PER_TERM if result.is_quarter else _MAX_UNITS_PER_TERM
+    base_terms = 6 if result.is_quarter else 4
+    shortfall  = min_units - result.total_units
+
+    for c in candidates:
+        if shortfall <= 0:
+            break
+
+        prefix = c.get("prefix", "")
+        number = c.get("number", "")
+        title  = c.get("title", "")
+        units  = float(c.get("units") or 0)
+
+        # Sequence constraint: skip prereqs of already-placed later-sequence courses;
+        # enforce that higher-sequence courses go after their prerequisites.
+        ord_c = infer_sequence_order(number)[1]
+        min_term_from = 1
+        if ord_c >= 0:
+            same_base_placed = [
+                s for s in result.all_courses()
+                if s.prefix == prefix and same_sequence_base(s.number, number)
+            ]
+            if same_base_placed:
+                placed_info = [
+                    (infer_sequence_order(s.number)[1], s.term) for s in same_base_placed
+                ]
+                # Skip if this is a prereq of an already-placed later-sequence course
+                if any(p_ord > ord_c for p_ord, _ in placed_info):
+                    continue
+                # Must come after all earlier-sequence placed courses
+                min_term_from = max(
+                    (t for p_ord, t in placed_info if p_ord < ord_c),
+                    default=0
+                ) + 1
+
+        # Find the term (>= min_term_from) with the most spare capacity that fits
+        best_t    = None
+        best_room = 0.0
+        for t in range(min_term_from, result.active_terms + 1):
+            used = sum(s.units for s in result.terms.get(t, []))
+            room = cap - used
+            if room >= units and room > best_room:
+                best_room = room
+                best_t    = t
+
+        if best_t is None:
+            # All eligible terms full — open a new term if the hard limit allows
+            if result.active_terms >= _MAX_TERMS_HARD:
+                continue
+            best_t = result.active_terms + 1
+            result.terms[best_t] = []
+            result.active_terms  = best_t
+            result.extended_plan = best_t > base_terms
+
+        slot = CourseSlot(
+            prefix=prefix, number=number, title=title, units=units,
+            term=best_t, tags=["Elective — transfer unit minimum"]
+        )
+        result.terms[best_t].append(slot)
+        result.total_units += units
+        shortfall          -= units
+
+
 # ── Main entry point ──────────────────────────────────────────────────────────
 
 def build_plan(
@@ -1119,6 +1240,19 @@ def build_plan(
     _apply_double_labels(result)
 
     result.total_units = sum(s.units for s in result.all_courses())
+    _fill_electives(result, college)
+
+    # Recompute metadata after elective filling (new terms may have been added)
+    base_terms = 6 if result.is_quarter else 4
+    last_used = base_terms
+    for t in range(_MAX_TERMS_HARD, 0, -1):
+        if result.terms.get(t):
+            last_used = t
+            break
+    result.active_terms  = last_used
+    result.extended_plan = last_used > base_terms
+    result.total_units   = sum(s.units for s in result.all_courses())
+
     _sanity_check(result)
 
     if ap_credits and ap_credits.strip():

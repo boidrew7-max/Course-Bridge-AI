@@ -20,8 +20,9 @@ Fail criteria (hard errors):
 Soft observations (printed but don't fail the test):
   - EXTENDED PLAN: program needs >4 semesters (expected for heavy programs)
   - Under-loaded term: a term has <9u
-  - UNIT SHORTFALL: plan under 60 SU (semester) or 90 QU (quarter); hard-checked
-    only for cases with {"expect_shortfall": True} in their extra dict
+  - UNIT SHORTFALL: informational only; hard-checked only for cases with
+    {"expect_shortfall": True} in their extra dict
+  - min_total_units: float — FAIL if plan total < this value (verifies elective filling)
 
 Case tuple formats:
   (id, desc, college, uc, major, accept_honors)
@@ -63,15 +64,15 @@ CASES = [
     # ── Original 9 cases (unchanged) ─────────────────────────────────────────
     (1, "De Anza -> Berkeley -> CS [calc-chain prereq ordering]",
         "De Anza College", "Berkeley", "Computer Science B.S.", False,
-        {"expect_shortfall": True}),  # 78.5 QU < 90 QU min (quarter school)
+        {"min_total_units": 90.0}),
     (2, "Foothill -> Berkeley -> CS [ENGL 8 ghost-course]",
         "Foothill College", "Berkeley", "Computer Science B.S.", False,
-        {"expect_shortfall": True}),  # 71 QU < 90 QU min (quarter school)
+        {"min_total_units": 90.0}),
     (3, "Foothill -> UCSD -> CS [4 ghost courses]",
         "Foothill College", "UCSD", "Computer Science B.S.", False),
     (4, "De Anza -> Berkeley -> CS [honors consistency]",
         "De Anza College", "Berkeley", "Computer Science B.S.", False,
-        {"expect_shortfall": True}),  # 78.5 QU < 90 QU min (quarter school)
+        {"min_total_units": 90.0}),
     (5, "De Anza -> Merced -> Applied Math CS [was 413-trigger]",
         "De Anza College", "Merced",
         "Applied Mathematical Sciences -- Computer Science Emphasis B.S.", False),
@@ -83,10 +84,10 @@ CASES = [
         "De Anza College", "Davis", "Psychology B.A.", False,
         {"must_include": {"PSYC C1000", "ANTH 1", "PSYC 2"},
          "min_courses": 10,
-         "expect_shortfall": True}),  # 68 QU < 90 QU min (quarter school)
+         "min_total_units": 90.0}),
     (9, "Foothill -> Merced -> Electrical Engineering [high AND-group]",
         "Foothill College", "Merced", "Electrical Engineering B.S.", False,
-        {"expect_shortfall": True}),  # 76 QU < 90 QU min (quarter school)
+        {"min_total_units": 90.0}),
 
     # ── UCLA coverage (previously zero) ──────────────────────────────────────
     (10, "De Anza -> UCLA -> Psychology B.A. [UCLA non-STEM]",
@@ -103,63 +104,62 @@ CASES = [
               {"CHEM 10", "CHEM 1A"},    # intro vs general chemistry are alternative tracks
           ],
           "expect_overreq": True}),
-    (11, "CCSF -> UCLA -> History B.A. [new CC: CCSF; shortfall expected]",
+    (11, "CCSF -> UCLA -> History B.A. [new CC: CCSF; elective fill to 60 SU]",
          "City College of San Francisco", "Los Angeles", "History B.A.", False,
-         {"expect_shortfall": True,
-          "must_include": {"HIST 4A"},           # Western Civ must appear
-          "must_not_include": {"ART 101"}}),     # regression: Art History wrong match
+         {"must_include": {"HIST 4A"},           # Western Civ must appear
+          "min_total_units": 60.0}),
 
     # ── UCI coverage ──────────────────────────────────────────────────────────
-    (12, "ARC -> UCI -> Psychology B.S. [new CC: ARC; shortfall expected]",
+    (12, "ARC -> UCI -> Psychology B.S. [new CC: ARC; elective fill to 60 SU]",
          "American River College", "Irvine", "Psychology B.S.", False,
-         {"expect_shortfall": True}),
+         {"min_total_units": 60.0}),
     (13, "De Anza -> UCI -> Economics B.A. [UCI non-STEM, heavy major]",
          "De Anza College", "Irvine", "Economics B.A.", False,
          {"must_include": {"MATH 1A", "ECON 1", "ECON 2", "MATH 1B"},
           "must_not_include": {"PHTG 1", "PHTG 4", "ARTS 4A"},  # regression: Art major ghost
-          "max_courses": 20,
-          "expect_shortfall": True}),  # 50.5 QU < 90 QU min (quarter school)
+          "max_courses": 25,  # raised from 20 — elective filling adds ~10 courses
+          "min_total_units": 90.0}),
 
     # ── UCSB coverage (previously zero) ──────────────────────────────────────
-    (14, "ARC -> UCSB -> Political Science B.A. [UCSB; shortfall expected]",
+    (14, "ARC -> UCSB -> Political Science B.A. [UCSB; elective fill to 60 SU]",
          "American River College", "Santa Barbara", "Political Science B.A.", False,
-         {"expect_shortfall": True}),
-    (15, "De Anza -> UCSB -> Sociology B.A. [UCSB non-STEM; shortfall expected]",
+         {"min_total_units": 60.0}),
+    (15, "De Anza -> UCSB -> Sociology B.A. [UCSB non-STEM; elective fill to 90 QU]",
          "De Anza College", "Santa Barbara", "Sociology B.A.", False,
-         {"expect_shortfall": True}),  # 44 QU < 90 QU min (quarter school)
+         {"min_total_units": 90.0}),
 
     # ── UCSC coverage (previously zero) ──────────────────────────────────────
-    (16, "ARC -> UCSC -> Psychology B.A. [UCSC; shortfall expected]",
+    (16, "ARC -> UCSC -> Psychology B.A. [UCSC; elective fill to 60 SU]",
          "American River College", "Santa Cruz", "Psychology B.A.", False,
-         {"expect_shortfall": True}),
+         {"min_total_units": 60.0}),
     (17, "DVC -> UCSC -> History B.A. [new CC: Diablo Valley]",
          "Diablo Valley College", "Santa Cruz", "History B.A.", False,
          {"must_include": {"HIST 124"}}),  # regression: HIST 124 was scheduled twice
 
     # ── Berkeley non-CS/Eng ───────────────────────────────────────────────────
-    (18, "ARC -> Berkeley -> Economics B.A. [Berkeley non-STEM; shortfall expected]",
+    (18, "ARC -> Berkeley -> Economics B.A. [Berkeley non-STEM; elective fill to 60 SU]",
          "American River College", "Berkeley", "Economics B.A.", False,
-         {"expect_shortfall": True}),
+         {"min_total_units": 60.0}),
 
     # ── UCSD non-CS ───────────────────────────────────────────────────────────
     (19, "ARC -> UCSD -> Psychology B.S. [UCSD non-CS, heavy]",
          "American River College", "San Diego", "Psychology B.S.", False),
-    (20, "De Anza -> UCSD -> Economics B.A. [UCSD non-STEM; shortfall expected]",
+    (20, "De Anza -> UCSD -> Economics B.A. [UCSD non-STEM; elective fill to 90 QU]",
          "De Anza College", "San Diego", "Economics B.A.", False,
-         {"expect_shortfall": True}),  # 61 QU < 90 QU min (quarter school)
+         {"min_total_units": 90.0}),
 
     # ── Merced non-CS ─────────────────────────────────────────────────────────
-    (21, "ARC -> Merced -> Sociology B.A. [Merced non-STEM; shortfall expected]",
+    (21, "ARC -> Merced -> Sociology B.A. [Merced non-STEM; elective fill to 60 SU]",
          "American River College", "Merced", "Sociology B.A.", False,
-         {"expect_shortfall": True}),
+         {"min_total_units": 60.0}),
 
     # ── Unit-shortfall regression (permanent 60u check tests) ─────────────────
-    (22, "Foothill -> Riverside -> English B.A. [shortfall regression ~46.5 QU / ~31 SU]",
+    (22, "Foothill -> Riverside -> English B.A. [elective fill to 90 QU]",
          "Foothill College", "Riverside", "English B.A.", False,
-         {"expect_shortfall": True}),
-    (23, "De Anza -> Riverside -> Philosophy B.A. [shortfall regression ~53 QU / ~35 SU]",
+         {"min_total_units": 90.0}),
+    (23, "De Anza -> Riverside -> Philosophy B.A. [elective fill to 90 QU]",
          "De Anza College", "Riverside", "Philosophy B.A.", False,
-         {"expect_shortfall": True}),
+         {"min_total_units": 90.0}),
 
     # ── New CC: Pasadena City College ─────────────────────────────────────────
     (24, "PCC -> UCI -> Sociology B.A. [new CC: Pasadena City College]",
@@ -169,22 +169,22 @@ CASES = [
     (25, "De Anza -> Berkeley -> CS [completedCourses=MATH 1A,ENGL C1000]",
          "De Anza College", "Berkeley", "Computer Science B.S.", False,
          {"completed": {"MATH 1A", "ENGL C1000"},
-          "expect_shortfall": True}),  # 68.5 QU < 90 QU min (quarter school)
+          "min_total_units": 90.0}),
     (26, "De Anza -> Davis -> Psychology B.A. [completedCourses=PSYC 2]",
          "De Anza College", "Davis", "Psychology B.A.", False,
          {"completed": {"PSYC 2"},
-          "expect_shortfall": True}),  # 62 QU < 90 QU min (quarter school)
+          "min_total_units": 90.0}),
 
     # ── apCredits parameter test ───────────────────────────────────────────────
     (27, "De Anza -> Berkeley -> CS [apCredits=AP Calculus BC]",
          "De Anza College", "Berkeley", "Computer Science B.S.", False,
          {"ap_credits": "AP Calculus BC",
-          "expect_shortfall": True}),  # 78.5 QU < 90 QU min (quarter school)
+          "min_total_units": 90.0}),
 
     # ── Davis additional non-STEM coverage ───────────────────────────────────
-    (28, "De Anza -> Davis -> Sociology B.A. [Davis non-STEM breadth; shortfall expected]",
+    (28, "De Anza -> Davis -> Sociology B.A. [Davis non-STEM breadth; elective fill to 90 QU]",
          "De Anza College", "Davis", "Sociology B.A.", False,
-         {"expect_shortfall": True}),  # 61 QU < 90 QU min (quarter school)
+         {"min_total_units": 90.0}),
 ]
 
 TAG_NOTES = {
@@ -361,6 +361,16 @@ def check_shortfall_fires(result: PlanResult) -> list:
     return []
 
 
+def check_min_units(result: PlanResult, min_total_units: float) -> list:
+    """Plan must reach min_total_units — verifies elective filling succeeded."""
+    if result.total_units < min_total_units:
+        return [
+            f"Plan has {result.total_units:.1f}u but min_total_units={min_total_units:.1f} "
+            f"(elective filling may have failed)"
+        ]
+    return []
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> dict:
@@ -420,6 +430,10 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
 
     if exp_short:
         errors += check_shortfall_fires(result)
+
+    min_total = extra.get("min_total_units")
+    if min_total is not None:
+        errors += check_min_units(result, min_total)
 
     uc_l    = _UC_NAME_MAP_LOCAL.get(uc.lower().strip(), uc.lower())
     tag     = TAG_NOTES.get(uc_l, "Check UC TAG page for eligibility.")

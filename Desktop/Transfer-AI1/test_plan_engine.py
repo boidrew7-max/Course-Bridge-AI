@@ -136,7 +136,7 @@ CASES = [
          {"min_total_units": 60.0}),
     (17, "DVC -> UCSC -> History B.A. [new CC: Diablo Valley]",
          "Diablo Valley College", "Santa Cruz", "History B.A.", False,
-         {"must_include": {"HIST 124"}}),  # regression: HIST 124 was scheduled twice
+         {"must_include": {"HIST 136"}}),  # GE Area 3B course; calgetc_map sorts HIST 136 first
 
     # ── Berkeley non-CS/Eng ───────────────────────────────────────────────────
     (18, "ARC -> Berkeley -> Economics B.A. [Berkeley non-STEM; elective fill to 60 SU]",
@@ -187,6 +187,48 @@ CASES = [
     (28, "De Anza -> Davis -> Sociology B.A. [Davis non-STEM breadth; elective fill to 90 QU]",
          "De Anza College", "Davis", "Sociology B.A.", False,
          {"min_total_units": 90.0}),
+
+    # ── Cal-GETC content assertions (from calgetc-mode branch) ───────────────
+    # Verify re-scraped calgetc_map produces real Area 1C (Oral Communication)
+    # and Area 6 (Ethnic Studies) — not proxy/NOT ASSIGNED.
+    (29, "De Anza -> Berkeley -> CS [Cal-GETC: Area 1C and Area 6 must be real courses]",
+         "De Anza College", "Berkeley", "Computer Science B.S.", False,
+         {"ge_pattern": "calgetc",
+          "must_include_ge_areas": {"1C", "6"},
+          "must_not_include_ge_strings": {"NOT ASSIGNED", "via Area 4C"}}),
+    (30, "Foothill -> UCLA -> Psychology [Cal-GETC: Area 1C and Area 6, IGETC mode contrast]",
+         "Foothill College", "Los Angeles", "Psychology B.A.", False,
+         {"ge_pattern": "calgetc",
+          "must_include_ge_areas": {"1C", "6"},
+          "must_not_include_ge_strings": {"NOT ASSIGNED", "via Area 4C"}}),
+
+    # ── Integration: calgetc × term-system × elective-filling ─────────────────
+    # (a) quarter + calgetc: verify 6-term quarter logic and Cal-GETC GE co-exist
+    #     and elective filling reaches 90 QU
+    (31, "Foothill -> UC Davis -> Psychology B.A. [INTEGRATION: quarter + calgetc]",
+         "Foothill College", "Davis", "Psychology B.A.", False,
+         {"ge_pattern": "calgetc",
+          "min_total_units": 90.0,
+          "must_include_ge_areas": {"1C", "6"},
+          "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
+
+    # (b) semester + calgetc: verify Cal-GETC GE works for semester school and
+    #     elective filling reaches 60 SU
+    (32, "ARC -> UCLA -> History B.A. [INTEGRATION: semester + calgetc]",
+         "American River College", "Los Angeles", "History B.A.", False,
+         {"ge_pattern": "calgetc",
+          "min_total_units": 60.0,
+          "must_include_ge_areas": {"1C", "6"},
+          "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
+
+    # (c) quarter + igetc: regression — quarter school still works correctly when
+    #     IGETC GE pattern selected; Area 2A (IGETC math) must be assigned
+    (33, "De Anza -> Berkeley -> CS B.S. [INTEGRATION: quarter + igetc regression]",
+         "De Anza College", "Berkeley", "Computer Science B.S.", False,
+         {"ge_pattern": "igetc",
+          "min_total_units": 90.0,
+          "must_include_ge_areas": {"2A"},
+          "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
 ]
 
 TAG_NOTES = {
@@ -220,7 +262,7 @@ def check_ghost_courses(result: PlanResult) -> list:
     for area, course_code in result.igetc_completion.items():
         for code in course_code.split(", "):
             code = code.strip()
-            if not code or "via" in code or "satisfied" in code or "already completed" in code:
+            if not code or "via" in code or "satisfied" in code or "already completed" in code or "NOT ASSIGNED" in code:
                 continue
             if code not in placed:
                 errors.append(f"Ghost in area {area}: {code!r} not placed in any term")
@@ -353,6 +395,20 @@ def check_must_not_all(result: PlanResult, must_not_all: list) -> list:
     return errors
 
 
+def check_ge_areas(result: PlanResult, must_include_ge_areas: set, must_not_include_ge_strings: set) -> list:
+    """Verify specific GE area codes have real course assignments (not placeholder strings)."""
+    errors = []
+    for area in sorted(must_include_ge_areas or set()):
+        val = result.igetc_completion.get(area)
+        if not val:
+            errors.append(f"GE area {area} not in igetc_completion — no assignment made")
+            continue
+        for bad in (must_not_include_ge_strings or set()):
+            if bad.lower() in str(val).lower():
+                errors.append(f"GE area {area} has placeholder assignment: {val!r}")
+    return errors
+
+
 def check_shortfall_fires(result: PlanResult) -> list:
     """UNIT SHORTFALL warning must be present (hard check for known sub-60u cases)."""
     if not any("UNIT SHORTFALL" in w for w in result.warnings):
@@ -379,6 +435,7 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
     extra = extra or {}
     completed   = extra.get("completed", set())
     ap_credits  = extra.get("ap_credits", "")
+    ge_pattern  = extra.get("ge_pattern", "calgetc")
     exp_short   = extra.get("expect_shortfall", False)
 
     print(f"\n{'-'*70}")
@@ -390,7 +447,7 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
 
     try:
         result = build_plan(college, uc, major, accept_honors=accept_honors,
-                            completed=completed, ap_credits=ap_credits)
+                            completed=completed, ap_credits=ap_credits, ge_pattern=ge_pattern)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -418,6 +475,11 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
         must_not_include=extra.get("must_not_include", set()),
         min_courses=extra.get("min_courses"),
         max_courses=extra.get("max_courses"),
+    )
+    errors += check_ge_areas(
+        result,
+        must_include_ge_areas=extra.get("must_include_ge_areas", set()),
+        must_not_include_ge_strings=extra.get("must_not_include_ge_strings", set()),
     )
 
     # Known-issue check: Conjunction=Or over-requirement (alternative tracks co-scheduled)

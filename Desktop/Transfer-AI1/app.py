@@ -1488,6 +1488,12 @@ def plan_v2():
     if mode not in ("competitive", "efficiency"):
         mode = "competitive"
 
+    # ge_pattern: "calgetc" for F2025+ (default), "igetc" for catalog-rights students.
+    # Frontend derives this from "When did you first enroll at a CC?":
+    #   before fall 2025 → "igetc";  fall 2025 or later → "calgetc"
+    ge_pattern_raw = data.get("gePattern", data.get("enrollmentYear", "calgetc"))
+    ge_pattern = "igetc" if str(ge_pattern_raw).strip().lower() == "igetc" else "calgetc"
+
     # completed courses: may be a string ("MATH 1A, ENGL C1000") or list
     completed_raw = data.get("completedCourses", "")
     if isinstance(completed_raw, list):
@@ -1511,6 +1517,7 @@ def plan_v2():
             accept_honors=accept_honors,
             completed=completed_set,
             ap_credits=ap_credits,
+            ge_pattern=ge_pattern,
         )
     except Exception as e:
         app.logger.error("plan_v2_build_fail college=%r school=%r major=%r err=%.200s",

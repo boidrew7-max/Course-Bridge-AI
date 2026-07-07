@@ -249,6 +249,12 @@ def api_options_majors():
     return jsonify({"majors": opts["majorsByCollegeAndTarget"].get(college, {}).get(uc, [])})
 
 
+@app.route("/options")
+def api_options():
+    """Combined options payload — colleges, UCs per college, majors per college+UC."""
+    return jsonify(_build_options())
+
+
 # ── Plan generation ────────────────────────────────────────────────────────
 
 # IGETC data loaded once on first use

@@ -196,30 +196,32 @@ def _build_options():
         return _OPTIONS_CACHE
     import gzip as _gz
     from collections import defaultdict
-    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "articulations_index.json")
-    for path in (base + ".gz", base):
-        if not os.path.exists(path):
-            continue
-        opener = _gz.open if path.endswith(".gz") else open
-        with opener(path, "rt", encoding="utf-8") as f:
-            index = json.load(f)
-        break
-    else:
-        _OPTIONS_CACHE = {"colleges": [], "targetsByCollege": {}, "majorsByCollegeAndTarget": {}}
-        return _OPTIONS_CACHE
-
     targets = defaultdict(set)
     majors  = defaultdict(lambda: defaultdict(set))
-    for key in index.keys():
-        parts = key.split("__")
-        if len(parts) < 3:
-            continue
-        college = parts[0].replace("_", " ")
-        uc      = parts[1].replace("_", " ")
-        major   = "__".join(parts[2:]).replace("_", " ")
-        targets[college].add(uc)
-        majors[college][uc].add(major)
-
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+    for shard_name in _UC_SHARD_MAP.values():
+        base = os.path.join(data_dir, f"articulations_{shard_name}.json")
+        for path in (base + ".gz", base):
+            if not os.path.exists(path):
+                continue
+            try:
+                opener = _gz.open if path.endswith(".gz") else open
+                with opener(path, "rt", encoding="utf-8") as f:
+                    index = json.load(f)
+                for key in index.keys():
+                    if key == "_meta":
+                        continue
+                    parts = key.split("__")
+                    if len(parts) < 3:
+                        continue
+                    college = parts[0].replace("_", " ")
+                    uc      = parts[1].replace("_", " ")
+                    major   = "__".join(parts[2:]).replace("_", " ")
+                    targets[college].add(uc)
+                    majors[college][uc].add(major)
+            except Exception:
+                pass
+            break
     _OPTIONS_CACHE = {
         "colleges": sorted(targets.keys()),
         "targetsByCollege": {c: sorted(v) for c, v in targets.items()},

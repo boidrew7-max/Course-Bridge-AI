@@ -1096,6 +1096,15 @@ def build_plan(
 
     result.total_units = sum(s.units for s in result.all_courses())
     _sanity_check(result)
+
+    if ap_credits and ap_credits.strip():
+        result.warnings.append(
+            "AP CREDIT NOTE: AP exam credit handling is not yet implemented in the "
+            "plan builder — your AP scores have not been applied. Consult your "
+            "college's AP chart to identify which CC courses your scores satisfy, "
+            "then re-run with those courses listed under \"already completed\"."
+        )
+
     return result
 
 

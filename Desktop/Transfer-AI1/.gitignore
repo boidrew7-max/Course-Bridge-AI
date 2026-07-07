@@ -13,6 +13,7 @@ data/articulations_index.json.gz
 
 # Scraper output
 agreements/
+gescrape/
 failures_raw/
 failed_agreements*.json
 failed_majors.json

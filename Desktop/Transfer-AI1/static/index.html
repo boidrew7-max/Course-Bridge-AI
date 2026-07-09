@@ -586,6 +586,21 @@
     #btn:hover { background: var(--accent-hover); }
     #btn:disabled { background: var(--bg-hover); color: var(--text-3); cursor: default; }
 
+    #planBtn {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-end;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    #planBtn:hover { background: var(--bg-hover); }
+    #planBtn:disabled { opacity: 0.4; cursor: default; }
+
     /* ── Scrollbar ────────────────────────────────────────── */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -1277,6 +1292,7 @@
         <button class="w-send-btn" onclick="sendFromWelcome()">Send</button>
       </div>
       <div class="welcome-chips">
+        <div class="chip" onclick="generatePlan()">🗓️ Generate my full transfer plan</div>
         <div class="chip" onclick="chipSend(this)">📚 De Anza → Berkeley CS — which courses transfer?</div>
         <div class="chip" onclick="chipSend(this)">🎯 Am I eligible for TAG to UC Davis?</div>
         <div class="chip" onclick="chipSend(this)">💰 How much does UCLA cost for a CA resident?</div>
@@ -1305,6 +1321,7 @@
     <!-- Footer input -->
     <div id="footer" style="display:none">
       <div id="row">
+        <button id="planBtn" onclick="generatePlan()" title="Generate my full transfer plan">🗓️</button>
         <textarea id="msg" rows="1" placeholder="Ask a follow-up..."></textarea>
         <button id="btn" onclick="send()">Send</button>
       </div>
@@ -1497,6 +1514,7 @@
             <button class="w-send-btn" onclick="sendFromWelcome()">Send</button>
           </div>
           <div class="welcome-chips">
+            <div class="chip" onclick="generatePlan()">🗓️ Generate my full transfer plan</div>
             <div class="chip" onclick="chipSend(this)">📚 De Anza → Berkeley CS — which courses transfer?</div>
             <div class="chip" onclick="chipSend(this)">🎯 Am I eligible for TAG to UC Davis?</div>
             <div class="chip" onclick="chipSend(this)">💰 How much does UCLA cost for a CA resident?</div>
@@ -1697,8 +1715,10 @@
       isStreaming = v;
       const btn = document.getElementById('btn');
       const inp = document.getElementById('msg');
+      const pbtn = document.getElementById('planBtn');
       if (btn) btn.disabled = v;
       if (inp) inp.disabled = v;
+      if (pbtn) pbtn.disabled = v;
     }
 
     // ── Send ──────────────────────────────────────────────────
@@ -1829,6 +1849,126 @@
 
       const inp = document.getElementById('msg');
       if (inp) inp.focus();
+    }
+
+    async function generatePlan() {
+      if (isStreaming) return;
+
+      if (!currentUser || !currentUser.college || !currentUser.major || !currentUser.target_schools) {
+        enterChat();
+        addBubble('assistant', "I need your college, major, and target UC campus first — open **Profile** (top right) to fill those in, then try again.");
+        return;
+      }
+
+      const college = currentUser.college;
+      const school  = currentUser.target_schools.split(',')[0].trim();
+      const major   = currentUser.major;
+      const extraSchools = currentUser.target_schools.split(',').map(s => s.trim()).filter(Boolean).slice(1);
+
+      setLocked(true);
+      enterChat();
+
+      if (!currentId) {
+        try {
+          const res = await fetch('/api/sessions', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: `Plan: ${major} @ ${school}`})
+          });
+          const sess = await res.json();
+          currentId = sess.id;
+          sessions.unshift(sess);
+          localStorage.setItem('trai_last', currentId);
+          renderSidebar();
+        } catch { /* session save failed, continue anyway */ }
+      }
+
+      const userLabel = `Generate my full transfer plan: ${college} → ${school} → ${major}`;
+      messages.push({ role: 'user', content: userLabel });
+      addBubble('user', userLabel);
+
+      const aiBubble = addBubble('assistant', '', true);
+      let fullText = '';
+      let errored  = false;
+
+      try {
+        const res = await fetch('/plan_v2', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            college, school, major,
+            acceptHonors: false,
+            completedCourses: [],
+            apCredits: '',
+            mode: 'competitive'
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '', done = false;
+
+        while (!done) {
+          const { done: sd, value } = await reader.read();
+          if (sd) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6);
+            if (payload === '[DONE]') { done = true; break; }
+            try {
+              fullText += JSON.parse(payload);
+              aiBubble.textContent = fullText;
+              scrollBottom();
+            } catch {}
+          }
+        }
+      } catch { errored = true; }
+
+      if (errored && !fullText) {
+        aiBubble.className = 'msg ai error';
+        aiBubble.innerHTML = `<span style="color:var(--text-2)">Something went wrong generating your plan. Check your connection and try again.</span>`;
+        const retryBtn = document.createElement('button');
+        retryBtn.className   = 'retry-btn';
+        retryBtn.textContent = 'Retry';
+        retryBtn.onclick     = () => {
+          (aiBubble.closest('.ai-row') || aiBubble).remove();
+          messages.pop();
+          setLocked(false);
+          generatePlan();
+        };
+        aiBubble.appendChild(document.createElement('br'));
+        aiBubble.appendChild(retryBtn);
+        setLocked(false);
+        return;
+      }
+
+      if (extraSchools.length) {
+        fullText += `\n\n---\n*Showing your plan for **${school}**. You also listed ${extraSchools.join(', ')} — ask me "generate my plan for ${extraSchools[0]}" to see that one too.*`;
+      }
+
+      aiBubble.classList.remove('streaming');
+      aiBubble.innerHTML = marked.parse(fullText);
+      aiBubble.appendChild(makeCopyBtn(() => fullText));
+      aiBubble.appendChild(makeFeedbackRow());
+      scrollBottom();
+
+      messages.push({ role: 'assistant', content: fullText });
+
+      if (currentId) {
+        fetch(`/api/sessions/${currentId}/messages`, {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({messages: [
+            {role:'user', content:userLabel},
+            {role:'assistant', content:fullText}
+          ]})
+        }).catch(() => {});
+      }
+
+      setLocked(false);
     }
 
     function chipSend(el) {

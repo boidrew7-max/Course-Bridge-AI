@@ -475,7 +475,7 @@ def _resolve_major_prep(
     completed: set,
     uc_normalized: str = "",
     major: str = "",
-) -> tuple[list, list, list, bool]:
+) -> tuple[list, list, list, bool, set]:
     """
     For each UC articulation entry, pick one option group deterministically.
 
@@ -572,6 +572,8 @@ def _resolve_major_prep(
     committed: dict = {}
     audit_rows = []
     post_transfer = []
+    loser_cc_codes: set = set()   # CC codes from alternatives NOT chosen in an OR-group —
+                                   # excluded from elective-filling to avoid redundant re-scheduling
 
     # ── Process NFromArea groups ───────────────────────────────────────────────
     seen_uc_sets: set = set()   # deduplicate groups with identical UC-code menus
@@ -634,6 +636,73 @@ def _resolve_major_prep(
         seen_uc_sets.add(uc_codes_fs)
 
         pick_n     = gdata["pick_n"]
+        sectioned  = any(a.get("sec") is not None for a in gdata["arts"])
+
+        if sectioned:
+            # ── Section-atomic pick: group rows by "sec" index, pick the
+            #    cheapest pick_n whole sections, commit every row in a
+            #    winning section (all-or-nothing per section). ─────────────
+            sections: dict = {}
+            for art in gdata["arts"]:
+                sections.setdefault(art.get("sec"), []).append(art)
+
+            sec_candidates = []   # (cost, sec_idx, rows_info)
+            for sec_idx, sec_arts in sections.items():
+                rows_info = []   # (uc_str, uc_key, chosen_cc_or_None)
+                cost = 0.0
+                for art in sec_arts:
+                    uc_c   = art.get("uc", {})
+                    uc_key = (uc_c.get("p","").upper(), uc_c.get("n","").upper())
+                    uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
+
+                    if uc_key in skip_uc_keys:
+                        rows_info.append((uc_str, uc_key, None, "skip"))
+                        continue
+
+                    valid = [g for g in art.get("cc", []) if g]
+                    if not valid:
+                        rows_info.append((uc_str, uc_key, None, "post"))
+                        continue
+
+                    chosen = _pick_cc(list(valid))
+                    cost += _cc_cost(chosen)
+                    rows_info.append((uc_str, uc_key, chosen, "cc"))
+
+                sec_candidates.append((cost, sec_idx, rows_info))
+
+            if not sec_candidates:
+                continue
+
+            sec_candidates.sort(key=lambda x: x[0])
+            winners = sec_candidates[:pick_n]
+            losers  = sec_candidates[pick_n:]
+
+            for _cost, _sec_idx, rows_info in winners:
+                for uc_str, _uc_key, chosen, kind in rows_info:
+                    if kind == "cc":
+                        _commit_chosen(chosen, uc_str)
+                    elif kind == "post":
+                        post_transfer.append(uc_str)
+                        audit_rows.append((uc_str, "-", "POST-TRANSFER"))
+                    elif kind == "skip":
+                        winner = skip_uc_keys[_uc_key]
+                        audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
+
+            winner_track_desc = (
+                " or ".join(
+                    "/".join(uc_str.split(" - ")[0] for uc_str, _, _, _ in w[2])
+                    for w in winners
+                ) if winners else "selected track"
+            )
+            for _cost, _sec_idx, rows_info in losers:
+                for uc_str, _uc_key, chosen, kind in rows_info:
+                    audit_rows.append((uc_str, f"satisfied via alternate track ({winner_track_desc})", "MET"))
+                    if kind == "cc":
+                        for c in chosen:
+                            loser_cc_codes.add((c.get("p",""), c.get("n","")))
+
+            continue
+
         candidates = []   # (cost, uc_str, chosen_cc_group, uc_key)
 
         for art in gdata["arts"]:
@@ -670,8 +739,10 @@ def _resolve_major_prep(
                 for w in winners
             ) if winners else "selected option"
         )
-        for _cost, uc_str, _chosen, _key in losers:
+        for _cost, uc_str, chosen, _key in losers:
             audit_rows.append((uc_str, f"satisfied via {winner_cc_desc}", "MET"))
+            for c in chosen:
+                loser_cc_codes.add((c.get("p",""), c.get("n","")))
 
     # ── Process AND entries (Following / legacy) ──────────────────────────────
     for art in and_arts:
@@ -695,7 +766,7 @@ def _resolve_major_prep(
         chosen = _pick_cc(list(valid_groups))
         _commit_chosen(chosen, uc_str)
 
-    return list(committed.values()), audit_rows, post_transfer, multi_track
+    return list(committed.values()), audit_rows, post_transfer, multi_track, loser_cc_codes
 
 
 # ── IGETC selection ───────────────────────────────────────────────────────────
@@ -1144,7 +1215,8 @@ def _apply_double_labels(result: PlanResult):
 
 # ── Elective filling ──────────────────────────────────────────────────────────
 
-def _fill_electives(result: PlanResult, college: str) -> None:
+def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None = None,
+                     accept_honors: bool = False) -> None:
     """
     Fill unit shortfall with UC-transferable courses from the school's IGETC pool.
 
@@ -1152,6 +1224,10 @@ def _fill_electives(result: PlanResult, college: str) -> None:
     caps, and tags each added course [Elective — transfer unit minimum].
     If the pool is exhausted before the minimum is reached, the remaining shortfall
     is left for _sanity_check to report.
+
+    exclude_codes: CC (prefix, number) pairs to skip — e.g. alternatives that LOST
+    an OR-group pick in major prep. Scheduling them as "electives" would silently
+    re-add a redundant course satisfying the same requirement the winner already met.
     """
     min_units = 90.0 if result.is_quarter else 60.0
     if result.total_units >= min_units:
@@ -1163,6 +1239,7 @@ def _fill_electives(result: PlanResult, college: str) -> None:
         return
 
     placed_codes = {s.code for s in result.all_courses()}
+    excluded = exclude_codes or set()
 
     # Aggregate deduplicated pool from byArea
     seen_keys: set = set()
@@ -1174,6 +1251,10 @@ def _fill_electives(result: PlanResult, college: str) -> None:
                 continue
             code = f"{ck[0]} {ck[1]}".strip()
             if code in placed_codes:
+                continue
+            if ck in excluded:
+                continue
+            if not accept_honors and ck[1].upper().endswith("H"):
                 continue
             units = float(c.get("units") or 0)
             if units <= 0:
@@ -1328,7 +1409,7 @@ def build_plan(
     arts   = shard[best_key]
     result = PlanResult(college=college, uc=uc, major=major, ge_pattern=ge_pattern)
 
-    major_courses, audit_rows, post_transfer, multi_track = _resolve_major_prep(
+    major_courses, audit_rows, post_transfer, multi_track, loser_cc_codes = _resolve_major_prep(
         arts, accept_honors, completed_keys, uc_normalized=uc_l, major=major
     )
     result.requirement_audit = audit_rows
@@ -1375,7 +1456,7 @@ def build_plan(
     _apply_double_labels(result)
 
     result.total_units = sum(s.units for s in result.all_courses())
-    _fill_electives(result, college)
+    _fill_electives(result, college, exclude_codes=loser_cc_codes, accept_honors=accept_honors)
 
     # Recompute metadata after elective filling (new terms may have been added)
     base_terms = 6 if result.is_quarter else 4

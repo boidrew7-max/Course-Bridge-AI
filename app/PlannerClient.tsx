@@ -1103,6 +1103,7 @@ export default function PlannerClient() {
   const [wizardUCs, setWizardUCs] = useState<string[]>([]);
   const [wizardMajor, setWizardMajor] = useState("");
   const [wizardMajorOptions, setWizardMajorOptions] = useState<string[]>([]);
+  const [wizardMajorFocused, setWizardMajorFocused] = useState(false);
   const [wizardCourses, setWizardCourses] = useState("");
   const [wizardNoCourses, setWizardNoCourses] = useState(false);
   const [wizardHonors, setWizardHonors] = useState<boolean | null>(null);
@@ -2388,30 +2389,45 @@ export default function PlannerClient() {
                   </div>
                 )}
                 {/* Step 3 — Major */}
-                {wizardStep === 3 && (
+                {wizardStep === 3 && (() => {
+                  const majorPool = wizardMajorOptions.length > 0 ? wizardMajorOptions : MAJOR_SUGGESTIONS;
+                  const query = wizardMajor.trim().toLowerCase();
+                  const matches = query
+                    ? majorPool.filter(m => m.toLowerCase().includes(query))
+                    : majorPool;
+                  return (
                   <div className="flex flex-col gap-4">
-                    <input
-                      list="major-list"
-                      value={wizardMajor}
-                      onChange={e => setWizardMajor(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter" && wizardMajor.trim()) setWizardStep(4); }}
-                      placeholder="e.g. Computer Science"
-                      className="w-full rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
-                      autoFocus
-                    />
-                    <datalist id="major-list">
-                      {(wizardMajorOptions.length > 0 ? wizardMajorOptions : MAJOR_SUGGESTIONS).map(m => <option key={m} value={m} />)}
-                    </datalist>
-                    <div className="flex flex-wrap gap-2">
-                      {MAJOR_SUGGESTIONS.slice(0,8).map(m => (
-                        <button key={m} onClick={() => { setWizardMajor(m); setWizardStep(4); }}
-                          className="rounded-full border border-[#d8d0c3] bg-[#faf8f3] px-3 py-1 text-xs text-[#4d535c] transition hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]">
-                          {m}
-                        </button>
-                      ))}
+                    <div className="relative">
+                      <input
+                        value={wizardMajor}
+                        onChange={e => setWizardMajor(e.target.value)}
+                        onFocus={() => setWizardMajorFocused(true)}
+                        onBlur={() => setTimeout(() => setWizardMajorFocused(false), 150)}
+                        onKeyDown={e => { if (e.key === "Enter" && wizardMajor.trim()) setWizardStep(4); }}
+                        placeholder="e.g. Computer Science"
+                        className="w-full rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                        autoFocus
+                        autoComplete="off"
+                      />
+                      {wizardMajorFocused && matches.length > 0 && (
+                        <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-2xl border border-[#d1c7b8] bg-white shadow-lg">
+                          {matches.map(m => (
+                            <button key={m} type="button"
+                              onMouseDown={() => { setWizardMajor(m); setWizardMajorFocused(false); setWizardStep(4); }}
+                              className="block w-full px-4 py-2.5 text-left text-sm text-[#303236] transition hover:bg-[#f0faf5] hover:text-[#0b7f46]">
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {wizardMajorFocused && query && matches.length === 0 && (
+                        <div className="absolute z-10 mt-1 w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#7b818b] shadow-lg">
+                          No major matches "{wizardMajor}" — you can still type it exactly and continue.
+                        </div>
+                      )}
                     </div>
                     {wizardMajorOptions.length === 0 && (
-                      <p className="text-xs text-[#7b818b]">Loading the full major list for {wizardCollege} → {wizardUCs[0]}… you can also just type your major below.</p>
+                      <p className="text-xs text-[#7b818b]">Loading the full major list for {wizardCollege} → {wizardUCs[0]}…</p>
                     )}
                     <div className="flex justify-between items-center pt-2">
                       <button onClick={() => setWizardStep(2)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
@@ -2421,7 +2437,8 @@ export default function PlannerClient() {
                       </button>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
                 {/* Step 4 — Courses */}
                 {wizardStep === 4 && (
                   <div className="flex flex-col gap-4">

@@ -1,7 +1,10 @@
 "use client";
 
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { interpretCompletedCourses } from "../lib/courseInterpreter.js";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const commonCompletedCourseAliases: Record<string, string[]> = {
   // Keep this client-side fallback in sync with lib/courseInterpreter.js.
@@ -1076,6 +1079,8 @@ function UCStatsPanel({ school }: { school: string }) {
 }
 
 export default function PlannerClient() {
+  const router = useRouter();
+  const [firstName, setFirstName] = useState("");
   const [assistOptions, setAssistOptions] = useState<RequirementOptions>({
     colleges: [],
     targetsByCollege: {},
@@ -1097,19 +1102,9 @@ export default function PlannerClient() {
   // ── Transfer AI chat ──────────────────────────────────────────
   const [chatOpen, setChatOpen] = useState(false);
 
-  // ── Wizard onboarding ─────────────────────────────────────────
-  const [wizardStep, setWizardStep] = useState<1|2|3|4>(1);
-  const [wizardCollege, setWizardCollege] = useState("");
-  const [wizardUCs, setWizardUCs] = useState<string[]>([]);
-  const [wizardMajor, setWizardMajor] = useState("");
-  const [wizardMajorOptions, setWizardMajorOptions] = useState<string[]>([]);
-  const [wizardMajorFocused, setWizardMajorFocused] = useState(false);
-  const [wizardCourses, setWizardCourses] = useState("");
-  const [wizardNoCourses, setWizardNoCourses] = useState(false);
+  // ── Profile preferences (hydrated from /onboarding via localStorage) ──
   const [wizardHonors, setWizardHonors] = useState<boolean | null>(null);
-  const [wizardHasAp, setWizardHasAp] = useState<boolean | null>(null);
   const [wizardApCredits, setWizardApCredits] = useState("");
-  const [wizardHsMath, setWizardHsMath] = useState("");
   const [wizardMode, setWizardMode] = useState<"competitive" | "efficiency" | null>(null);
   // ── Multi-school tabs ─────────────────────────────────────────
   const [planSchools, setPlanSchools] = useState<string[]>([]);
@@ -1118,11 +1113,13 @@ export default function PlannerClient() {
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [onboardingDone, setOnboardingDone] = useState(false);
+  // PlannerClient only ever mounts (via app/page.tsx) once onboarding has
+  // completed and a profile exists in localStorage — see the hydration
+  // effect below — so it always starts in the "done" (dashboard) state.
+  const [onboardingDone, setOnboardingDone] = useState(true);
   const [aiPlan, setAiPlan] = useState("");
   const [aiPlanLoading, setAiPlanLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const onboardingStarted = useRef(false);
 
   // ── Cal-GETC + tracker + panels ──────────────────────────────────
   const [calgetcChecked, setCalgetcChecked] = useState<Record<string, boolean>>({});
@@ -1166,23 +1163,41 @@ export default function PlannerClient() {
     if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, chatOpen]);
 
-  // Lock body scroll when wizard is open (fixes iOS Safari scroll-through)
+  // Hydrate from the profile /onboarding saved to localStorage, then kick
+  // off plan generation for it — this replaces the old in-page wizard's
+  // completeWizard() now that onboarding lives on its own route.
   useEffect(() => {
-    if (!onboardingDone) {
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-    };
-  }, [onboardingDone]);
+    let raw: string | null = null;
+    try { raw = localStorage.getItem("cb_profile"); } catch {}
+    if (!raw) { router.replace("/"); return; }
+    try {
+      const profile = JSON.parse(raw);
+      setFirstName(profile.firstName ?? "");
+      setCommunityCollege(profile.college ?? "");
+      setTargetSchool(profile.school ?? "");
+      setTargetMajor(profile.major ?? "");
+      setCompletedCourses(profile.completedCourses ?? "");
+      setWizardHonors(profile.honors ?? true);
+      setWizardApCredits(profile.apCredits ?? "");
+      setWizardMode(profile.mode ?? "competitive");
+      const schools: string[] = profile.planSchools?.length ? profile.planSchools : [profile.school].filter(Boolean);
+      setPlanSchools(schools);
+      setActiveSchoolTab(profile.school ?? "");
+      if (profile.college && profile.school && profile.major) {
+        generateAIPlan(
+          profile.college,
+          profile.school,
+          profile.major,
+          profile.completedCourses ?? "",
+          profile.honors ?? true,
+          profile.apCredits ?? "",
+          "calgetc",
+          profile.mode ?? "competitive"
+        );
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Persist Cal-GETC and tracker to localStorage
   useEffect(() => {
@@ -1278,14 +1293,6 @@ export default function PlannerClient() {
     }
   }, [streamResponse]);
 
-  // Auto-start chat onboarding only if wizard was skipped and chat re-opened
-  useEffect(() => {
-    if (chatOpen && !onboardingStarted.current && chatMessages.length === 0 && !onboardingDone) {
-      onboardingStarted.current = true;
-      runOnboardingMessage([]);
-    }
-  }, [chatOpen, chatMessages.length, runOnboardingMessage, onboardingDone]);
-
   async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", gePattern = "calgetc", mode = "competitive") {
     setAiPlanLoading(true);
     setAiPlan("");
@@ -1320,21 +1327,6 @@ export default function PlannerClient() {
     } finally {
       setAiPlanLoading(false);
     }
-  }
-
-  function completeWizard() {
-    const courses = wizardNoCourses ? "" : wizardCourses;
-    if (wizardCollege)    setCommunityCollege(wizardCollege);
-    if (wizardUCs.length) setTargetSchool(wizardUCs[0]);
-    if (wizardMajor)      setTargetMajor(wizardMajor);
-    setCompletedCourses(courses);
-    setPlanSchools(wizardUCs);
-    setActiveSchoolTab(wizardUCs[0] ?? "");
-    setOnboardingDone(true);
-    setTimeout(() => {
-      document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses, wizardHonors ?? true, wizardApCredits, "calgetc", wizardMode ?? "competitive");
   }
 
   const sendChatMessage = useCallback(async (text?: string) => {
@@ -1396,17 +1388,6 @@ export default function PlannerClient() {
       .catch(() => setMajorOptions2([]));
   }, [communityCollege, targetSchool]);
 
-  // Load the REAL major list for the onboarding wizard's step 3 datalist, so
-  // typing e.g. "chem" surfaces every real match ("Chemical Biology B.S.",
-  // "Chemistry B.A. and B.S.", ...) instead of only whatever's in the small
-  // hardcoded MAJOR_SUGGESTIONS fallback list.
-  useEffect(() => {
-    if (!wizardCollege || !wizardUCs[0]) { setWizardMajorOptions([]); return; }
-    fetch(`/api/options/majors?college=${encodeURIComponent(wizardCollege)}&uc=${encodeURIComponent(wizardUCs[0])}`)
-      .then(r => r.json())
-      .then(data => setWizardMajorOptions(data.majors ?? []))
-      .catch(() => setWizardMajorOptions([]));
-  }, [wizardCollege, wizardUCs]);
 
   const requirements = assistRequirements;
   const options = assistOptions;
@@ -1567,152 +1548,18 @@ export default function PlannerClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#eee9df] text-[#2f3135]">
-      <section className="mx-auto max-w-7xl px-5 py-6 md:px-8">
-        <nav className="mb-8 flex items-center justify-between border-b border-[#d8d0c3] pb-4 gap-4 flex-wrap bg-[#eee9df]">
-          <div className="flex items-center gap-3 min-w-0">
-            <img
-              src="/coursebridge-logo.png"
-              alt="CourseBridge logo"
-              className="h-[80px] w-auto shrink-0"
-            />
-          </div>
+    <main className="min-h-screen bg-[#faf9f6] text-[#2f3135]">
+      <Navbar />
 
-          <a
-            href="#planner"
-            className="rounded-xl bg-[#0b7f46] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] shrink-0"
-          >
-            Build your plan
-          </a>
-        </nav>
-
-        <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
-          <section className="pt-4">
-            <p className="mb-4 inline-flex rounded-full border border-[#b8d8c7] bg-[#e7f3ed] px-4 py-2 text-sm font-semibold text-[#0b7f46]">
-              Built around real transfer planning problems
-            </p>
-
-            <h1
-              className="max-w-3xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl"
-              style={{background:"linear-gradient(135deg,#1a2e22 0%,#0b7f46 65%,#0fa85a 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text"}}
-            >
-              Know exactly what classes you need before you transfer.
-            </h1>
-
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#6f7680]">
-              CourseBridge helps community college students plan UC
-              transfer requirements using real ASSIST data — personalized to
-              your college, major, and target campus.
-            </p>
-
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#planner"
-                className="rounded-xl bg-[#0b7f46] px-5 py-3 text-center font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
-              >
-                Build My Transfer Plan
-              </a>
-
-              <a
-                href="#example"
-                className="rounded-xl border border-[#d1c7b8] bg-[#faf8f3] px-5 py-3 text-center font-semibold text-[#303236] transition hover:bg-white hover:border-[#0b7f46]"
-              >
-                See Example Plan
-              </a>
-            </div>
-
-            <div className="mt-10 flex flex-wrap gap-8 border-t border-[#d8d0c3] pt-7">
-              {[
-                { n: "116", label: "Community Colleges" },
-                { n: "57K+", label: "Courses indexed" },
-                { n: "9", label: "UC campuses" },
-                { n: "121K+", label: "Articulation agreements" },
-              ].map(s => (
-                <div key={s.label}>
-                  <p className="text-2xl font-bold text-[#0b7f46]">{s.n}</p>
-                  <p className="text-xs text-[#7b818b] mt-0.5">{s.label}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 grid gap-3 sm:grid-cols-2">
-              <PainPoint text="ASSIST.org can be hard to read." />
-              <PainPoint text="Requirements change by school and major." />
-              <PainPoint text="One missing prerequisite can delay transfer." />
-              <PainPoint text="Counselors help, but appointments fill up fast." />
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] p-6 shadow-[0_18px_45px_rgba(67,54,36,0.08)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-[#7b818b]">
-                  Product preview
-                </p>
-                <h2 className="mt-1 text-2xl font-bold text-[#303236]">
-                  UC Berkeley · Economics
-                </h2>
-              </div>
-
-              <span className="rounded-full border border-[#f0c15d] bg-[#fff7db] px-3 py-1 text-sm font-semibold text-[#8a6100]">
-                Moderate
-              </span>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <PreviewCard
-                title="Completed"
-                items={previewCompleted.map((course) => course.name)}
-              />
-
-              <PreviewCard
-                title="Missing"
-                items={previewMissing.map((course) => course.name)}
-              />
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-[#d8d0c3] bg-white p-4">
-              <p className="mb-3 text-sm font-semibold text-[#303236]">
-                Recommended next term
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {previewRecommended.map((course) => (
-                  <span
-                    key={course.code}
-                    className="rounded-lg bg-[#e7f3ed] px-3 py-2 text-sm font-semibold text-[#0b7f46]"
-                  >
-                    {course.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-[#ef9a9a] bg-[#fff0f0] p-4">
-              <p className="font-semibold text-[#9b1c1c]">Warning</p>
-              <p className="mt-2 text-sm leading-6 text-[#7f1d1d]">
-                GE filler classes can help balance your schedule, but they are
-                not a substitute for major prep. Always verify with ASSIST.org
-                and a counselor.
-              </p>
-            </div>
-          </section>
+      <section className="mx-auto max-w-7xl px-5 py-8 md:px-8">
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-[#1a2e22]">
+            {firstName ? `Welcome back, ${firstName}.` : "Your transfer plan"}
+          </h1>
+          <p className="mt-1 text-sm text-[#7b818b]">
+            {communityCollege || "—"} → {targetSchool || "—"} · {targetMajor || "—"}
+          </p>
         </div>
-
-        <section className="mt-14 grid gap-5 md:grid-cols-3">
-          <Step number="1" title="Add your courses">
-            Enter your completed courses in plain text.
-          </Step>
-
-          <Step number="2" title="Pick a UC and major">
-            Choose the UC campus and major you want to transfer into.
-          </Step>
-
-          <Step number="3" title="Get a clear plan">
-            See major requirements, blocked classes, and lighter GE filler
-            options.
-          </Step>
-        </section>
 
         {/* ── School tabs ─────────────────────────────────────── */}
         {planSchools.length > 1 && (
@@ -1773,7 +1620,7 @@ export default function PlannerClient() {
                     ))}
                   </div>
                   <button
-                    onClick={() => { setOnboardingDone(false); setWizardStep(1); setAiPlan(""); setPlanSchools([]); }}
+                    onClick={() => { try { localStorage.removeItem("cb_profile"); } catch {} router.push("/onboarding"); }}
                     className="w-full rounded-2xl border border-[#d8d0c3] bg-white px-4 py-3 text-sm font-semibold text-[#7b818b] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
                   >
                     Edit my info
@@ -2264,265 +2111,9 @@ export default function PlannerClient() {
           </div>
         )}
 
-        <footer className="mt-10 border-t border-[#d8d0c3] pt-5 text-sm text-[#7b818b]">
-          Demo data only. CourseBridge is independent and not affiliated with
-          ASSIST, UC, CSU, or CCSF. Always verify requirements through
-          ASSIST.org, official college catalogs, and a counselor.
-        </footer>
       </section>
 
-      {/* ── Step wizard onboarding ───────────────────────────── */}
-      {!onboardingDone && (() => {
-        // value must match the backend's canonical campus name (same as /api/options/ucs
-        // returns) — the "Build your plan" panel and its major dropdown key off this same
-        // targetSchool state, so a mismatched label here (e.g. "UC Berkeley" instead of
-        // "Berkeley") breaks /api/options/majors after onboarding and silently empties the
-        // major list.
-        const UC_OPTIONS: { label: string; value: string }[] = [
-          { label: "UCLA",             value: "Los Angeles" },
-          { label: "UC Berkeley",      value: "Berkeley" },
-          { label: "UC San Diego",     value: "San Diego" },
-          { label: "UC Irvine",        value: "Irvine" },
-          { label: "UC Santa Barbara", value: "Santa Barbara" },
-          { label: "UC Davis",         value: "Davis" },
-          { label: "UC Santa Cruz",    value: "Santa Cruz" },
-          { label: "UC Riverside",     value: "Riverside" },
-          { label: "UC Merced",        value: "Merced" },
-        ];
-        const CC_SUGGESTIONS = ["De Anza College","Mt. SAC","Santa Monica College","Diablo Valley College","City College of SF","Foothill College","Pasadena City College","El Camino College","Irvine Valley College","Los Angeles Valley College","Cerritos College","Grossmont College","Palomar College","Saddleback College"];
-        const MAJOR_SUGGESTIONS = ["Computer Science","Business Administration","Economics","Psychology","Biology","Nursing","Engineering","Political Science","Sociology","Mathematics","English","Data Science","Mechanical Engineering","Electrical Engineering","Chemistry","Kinesiology","Communications","Accounting","Architecture","Film & Media Studies"];
-        const steps = ["College","Target UCs","Major","Courses"];
-        const toggleUC = (uc: string) => setWizardUCs(prev => prev.includes(uc) ? prev.filter(u => u !== uc) : [...prev, uc]);
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl flex flex-col" style={{maxHeight:"90vh"}}>
-
-              {/* Green gradient header */}
-              <div className="bg-gradient-to-br from-[#0a6e3d] to-[#0d9456] px-8 pt-7 pb-6">
-                {/* Step circles */}
-                <div className="flex items-center gap-2 mb-5">
-                  {steps.map((label, i) => (
-                    <div key={i} className="flex items-center gap-2 flex-1">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all duration-300 ${
-                        i < wizardStep - 1 ? "bg-white text-[#0b7f46]" :
-                        i === wizardStep - 1 ? "bg-white text-[#0b7f46] ring-4 ring-white/25" :
-                        "bg-white/15 text-white/50"
-                      }`}>
-                        {i < wizardStep - 1 ? "✓" : i + 1}
-                      </div>
-                      <span className={`hidden sm:block text-xs font-semibold truncate transition-all duration-300 ${i === wizardStep - 1 ? "text-white" : "text-white/40"}`}>{label}</span>
-                      {i < steps.length - 1 && (
-                        <div className={`flex-1 h-0.5 rounded-full transition-all duration-300 ${i < wizardStep - 1 ? "bg-white/60" : "bg-white/20"}`} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <h2 className="text-2xl font-bold text-white">
-                  {wizardStep === 1 ? "Where do you go to school?" :
-                   wizardStep === 2 ? "Which UCs are you targeting?" :
-                   wizardStep === 3 ? "What do you want to study?" :
-                   "What courses have you completed?"}
-                </h2>
-                <p className="mt-1.5 text-sm text-white/70">
-                  {wizardStep === 1 ? "Enter your California community college" :
-                   wizardStep === 2 ? "Select all that apply — we'll build a plan for each" :
-                   wizardStep === 3 ? "Enter your intended major" :
-                   "List them in plain text — don't worry about formatting"}
-                </p>
-              </div>
-
-              <div className="p-7 flex-1" style={{overflowY:"auto", WebkitOverflowScrolling:"touch"}}>
-                {/* Step 1 — College */}
-                {wizardStep === 1 && (
-                  <div className="flex flex-col gap-4">
-                    <input
-                      list="cc-list"
-                      value={wizardCollege}
-                      onChange={e => setWizardCollege(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter" && wizardCollege.trim()) setWizardStep(2); }}
-                      placeholder="e.g. De Anza College"
-                      className="w-full rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
-                      autoFocus
-                    />
-                    <datalist id="cc-list">
-                      {CC_SUGGESTIONS.map(cc => <option key={cc} value={cc} />)}
-                    </datalist>
-                    <div className="flex flex-wrap gap-2">
-                      {CC_SUGGESTIONS.slice(0,6).map(cc => (
-                        <button key={cc} onClick={() => { setWizardCollege(cc); setWizardStep(2); }}
-                          className="rounded-full border border-[#d8d0c3] bg-[#faf8f3] px-3 py-1 text-xs text-[#4d535c] transition hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]">
-                          {cc}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex justify-end pt-2">
-                      <button onClick={() => setWizardStep(2)} disabled={!wizardCollege.trim()}
-                        className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">
-                        Next →
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {/* Step 2 — Target UCs (multi-select) */}
-                {wizardStep === 2 && (
-                  <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {UC_OPTIONS.map(uc => (
-                        <button key={uc.value} onClick={() => toggleUC(uc.value)}
-                          className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition ${wizardUCs.includes(uc.value) ? "border-[#0b7f46] bg-[#f0faf5] text-[#0b7f46]" : "border-[#d8d0c3] bg-[#faf8f3] text-[#303236] hover:border-[#0b7f46] hover:text-[#0b7f46]"}`}>
-                          {wizardUCs.includes(uc.value) ? "✓ " : ""}{uc.label}
-                        </button>
-                      ))}
-                    </div>
-                    {wizardUCs.length > 0 && (
-                      <p className="text-xs text-[#0b7f46] font-medium">{wizardUCs.length} school{wizardUCs.length > 1 ? "s" : ""} selected</p>
-                    )}
-                    <div className="flex justify-between items-center pt-2">
-                      <button onClick={() => setWizardStep(1)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
-                      <button onClick={() => setWizardStep(3)} disabled={wizardUCs.length === 0}
-                        className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">
-                        Next →
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {/* Step 3 — Major */}
-                {wizardStep === 3 && (() => {
-                  const majorPool = wizardMajorOptions.length > 0 ? wizardMajorOptions : MAJOR_SUGGESTIONS;
-                  const query = wizardMajor.trim().toLowerCase();
-                  const matches = query
-                    ? majorPool.filter(m => m.toLowerCase().includes(query))
-                    : majorPool;
-                  return (
-                  <div className="flex flex-col gap-4">
-                    <div className="relative">
-                      <input
-                        value={wizardMajor}
-                        onChange={e => setWizardMajor(e.target.value)}
-                        onFocus={() => setWizardMajorFocused(true)}
-                        onBlur={() => setTimeout(() => setWizardMajorFocused(false), 150)}
-                        onKeyDown={e => { if (e.key === "Enter" && wizardMajor.trim()) setWizardStep(4); }}
-                        placeholder="e.g. Computer Science"
-                        className="w-full rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
-                        autoFocus
-                        autoComplete="off"
-                      />
-                      {wizardMajorFocused && matches.length > 0 && (
-                        <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-2xl border border-[#d1c7b8] bg-white shadow-lg">
-                          {matches.map(m => (
-                            <button key={m} type="button"
-                              onMouseDown={() => { setWizardMajor(m); setWizardMajorFocused(false); setWizardStep(4); }}
-                              className="block w-full px-4 py-2.5 text-left text-sm text-[#303236] transition hover:bg-[#f0faf5] hover:text-[#0b7f46]">
-                              {m}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      {wizardMajorFocused && query && matches.length === 0 && (
-                        <div className="absolute z-10 mt-1 w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#7b818b] shadow-lg">
-                          No major matches "{wizardMajor}" — you can still type it exactly and continue.
-                        </div>
-                      )}
-                    </div>
-                    {wizardMajorOptions.length === 0 && (
-                      <p className="text-xs text-[#7b818b]">Loading the full major list for {wizardCollege} → {wizardUCs[0]}…</p>
-                    )}
-                    <div className="flex justify-between items-center pt-2">
-                      <button onClick={() => setWizardStep(2)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
-                      <button onClick={() => setWizardStep(4)} disabled={!wizardMajor.trim()}
-                        className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">
-                        Next →
-                      </button>
-                    </div>
-                  </div>
-                  );
-                })()}
-                {/* Step 4 — Courses */}
-                {wizardStep === 4 && (
-                  <div className="flex flex-col gap-4">
-                    <label className="flex items-center gap-3 cursor-pointer select-none">
-                      <input type="checkbox" checked={wizardNoCourses} onChange={e => { setWizardNoCourses(e.target.checked); if (e.target.checked) setWizardCourses(""); }}
-                        className="w-4 h-4 rounded accent-[#0b7f46]" />
-                      <span className="text-sm text-[#303236]">I haven't completed any college courses yet</span>
-                    </label>
-                    {!wizardNoCourses && (
-                      <textarea
-                        value={wizardCourses}
-                        onChange={e => setWizardCourses(e.target.value)}
-                        placeholder="e.g. Calc 1, English 1A, Intro to CS, Econ 1"
-                        rows={4}
-                        className="w-full rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 resize-none"
-                        autoFocus
-                      />
-                    )}
-                    {wizardNoCourses && (
-                      <div className="rounded-xl border border-[#d1c7b8] bg-[#faf8f3] px-4 py-3">
-                        <p className="text-sm font-medium text-[#303236] mb-2">Highest math completed in high school? <span className="text-[#7b818b] font-normal">(optional)</span></p>
-                        <input type="text" value={wizardHsMath} onChange={e => setWizardHsMath(e.target.value)}
-                          placeholder="e.g. Pre-Calculus, Algebra II, Calculus AB"
-                          className="w-full rounded-lg border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10" />
-                      </div>
-                    )}
-                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
-                      <p className="text-sm font-semibold text-[#303236] mb-3">Are you open to taking honors courses?</p>
-                      <div className="flex gap-3">
-                        <button onClick={() => setWizardHonors(true)}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHonors === true ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          Yes, include them
-                        </button>
-                        <button onClick={() => setWizardHonors(false)}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHonors === false ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          No, skip honors
-                        </button>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
-                      <p className="text-sm font-semibold text-[#303236] mb-3">Do you have any AP exam credit?</p>
-                      <div className="flex gap-3 mb-3">
-                        <button onClick={() => setWizardHasAp(true)}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHasAp === true ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          Yes
-                        </button>
-                        <button onClick={() => { setWizardHasAp(false); setWizardApCredits(""); }}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardHasAp === false ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          No
-                        </button>
-                      </div>
-                      {wizardHasAp === true && (
-                        <textarea value={wizardApCredits} onChange={e => setWizardApCredits(e.target.value)}
-                          placeholder="e.g. AP Calculus AB (score 4), AP English Language (score 5)"
-                          rows={2}
-                          className="w-full rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 resize-none" />
-                      )}
-                    </div>
-                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
-                      <p className="text-sm font-semibold text-[#303236] mb-1">Planning mode</p>
-                      <p className="text-xs text-[#7b818b] mb-3">Competitive maximizes your transfer strength. Efficiency minimizes workload.</p>
-                      <div className="flex gap-3">
-                        <button onClick={() => setWizardMode("competitive")}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardMode === "competitive" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          🏆 Competitive
-                        </button>
-                        <button onClick={() => setWizardMode("efficiency")}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardMode === "efficiency" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          ⚡ Efficiency
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center pt-2">
-                      <button onClick={() => setWizardStep(3)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
-                      <button onClick={completeWizard} disabled={(!wizardNoCourses && !wizardCourses.trim()) || wizardHonors === null || wizardHasAp === null || (wizardHasAp === true && !wizardApCredits.trim()) || wizardMode === null}
-                        className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">
-                        Build My Plan →
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      <Footer />
 
       {/* ── Transfer AI floating chat ─────────────────────────── */}
       {!chatOpen && (

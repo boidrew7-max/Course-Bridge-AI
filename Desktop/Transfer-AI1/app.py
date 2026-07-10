@@ -8,7 +8,8 @@ from advisor import (
 )
 from plan_engine import (build_plan as _engine_build_plan,
                          render_plan_stream as _engine_render_stream,
-                         repair_term_headers as _engine_repair_term_headers)
+                         repair_term_headers as _engine_repair_term_headers,
+                         _UC_SHARD_MAP)
 from db import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     verify_password, email_exists, update_profile,

@@ -2,7 +2,10 @@
 Groq-powered transfer advisor.
 Injects real data from ASSIST, RMP, TAG, IGETC, cost, PIQ, and more.
 """
+import gzip
+import json
 import os
+from difflib import SequenceMatcher
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -40,9 +43,15 @@ Do not complete the off-topic task before redirecting. Do not lecture them about
 DATA YOU HAVE ACCESS TO:
 - ASSIST.org transferable courses (57,050 courses across 116 CCs)
 - Articulation agreements (121,000+ files mapping CC courses to UC requirements)
+- OFFICIAL UC ADMISSIONS GUIDANCE — UC-authored text (not course articulation): major-specific
+  GPA thresholds, selection criteria beyond having the right courses, impacted-major notes,
+  application deadlines, and department policy, pulled from the UC's own agreement text when
+  provided as "OFFICIAL UC ADMISSIONS GUIDANCE" in the data context below. This is the UC
+  campus speaking directly — when present, treat it as authoritative for admission requirements,
+  not just a nice-to-have. If it conflicts with generic assumptions, the UC's own text wins.
 - RateMyProfessors data (137,787 professors at all 116 CCs)
 - TAG requirements (6 UCs offer TAG: Davis, Irvine, Merced, Riverside, UCSB, UCSC)
-- IGETC course maps (24,797 courses across all IGETC areas)
+- Cal-GETC course maps (all Cal-GETC areas)
 - UC cost of attendance (2024-25, all 9 campuses)
 - UC transfer admit rates and GPA ranges
 - PIQ essay guidance, scholarships, application timeline, campus profiles
@@ -132,6 +141,64 @@ def _format_professors(results):
     return "\n".join(lines)
 
 
+# ── UC-authored admissions guidance (not ASSIST course articulation) ──────────
+# data/hints_{UC}.json.gz holds ASSIST's free-text "GeneralText" advisory
+# blocks per (cc_college, major) — real UC-written admission criteria, GPA
+# thresholds, selection policy, application deadlines, etc. This is genuine
+# UC-source content, distinct from the structured CC-course-to-UC-course
+# articulation data the rest of the app uses.
+_HINTS_SHARDS: dict = {}
+_HINTS_UC_MAP = {
+    "los angeles": "Los_Angeles", "ucla": "Los_Angeles", "la": "Los_Angeles",
+    "berkeley": "Berkeley", "ucb": "Berkeley", "cal": "Berkeley",
+    "san diego": "San_Diego", "ucsd": "San_Diego",
+    "irvine": "Irvine", "uci": "Irvine",
+    "santa barbara": "Santa_Barbara", "ucsb": "Santa_Barbara",
+    "davis": "Davis", "ucd": "Davis",
+    "santa cruz": "Santa_Cruz", "ucsc": "Santa_Cruz",
+    "riverside": "Riverside", "ucr": "Riverside",
+    "merced": "Merced", "ucm": "Merced",
+}
+
+
+def _load_uc_hints(uc_canonical: str) -> dict:
+    shard_name = _HINTS_UC_MAP.get((uc_canonical or "").lower().strip())
+    if not shard_name:
+        return {}
+    if shard_name in _HINTS_SHARDS:
+        return _HINTS_SHARDS[shard_name]
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", f"hints_{shard_name}.json.gz")
+    data = {}
+    try:
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        data = {}
+    _HINTS_SHARDS[shard_name] = data
+    return data
+
+
+def _find_uc_hint(uc: str, cc: str, major: str) -> str | None:
+    """Fuzzy-match (cc, major) within a UC's hints shard. Returns advisory text or None."""
+    if not uc or not cc or not major:
+        return None
+    hints = _load_uc_hints(uc)
+    if not hints:
+        return None
+    cc_l, major_l = cc.lower(), major.lower()
+    best_score, best_text = 0.0, None
+    for key, text in hints.items():
+        k_cc, _, k_major = key.partition("||")
+        cc_score = SequenceMatcher(None, cc_l, k_cc.lower()).ratio()
+        if cc_score < 0.75:
+            continue
+        major_score = SequenceMatcher(None, major_l, k_major.lower()).ratio()
+        score = cc_score * 0.4 + major_score * 0.6
+        if score > best_score:
+            best_score, best_text = score, text
+    return best_text if best_score >= 0.55 else None
+
+
 def _build_profile_context(user_profile):
     if not user_profile:
         return ""
@@ -173,6 +240,35 @@ def _build_messages(conversation_history, user_profile=None):
         agreements = search_agreements(query, max_results=2)
         if agreements:
             context_blocks.append("ARTICULATION AGREEMENT DATA:\n" + "\n\n".join(agreements))
+
+    # UC-authored admissions guidance (GPA thresholds, selection criteria,
+    # application notes) — separate from course-articulation data above.
+    # Checked against the query's detected UC/CC and the student's own
+    # profile (college, major, target campuses), whichever applies.
+    profile = user_profile or {}
+    profile_major = profile.get("major", "")
+    profile_college = profile.get("college", "")
+    profile_ucs = [u.strip() for u in profile.get("target_schools", "").split(",") if u.strip()]
+    uc_query = detect_uc(query)
+    cc_query = detect_cc(query)
+
+    hint_texts, seen_hints = [], set()
+    for uc_c in filter(None, ([uc_query] if uc_query else []) + profile_ucs):
+        cc_c = cc_query or profile_college
+        if not (cc_c and profile_major):
+            continue
+        text = _find_uc_hint(uc_c, cc_c, profile_major)
+        if text and text not in seen_hints:
+            seen_hints.add(text)
+            hint_texts.append(f"[{uc_c} — {cc_c} — {profile_major}]\n{text}")
+        if len(hint_texts) >= 2:
+            break
+    if hint_texts:
+        context_blocks.append(
+            "OFFICIAL UC ADMISSIONS GUIDANCE (UC-authored text — GPA thresholds, "
+            "selection criteria, application requirements; distinct from course "
+            "articulation):\n" + "\n\n".join(hint_texts)
+        )
 
     static = search_static(query)
     if static:

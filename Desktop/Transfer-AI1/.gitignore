@@ -10,6 +10,7 @@ data/igetc_map.json
 # Full monolithic index (too large for memory — use shards instead)
 data/articulations_index.json
 data/articulations_index.json.gz
+data/alternative_hints.json
 
 # Scraper output
 agreements/

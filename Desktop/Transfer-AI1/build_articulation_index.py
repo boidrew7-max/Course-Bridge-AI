@@ -106,12 +106,28 @@ _KNOWN_TYPES = {"Following", "NFromArea"}
 _SECTION_UNIT_TYPES = {"Series", "Sequence"}
 _UNIT_BASED_TYPES   = {"Unit", "QuarterUnit", "SemesterUnit", "Semester", "Quarter"}
 
+# Per-course attribute text meaning "this CC course alone doesn't fully satisfy
+# the UC requirement — a bridge course must also be completed after transfer".
+_CONDITIONAL_ATTR_RE = re.compile(r"additional university course", re.IGNORECASE)
 
-def _parse_template_assets(ta_raw) -> tuple[dict, Counter]:
+# CourseGroup/row-level attribute text meaning the articulation is scheduled to
+# change soon — surface as a plan-level warning rather than silently trusting it.
+_STALE_ATTR_RE = re.compile(
+    r"will be revised|effective next|subject to change|no longer accepted",
+    re.IGNORECASE,
+)
+
+
+def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict]:
     """
     Parse templateAssets and return:
       cell_to_group: {courseIdentifierParentId (int) -> (groupId str, pick_n int, sec_idx int|None)}
       unknown_types: Counter of unrecognised instruction.type values
+      all_uc_cells: {courseIdentifierParentId (int) -> {"p","n","t"}} for EVERY UC
+        course cell seen in the template, regardless of group type. Used to find
+        UC courses the major requires that never got a row in `articulations` at
+        all (ASSIST gives them no noArticulationReason either — they just don't
+        appear there), which the old parser silently dropped.
 
     pick_n semantics:
       0  = "Following" (AND — complete all)
@@ -123,13 +139,14 @@ def _parse_template_assets(ta_raw) -> tuple[dict, Counter]:
     """
     cell_to_group: dict = {}
     unknown_types: Counter = Counter()
+    all_uc_cells: dict = {}
 
     try:
         ta = json.loads(ta_raw) if isinstance(ta_raw, str) else (ta_raw or [])
     except Exception:
-        return cell_to_group, unknown_types
+        return cell_to_group, unknown_types, all_uc_cells
     if not isinstance(ta, list):
-        return cell_to_group, unknown_types
+        return cell_to_group, unknown_types, all_uc_cells
 
     for item in ta:
         if not isinstance(item, dict) or item.get("type") != "RequirementGroup":
@@ -224,14 +241,33 @@ def _parse_template_assets(ta_raw) -> tuple[dict, Counter]:
                         # (Duplicate across emphasis tracks handled at engine level.)
                         if ciid not in cell_to_group:
                             cell_to_group[ciid] = (gid, pick_n, unit_key)
+                        if ciid not in all_uc_cells:
+                            all_uc_cells[ciid] = {
+                                "p": course.get("prefix", ""),
+                                "n": course.get("courseNumber", ""),
+                                "t": course.get("courseTitle", ""),
+                            }
 
-    return cell_to_group, unknown_types
+    return cell_to_group, unknown_types, all_uc_cells
 
 
 def parse_one(filepath) -> tuple[list | None, Counter]:
     """
     Returns (rows, unknown_instr_types).
     rows: list of shard entries, or None if no CC articulations found.
+
+    Row fields beyond uc/cc/g/k/sec:
+      "cond": True on a CC course dict inside "cc" — ASSIST attaches a per-course
+        attribute saying the CC course alone doesn't fully satisfy the UC
+        requirement; a bridge course must still be completed after transfer.
+      "stale": <note text> on a row — ASSIST attaches a note to the whole
+        CourseGroup (e.g. "Effective next fall, this articulation will be
+        revised") saying the mapping is due to change.
+      "na": True on a row — the UC course appears in the major's template
+        (so it's required) but has NO entry at all in `articulations` — not
+        even a noArticulationReason. Distinct from a genuine POST-TRANSFER
+        row (noArticulationReason set): "na" rows are silently dropped by
+        ASSIST's own data, not explicitly marked post-transfer.
     """
     unknown_types: Counter = Counter()
     try:
@@ -247,11 +283,12 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
     except Exception:
         return None, unknown_types
 
-    cell_to_group, unknown_types = _parse_template_assets(
+    cell_to_group, unknown_types, all_uc_cells = _parse_template_assets(
         result.get("templateAssets", "[]")
     )
 
     rows = []
+    covered_ciids: set = set()
     for art in arts:
         if not isinstance(art, dict):
             continue
@@ -262,6 +299,8 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
 
         # Link articulation to its RequirementGroup via courseIdentifierParentId
         ciid = uc_c.get("courseIdentifierParentId")
+        if ciid is not None:
+            covered_ciids.add(ciid)
         gid, pick_n, sec_idx = (
             cell_to_group.get(ciid, ("", 0, None)) if ciid is not None else ("", 0, None)
         )
@@ -286,20 +325,30 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
 
         items = sa.get("items", [])
         cc_groups = []
+        stale_note = None
         for grp in items:
             if not isinstance(grp, dict):
                 continue
             conj = grp.get("courseConjunction", "Or")
+            for grp_attr in (grp.get("attributes") or []):
+                content = grp_attr.get("content", "") if isinstance(grp_attr, dict) else ""
+                if _STALE_ATTR_RE.search(content):
+                    stale_note = content
             grp_courses = []
             for c in grp.get("items", []):
                 if isinstance(c, dict) and c.get("courseNumber"):
-                    grp_courses.append({
+                    course_dict = {
                         "p": c.get("prefix", ""),
                         "n": c.get("courseNumber", ""),
                         "t": c.get("courseTitle", ""),
                         "u": c.get("maxUnits", ""),
                         "j": conj,
-                    })
+                    }
+                    for c_attr in (c.get("attributes") or []):
+                        content = c_attr.get("content", "") if isinstance(c_attr, dict) else ""
+                        if _CONDITIONAL_ATTR_RE.search(content):
+                            course_dict["cond"] = True
+                    grp_courses.append(course_dict)
             if grp_courses:
                 if conj == "Or":
                     # Or-conjunction: each CC course is an independent alternative.
@@ -323,6 +372,26 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
             "cc": cc_groups,
             "g": gid,
             "k": pick_n,
+        }
+        if sec_idx is not None:
+            row["sec"] = sec_idx
+        if stale_note:
+            row["stale"] = stale_note
+        rows.append(row)
+
+    # UC courses required by the major (present in templateAssets) but with NO
+    # entry at all in `articulations` — ASSIST gives them no CC mapping and no
+    # explicit noArticulationReason either. Without this, they silently vanish.
+    for ciid, uc_cell in all_uc_cells.items():
+        if ciid in covered_ciids:
+            continue
+        gid, pick_n, sec_idx = cell_to_group.get(ciid, ("", 0, None))
+        row = {
+            "uc": dict(uc_cell),
+            "cc": [[]],
+            "g": gid,
+            "k": pick_n,
+            "na": True,
         }
         if sec_idx is not None:
             row["sec"] = sec_idx

@@ -215,6 +215,7 @@ class PlanResult:
     igetc_completion: dict = field(default_factory=dict)
     requirement_audit: list = field(default_factory=list)
     post_transfer: list = field(default_factory=list)
+    not_articulated: list = field(default_factory=list)  # required, zero CC equivalent per ASSIST
     warnings: list = field(default_factory=list)
     total_units: float = 0.0
     active_terms: int = 4      # how many terms actually have courses
@@ -259,6 +260,13 @@ _TERMS_QUARTER = {
     7: "Extended / Quarter 7",
     8: "Extended / Quarter 8",
 }
+
+
+def _fmt_units(u: float) -> str:
+    """Format a unit count without losing fractional units (ASSIST commonly
+    lists X.5-unit courses, e.g. CIS 22CH = 4.5u) — never round to the nearest
+    whole number for display."""
+    return f"{u:g}"
 
 
 # ── Calc-chain detection ───────────────────────────────────────────────────────
@@ -351,14 +359,14 @@ _CC_PREREQ_CHAINS: dict = {
     ("de anza college", "CIS", "22C"): {
         "inject": [
             ("CIS", "22A", "Introduction to Programming (Python)", 4.5, []),
-            ("CIS", "22B", "C++ Programming and Data Structures", 4.5, []),
+            ("CIS", "22B", "Intermediate Programming Methodologies in C++", 4.5, []),
         ],
         "trigger_prereqs": [],
     },
     ("de anza college", "CIS", "22CH"): {
         "inject": [
             ("CIS", "22A", "Introduction to Programming (Python)", 4.5, []),
-            ("CIS", "22B", "C++ Programming and Data Structures", 4.5, []),
+            ("CIS", "22B", "Intermediate Programming Methodologies in C++", 4.5, []),
         ],
         "trigger_prereqs": [],
     },
@@ -423,6 +431,35 @@ _UC_REQ_OR_GROUPS: list = [
     })),
 ]
 
+# Known bridge courses for "conditional" articulations — ASSIST marks the CC
+# course as satisfying the requirement only if a specific UC course is also
+# completed after transfer (e.g. CIS 22C -> COMPSCI 61B still requires
+# COMPSCI 47B at Berkeley). Keyed by (uc_prefix, uc_number).
+_BRIDGE_COURSE_MAP = {
+    ("COMPSCI", "61A"): "COMPSCI 47A",
+    ("COMPSCI", "61B"): "COMPSCI 47B",
+    ("COMPSCI", "61C"): "COMPSCI 47C",
+}
+
+
+def _conditional_bridge_note(uc_str: str) -> str:
+    """Build a Post-Transfer entry for a MET (CONDITIONAL) requirement."""
+    head = uc_str.split(" - ", 1)[0].strip()
+    parts = head.split()
+    prefix, number = (parts[0], parts[-1]) if len(parts) >= 2 else ("", "")
+    bridge = _BRIDGE_COURSE_MAP.get((prefix.upper(), number.upper()))
+    if bridge:
+        return (
+            f"{head} — CONDITIONAL: also complete {bridge} at the university after "
+            "transfer to fully satisfy this requirement (per ASSIST's conditional "
+            "articulation note)."
+        )
+    return (
+        f"{head} — CONDITIONAL: ASSIST requires an additional university-level course "
+        "after transfer to fully satisfy this requirement; confirm the specific course "
+        "with a UC advisor."
+    )
+
 
 def _inject_cc_prereqs(
     major_courses: list,
@@ -475,7 +512,7 @@ def _resolve_major_prep(
     completed: set,
     uc_normalized: str = "",
     major: str = "",
-) -> tuple[list, list, list, bool, set]:
+) -> tuple[list, list, list, bool, set, list, list]:
     """
     For each UC articulation entry, pick one option group deterministically.
 
@@ -491,14 +528,40 @@ def _resolve_major_prep(
         AND requirement.  Falls back to the legacy _UC_REQ_OR_GROUPS list for
         old shards that predate the "g"/"k" fields.
 
-    Returns (major_courses, audit_rows, post_transfer, multi_track) where
-    multi_track is True when duplicate NFromArea menus were detected (indicating
-    the agreement covers multiple emphasis tracks and this plan is a superset).
+    Returns (major_courses, audit_rows, post_transfer, multi_track,
+    loser_cc_codes, not_articulated, stale_notes) where multi_track is True
+    when duplicate NFromArea menus were detected (indicating the agreement
+    covers multiple emphasis tracks and this plan is a superset).
     """
     major_l = major.lower()
 
+    # ── Split out "na" rows: required by the major (present in ASSIST's own
+    #    template) but with NO articulation entry at all — not even an explicit
+    #    noArticulationReason. Render these as their own NOT ARTICULATED list
+    #    rather than silently dropping them or conflating with POST-TRANSFER. ──
+    not_articulated = []
+    filtered_arts = []
+    for art in arts:
+        if art.get("na"):
+            uc_c = art.get("uc", {})
+            not_articulated.append(f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}")
+        else:
+            filtered_arts.append(art)
+    arts = filtered_arts
+
+    # ── Staleness notes: ASSIST occasionally flags an articulation as due to
+    #    be revised. Surface regardless of which option ends up chosen. ──────
+    stale_notes = []
+    for art in arts:
+        note = art.get("stale")
+        if note:
+            uc_c = art.get("uc", {})
+            uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')}"
+            stale_notes.append(f"ASSIST flags {uc_str} as subject to change: {note}")
+
     # ── Legacy OR-group pre-pass (fallback for shards without g/k) ───────────
     skip_uc_keys: dict = {}
+    winner_group_label: dict = {}   # winner_key -> combined "A / B / C" label
     for group in _UC_REQ_OR_GROUPS:
         if len(group) == 3:
             group_uc, major_substr, or_group = group
@@ -529,6 +592,7 @@ def _resolve_major_prep(
         if len(members) <= 1:
             continue
         winner = min(members, key=lambda x: x[1])[0]
+        winner_group_label[winner] = " / ".join(f"{k[0]} {k[1]}" for k, _ in members)
         for key, _ in members:
             if key != winner:
                 skip_uc_keys[key] = winner
@@ -601,8 +665,9 @@ def _resolve_major_prep(
             if (c.get("p",""), c.get("n","")) not in completed
         )
 
-    def _commit_chosen(chosen, uc_str):
+    def _commit_chosen(chosen, uc_str, uc_key=None):
         cc_codes = []
+        conditional = any(c.get("cond") for c in chosen)
         for c in chosen:
             key = (c.get("p",""), c.get("n",""))
             if key in completed:
@@ -621,7 +686,17 @@ def _resolve_major_prep(
             else:
                 committed[key].uc_reqs.append(uc_str)
             cc_codes.append(f"{key[0]} {key[1]}")
-        audit_rows.append((uc_str, " + ".join(cc_codes) if cc_codes else "-", "MET"))
+        # If this UC requirement won a legacy OR-group (e.g. MATH 54 / EECS 16A /
+        # MATH 56), render ONE consolidated row for the whole group instead of a
+        # separate "satisfied via" row per alternative.
+        label = uc_str
+        if uc_key is not None and uc_key in winner_group_label:
+            _, _, title = uc_str.partition(" - ")
+            label = f"{winner_group_label[uc_key]} - {title}" if title else winner_group_label[uc_key]
+        status = "MET (CONDITIONAL)" if conditional else "MET"
+        audit_rows.append((label, " + ".join(cc_codes) if cc_codes else "-", status))
+        if conditional:
+            post_transfer.append(_conditional_bridge_note(uc_str))
 
     for gid, gdata in group_map.items():
         uc_codes_fs = gdata["uc_codes"]
@@ -656,7 +731,8 @@ def _resolve_major_prep(
                     uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
 
                     if uc_key in skip_uc_keys:
-                        rows_info.append((uc_str, uc_key, None, "skip"))
+                        # Alternative already satisfied by another member of this
+                        # legacy OR-group elsewhere — no separate row for it.
                         continue
 
                     valid = [g for g in art.get("cc", []) if g]
@@ -684,9 +760,6 @@ def _resolve_major_prep(
                     elif kind == "post":
                         post_transfer.append(uc_str)
                         audit_rows.append((uc_str, "-", "POST-TRANSFER"))
-                    elif kind == "skip":
-                        winner = skip_uc_keys[_uc_key]
-                        audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
 
             winner_track_desc = (
                 " or ".join(
@@ -711,8 +784,8 @@ def _resolve_major_prep(
             uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
 
             if uc_key in skip_uc_keys:
-                winner = skip_uc_keys[uc_key]
-                audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
+                # Alternative already satisfied by another member of this
+                # legacy OR-group elsewhere — no separate row for it.
                 continue
 
             valid = [g for g in art.get("cc", []) if g]
@@ -751,8 +824,8 @@ def _resolve_major_prep(
         uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')} - {uc_c.get('t','')}"
 
         if uc_key in skip_uc_keys:
-            winner = skip_uc_keys[uc_key]
-            audit_rows.append((uc_str, f"satisfied via {winner[0]} {winner[1]}", "MET"))
+            # Alternative already satisfied by another member of this legacy
+            # OR-group elsewhere — no separate row for it.
             continue
 
         cc_groups = art.get("cc", [])
@@ -764,9 +837,10 @@ def _resolve_major_prep(
             continue
 
         chosen = _pick_cc(list(valid_groups))
-        _commit_chosen(chosen, uc_str)
+        _commit_chosen(chosen, uc_str, uc_key=uc_key)
 
-    return list(committed.values()), audit_rows, post_transfer, multi_track, loser_cc_codes
+    return (list(committed.values()), audit_rows, post_transfer, multi_track,
+            loser_cc_codes, not_articulated, stale_notes)
 
 
 # ── IGETC selection ───────────────────────────────────────────────────────────
@@ -1409,12 +1483,15 @@ def build_plan(
     arts   = shard[best_key]
     result = PlanResult(college=college, uc=uc, major=major, ge_pattern=ge_pattern)
 
-    major_courses, audit_rows, post_transfer, multi_track, loser_cc_codes = _resolve_major_prep(
+    (major_courses, audit_rows, post_transfer, multi_track,
+     loser_cc_codes, not_articulated, stale_notes) = _resolve_major_prep(
         arts, accept_honors, completed_keys, uc_normalized=uc_l, major=major
     )
     result.requirement_audit = audit_rows
     result.multi_track = multi_track
     result.post_transfer     = post_transfer
+    result.not_articulated   = not_articulated
+    result.warnings.extend(stale_notes)
 
     # Use matched CC name from shard key for IGETC lookup so typos in the
     # user's college string still resolve to the correct IGETC school entry.
@@ -1686,10 +1763,10 @@ def build_render_prompt(
         else:
             season = term_names.get(t, f"Term {t}")
         t_units = sum(s.units for s in result.terms.get(t, []))
-        lines.append(f"## Term {t} ({season}) -- {t_units:.0f} units")
+        lines.append(f"## Term {t} ({season}) -- {_fmt_units(t_units)} units")
         for slot in result.terms.get(t, []):
             tag = f" [{slot.tag_str()}]" if slot.tags else ""
-            lines.append(f"- {slot.code} -- {slot.title} ({slot.units:.0f}u){tag}")
+            lines.append(f"- {slot.code} -- {slot.title} ({_fmt_units(slot.units)}u){tag}")
         lines.append("")
 
     lines.append("## Requirement Audit (copy verbatim into audit table)")
@@ -1700,6 +1777,13 @@ def build_render_prompt(
         lines.append("Post-Transfer (no CC articulation):")
         for pt in result.post_transfer:
             lines.append(f"  {pt}")
+    if result.not_articulated:
+        lines.append("Not Articulated (required by the major, zero CC equivalent per ASSIST):")
+        for na in result.not_articulated:
+            lines.append(
+                f"  {na} | NOT ARTICULATED — no CC equivalent; take at {result.uc} "
+                f"or via {result.uc} Summer Session before transfer."
+            )
     lines.append("")
 
     is_calgetc = getattr(result, "ge_pattern", "calgetc") == "calgetc"
@@ -1754,38 +1838,24 @@ def build_render_prompt(
     lines.append(f"- TAG: {tag_note}")
     lines.append(f"- GPA target: {gpa_range} -- {gpa_note}")
     if result.is_quarter:
-        sem_equiv = result.total_units * (2.0 / 3.0)
+        sem_equiv = round(result.total_units * (2.0 / 3.0), 1)
         if result.summer_overflow:
             lines.append(
-                f"- Total units: {result.total_units:.0f} QU (approx. {sem_equiv:.0f} SU) "
+                f"- Total units: {_fmt_units(result.total_units)} QU (approx. {_fmt_units(sem_equiv)} SU) "
                 f"across 6 quarters + 1 summer session"
             )
         else:
             lines.append(
-                f"- Total units: {result.total_units:.0f} quarter units "
-                f"(approx. {sem_equiv:.0f} semester units) across {result.active_terms} quarters"
+                f"- Total units: {_fmt_units(result.total_units)} quarter units "
+                f"(approx. {_fmt_units(sem_equiv)} semester units) across {result.active_terms} quarters"
             )
     else:
         if result.summer_overflow:
-            lines.append(f"- Total units: {result.total_units:.0f} across 4 semesters + 1 summer session")
+            lines.append(f"- Total units: {_fmt_units(result.total_units)} across 4 semesters + 1 summer session")
         else:
-            lines.append(f"- Total units: {result.total_units:.0f} across {result.active_terms} terms")
+            lines.append(f"- Total units: {_fmt_units(result.total_units)} across {result.active_terms} terms")
     for w in result.warnings:
         lines.append(f"- NOTE: {w}")
-
-    # Campus guidance notes (not from ASSIST data)
-    if (result.college == "De Anza College"
-            and "berkeley" in result.uc.lower()
-            and "computer science" in result.major.lower()):
-        lines.append(
-            "\n## Campus Guidance Notes (not from ASSIST data)\n"
-            "- CDSS recommends completing CS 61A (Programming & Abstraction) before transfer "
-            "if not already covered by your CC coursework.\n"
-            "- CS 61C (Machine Structures) has no CC articulation; Berkeley's CDSS suggests "
-            "enrolling in CS 61C via UC Berkeley Summer Session.\n"
-            "- Berkeley's College of Computing, Data Science, and Society (CDSS) does NOT "
-            "require IGETC or Cal-GETC for admission."
-        )
 
     return "\n".join(lines)
 

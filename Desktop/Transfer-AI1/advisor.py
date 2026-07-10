@@ -401,8 +401,21 @@ Your only active construction task:
 | [from CC-COMPLETABLE entries] | [CC course scheduled] | MET |
 | [from CC-COMPLETABLE entries] | [CC course missing] | NOT MET |
 | [from POST-TRANSFER entries] | No CC articulation | POST-TRANSFER |
+| [from "Not Articulated" entries] | No CC articulation | NOT ARTICULATED |
 
-**IGETC / GE Status**
+🚨 CONDITIONAL ARTICULATION RULE: if the input marks a requirement's status as
+"MET (CONDITIONAL)", copy that status EXACTLY as "MET (CONDITIONAL)" — never
+simplify it to plain "MET". This means the CC course satisfies the requirement
+only if an additional university-level course is also completed after transfer
+(the specific bridge course, when named, appears in Post-Transfer Requirements).
+
+🚨 NOT ARTICULATED RULE: if the input lists a requirement under "Not Articulated",
+it means the course is required by the major but ASSIST provides no CC equivalent
+at all — this is DIFFERENT from POST-TRANSFER (which is an explicit "must take at
+university" note). Render its status as exactly "NOT ARTICULATED", never merge it
+into POST-TRANSFER or drop it.
+
+**GE Status**
 | Area | CC Course | Status |
 |---|---|---|
 | 1A English Composition | COURSE# | MET / NOT MET |
@@ -440,18 +453,14 @@ If none → write: None — all UC requirements have CC articulation.
 ## Term 4 (Spring)
 - COURSE# — Full Title (X units) [IGETC Area Xn]
 
-## IGETC Completion
+## GE Completion
+🚨 HEADER RULE: title this section "## Cal-GETC Completion" or "## IGETC Completion" —
+copy whichever label the input data above actually uses (it says "Cal-GETC" or "IGETC"
+explicitly). NEVER write "## IGETC Completion" when the input data is Cal-GETC, and
+never mix the two labels within one plan.
 (✅ only if course appears in a term above)
-- Area 1A: ✅/❌ COURSE#
-- Area 1B: ✅/❌ COURSE#
-- Area 2A: ✅/❌ COURSE#
-- Area 3A: ✅/❌ COURSE#
-- Area 3B: ✅/❌ COURSE#
-- Area 4: ✅/❌ COURSE#, COURSE#, COURSE#
-- Area 5A: ✅/❌ COURSE#
-- Area 5B: ✅/❌ COURSE# ★LAB
-- Area 5C: ✅/❌ satisfied by 5B ★LAB — no separate course
-- Area 6: ✅/❌ COURSE# or ⚠️ 2+ years HS foreign language
+Copy the exact area codes, labels, and order given in the input's GE Completion data
+above — do not invent, drop, reorder, or rename any area.
 
 ## Key Notes
 - TAG: [copy verbatim from user message input — do not change]

@@ -1575,7 +1575,6 @@ export default function PlannerClient() {
               src="/coursebridge-logo.png"
               alt="CourseBridge logo"
               className="h-[80px] w-auto shrink-0"
-              style={{mixBlendMode:"multiply"}}
             />
           </div>
 

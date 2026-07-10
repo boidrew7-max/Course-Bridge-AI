@@ -162,11 +162,14 @@ _HINTS_UC_MAP = {
 
 
 def _load_uc_hints(uc_canonical: str) -> dict:
+    # Only ever keep ONE shard resident (each is tens of MB decompressed).
+    # plan_v2 now calls this per-request for whichever UC is being planned,
+    # so an unbounded cache across all 9 UCs was OOM-killing the dyno.
     shard_name = _HINTS_UC_MAP.get((uc_canonical or "").lower().strip())
     if not shard_name:
         return {}
-    if shard_name in _HINTS_SHARDS:
-        return _HINTS_SHARDS[shard_name]
+    if _HINTS_SHARDS.get("_name") == shard_name:
+        return _HINTS_SHARDS["_data"]
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", f"hints_{shard_name}.json.gz")
     data = {}
     try:
@@ -174,7 +177,9 @@ def _load_uc_hints(uc_canonical: str) -> dict:
             data = json.load(f)
     except Exception:
         data = {}
-    _HINTS_SHARDS[shard_name] = data
+    _HINTS_SHARDS.clear()
+    _HINTS_SHARDS["_name"] = shard_name
+    _HINTS_SHARDS["_data"] = data
     return data
 
 

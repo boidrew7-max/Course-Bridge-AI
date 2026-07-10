@@ -1102,6 +1102,7 @@ export default function PlannerClient() {
   const [wizardCollege, setWizardCollege] = useState("");
   const [wizardUCs, setWizardUCs] = useState<string[]>([]);
   const [wizardMajor, setWizardMajor] = useState("");
+  const [wizardMajorOptions, setWizardMajorOptions] = useState<string[]>([]);
   const [wizardCourses, setWizardCourses] = useState("");
   const [wizardNoCourses, setWizardNoCourses] = useState(false);
   const [wizardHonors, setWizardHonors] = useState<boolean | null>(null);
@@ -1394,6 +1395,18 @@ export default function PlannerClient() {
       .then(data => setMajorOptions2(data.majors ?? []))
       .catch(() => setMajorOptions2([]));
   }, [communityCollege, targetSchool]);
+
+  // Load the REAL major list for the onboarding wizard's step 3 datalist, so
+  // typing e.g. "chem" surfaces every real match ("Chemical Biology B.S.",
+  // "Chemistry B.A. and B.S.", ...) instead of only whatever's in the small
+  // hardcoded MAJOR_SUGGESTIONS fallback list.
+  useEffect(() => {
+    if (!wizardCollege || !wizardUCs[0]) { setWizardMajorOptions([]); return; }
+    fetch(`/api/options/majors?college=${encodeURIComponent(wizardCollege)}&uc=${encodeURIComponent(wizardUCs[0])}`)
+      .then(r => r.json())
+      .then(data => setWizardMajorOptions(data.majors ?? []))
+      .catch(() => setWizardMajorOptions([]));
+  }, [wizardCollege, wizardUCs]);
 
   const requirements = assistRequirements;
   const options = assistOptions;
@@ -2387,7 +2400,7 @@ export default function PlannerClient() {
                       autoFocus
                     />
                     <datalist id="major-list">
-                      {MAJOR_SUGGESTIONS.map(m => <option key={m} value={m} />)}
+                      {(wizardMajorOptions.length > 0 ? wizardMajorOptions : MAJOR_SUGGESTIONS).map(m => <option key={m} value={m} />)}
                     </datalist>
                     <div className="flex flex-wrap gap-2">
                       {MAJOR_SUGGESTIONS.slice(0,8).map(m => (
@@ -2397,6 +2410,9 @@ export default function PlannerClient() {
                         </button>
                       ))}
                     </div>
+                    {wizardMajorOptions.length === 0 && (
+                      <p className="text-xs text-[#7b818b]">Loading the full major list for {wizardCollege} → {wizardUCs[0]}… you can also just type your major below.</p>
+                    )}
                     <div className="flex justify-between items-center pt-2">
                       <button onClick={() => setWizardStep(2)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                       <button onClick={() => setWizardStep(4)} disabled={!wizardMajor.trim()}

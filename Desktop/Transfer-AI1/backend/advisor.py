@@ -498,6 +498,7 @@ Your only active construction task:
 | [from CC-COMPLETABLE entries] | [CC course missing] | NOT MET |
 | [from POST-TRANSFER entries] | No CC articulation | POST-TRANSFER |
 | [from "Not Articulated" entries] | No CC articulation | NOT ARTICULATED |
+| [from "Recommended, Not Required" entries] | No CC articulation | RECOMMENDED |
 
 🚨 CONDITIONAL ARTICULATION RULE: if the input marks a requirement's status as
 "MET (CONDITIONAL)", copy that status EXACTLY as "MET (CONDITIONAL)" — never
@@ -510,6 +511,12 @@ it means the course is required by the major but ASSIST provides no CC equivalen
 at all — this is DIFFERENT from POST-TRANSFER (which is an explicit "must take at
 university" note). Render its status as exactly "NOT ARTICULATED", never merge it
 into POST-TRANSFER or drop it.
+
+🚨 RECOMMENDED RULE: if the input lists a requirement under "Recommended, Not
+Required", it means the UC's own admissions guidance calls this course "highly
+recommended" but NOT required for admission — it is optional. Render its status
+as exactly "RECOMMENDED", never merge it into NOT ARTICULATED (which implies a
+required gap) or POST-TRANSFER.
 
 **GE Status**
 | Area | CC Course | Status |

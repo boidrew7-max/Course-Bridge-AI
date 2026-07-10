@@ -216,6 +216,7 @@ class PlanResult:
     requirement_audit: list = field(default_factory=list)
     post_transfer: list = field(default_factory=list)
     not_articulated: list = field(default_factory=list)  # required, zero CC equivalent per ASSIST
+    recommended_optional: list = field(default_factory=list)  # highly recommended, not required
     warnings: list = field(default_factory=list)
     total_units: float = 0.0
     active_terms: int = 4      # how many terms actually have courses
@@ -512,7 +513,8 @@ def _resolve_major_prep(
     completed: set,
     uc_normalized: str = "",
     major: str = "",
-) -> tuple[list, list, list, bool, set, list, list]:
+    college: str = "",
+) -> tuple[list, list, list, bool, set, list, list, list]:
     """
     For each UC articulation entry, pick one option group deterministically.
 
@@ -562,6 +564,10 @@ def _resolve_major_prep(
     # ── Legacy OR-group pre-pass (fallback for shards without g/k) ───────────
     skip_uc_keys: dict = {}
     winner_group_label: dict = {}   # winner_key -> combined "A / B / C" label
+    satisfied_alt_group_keys: set = set()  # every non-winning key in a resolved OR-group,
+                                            # including alternatives with zero CC articulation
+                                            # at all (e.g. MATH 56) — these aren't real gaps,
+                                            # they're just the alternative track not taken.
     for group in _UC_REQ_OR_GROUPS:
         if len(group) == 3:
             group_uc, major_substr, or_group = group
@@ -596,6 +602,13 @@ def _resolve_major_prep(
         for key, _ in members:
             if key != winner:
                 skip_uc_keys[key] = winner
+        satisfied_alt_group_keys.update(k for k in or_group if k != winner)
+
+    if satisfied_alt_group_keys:
+        not_articulated = [
+            entry for entry in not_articulated
+            if tuple(entry.split(" - ", 1)[0].split(" ", 1)) not in satisfied_alt_group_keys
+        ]
 
     # ── Partition entries into NFromArea groups vs AND entries ────────────────
     # group_map: gid -> {"pick_n": int, "arts": list, "uc_codes": frozenset}
@@ -839,8 +852,36 @@ def _resolve_major_prep(
         chosen = _pick_cc(list(valid_groups))
         _commit_chosen(chosen, uc_str, uc_key=uc_key)
 
+    # ── Split "Highly Recommended" (not required) courses out of not_articulated ──
+    # ASSIST's structured data can't distinguish "required for admission" from
+    # "highly recommended" — that distinction only lives in the UC's free-text
+    # admissions guidance. Pull it out here so students aren't alarmed by a
+    # "NOT ARTICULATED" label on a course that isn't actually a hard requirement.
+    recommended_optional = []
+    if not_articulated:
+        from advisor import _find_uc_hint
+        hint_text = _find_uc_hint(uc_normalized, college, major)
+        recommended_codes: set = set()
+        if hint_text:
+            m = re.search(
+                r"Highly Recommended Courses? for Admission(.*?)(?:\n\s*\n|Required Courses|$)",
+                hint_text, re.IGNORECASE | re.DOTALL,
+            )
+            if m:
+                for code_m in re.finditer(r"\b([A-Z]{2,10})\s+(\d{1,4}[A-Z]?)\b", m.group(1)):
+                    recommended_codes.add((code_m.group(1).upper(), code_m.group(2).upper()))
+        if recommended_codes:
+            still_gap = []
+            for entry in not_articulated:
+                prefix_num = tuple(entry.split(" - ", 1)[0].split(" ", 1))
+                if len(prefix_num) == 2 and (prefix_num[0].upper(), prefix_num[1].upper()) in recommended_codes:
+                    recommended_optional.append(entry)
+                else:
+                    still_gap.append(entry)
+            not_articulated = still_gap
+
     return (list(committed.values()), audit_rows, post_transfer, multi_track,
-            loser_cc_codes, not_articulated, stale_notes)
+            loser_cc_codes, not_articulated, stale_notes, recommended_optional)
 
 
 # ── IGETC selection ───────────────────────────────────────────────────────────
@@ -1484,13 +1525,14 @@ def build_plan(
     result = PlanResult(college=college, uc=uc, major=major, ge_pattern=ge_pattern)
 
     (major_courses, audit_rows, post_transfer, multi_track,
-     loser_cc_codes, not_articulated, stale_notes) = _resolve_major_prep(
-        arts, accept_honors, completed_keys, uc_normalized=uc_l, major=major
+     loser_cc_codes, not_articulated, stale_notes, recommended_optional) = _resolve_major_prep(
+        arts, accept_honors, completed_keys, uc_normalized=uc_l, major=major, college=college
     )
     result.requirement_audit = audit_rows
     result.multi_track = multi_track
     result.post_transfer     = post_transfer
     result.not_articulated   = not_articulated
+    result.recommended_optional = recommended_optional
     result.warnings.extend(stale_notes)
 
     # Use matched CC name from shard key for IGETC lookup so typos in the
@@ -1783,6 +1825,13 @@ def build_render_prompt(
             lines.append(
                 f"  {na} | NOT ARTICULATED — no CC equivalent; take at {result.uc} "
                 f"or via {result.uc} Summer Session before transfer."
+            )
+    if result.recommended_optional:
+        lines.append("Recommended, Not Required (per the UC's own admissions guidance):")
+        for ro in result.recommended_optional:
+            lines.append(
+                f"  {ro} | RECOMMENDED — highly recommended for admission but not "
+                f"required; no CC equivalent, optional to take before or after transfer."
             )
     lines.append("")
 

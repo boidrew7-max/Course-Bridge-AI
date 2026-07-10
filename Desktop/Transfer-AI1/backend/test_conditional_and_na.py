@@ -70,7 +70,7 @@ def test_na_row_always_produces_entry():
             "na": True,
         },
     ]
-    _, audit_rows, post_transfer, _, _, not_articulated, _ = _resolve_major_prep(
+    _, audit_rows, post_transfer, _, _, not_articulated, _, _ = _resolve_major_prep(
         arts, accept_honors=False, completed=set(),
         uc_normalized="berkeley", major="Computer Science B.A.",
     )
@@ -106,7 +106,7 @@ def test_na_row_mixed_with_normal_rows():
             "na": True,
         },
     ]
-    major_courses, audit_rows, post_transfer, _, _, not_articulated, _ = _resolve_major_prep(
+    major_courses, audit_rows, post_transfer, _, _, not_articulated, _, _ = _resolve_major_prep(
         arts, accept_honors=False, completed=set(),
         uc_normalized="berkeley", major="Computer Science B.A.",
     )

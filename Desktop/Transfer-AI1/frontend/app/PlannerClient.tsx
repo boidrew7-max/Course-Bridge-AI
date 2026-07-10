@@ -1026,6 +1026,7 @@ const STATUS_STYLES: Record<string, string> = {
   "NOT COMPLETE": "bg-[#fff0f0] text-[#9b1c1c]",
   "NOT ARTICULATED": "bg-[#f1f0ee] text-[#6f7680]",
   "POST-TRANSFER": "bg-[#eef5ff] text-[#2f5fa8]",
+  "RECOMMENDED": "bg-[#f5f0ff] text-[#6b3fa0]",
 };
 
 function StatusBadge({ value }: { value: string }) {

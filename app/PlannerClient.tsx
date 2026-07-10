@@ -2261,7 +2261,22 @@ export default function PlannerClient() {
 
       {/* ── Step wizard onboarding ───────────────────────────── */}
       {!onboardingDone && (() => {
-        const UC_OPTIONS = ["UCLA","UC Berkeley","UC San Diego","UC Irvine","UC Santa Barbara","UC Davis","UC Santa Cruz","UC Riverside","UC Merced"];
+        // value must match the backend's canonical campus name (same as /api/options/ucs
+        // returns) — the "Build your plan" panel and its major dropdown key off this same
+        // targetSchool state, so a mismatched label here (e.g. "UC Berkeley" instead of
+        // "Berkeley") breaks /api/options/majors after onboarding and silently empties the
+        // major list.
+        const UC_OPTIONS: { label: string; value: string }[] = [
+          { label: "UCLA",             value: "Los Angeles" },
+          { label: "UC Berkeley",      value: "Berkeley" },
+          { label: "UC San Diego",     value: "San Diego" },
+          { label: "UC Irvine",        value: "Irvine" },
+          { label: "UC Santa Barbara", value: "Santa Barbara" },
+          { label: "UC Davis",         value: "Davis" },
+          { label: "UC Santa Cruz",    value: "Santa Cruz" },
+          { label: "UC Riverside",     value: "Riverside" },
+          { label: "UC Merced",        value: "Merced" },
+        ];
         const CC_SUGGESTIONS = ["De Anza College","Mt. SAC","Santa Monica College","Diablo Valley College","City College of SF","Foothill College","Pasadena City College","El Camino College","Irvine Valley College","Los Angeles Valley College","Cerritos College","Grossmont College","Palomar College","Saddleback College"];
         const MAJOR_SUGGESTIONS = ["Computer Science","Business Administration","Economics","Psychology","Biology","Nursing","Engineering","Political Science","Sociology","Mathematics","English","Data Science","Mechanical Engineering","Electrical Engineering","Chemistry","Kinesiology","Communications","Accounting","Architecture","Film & Media Studies"];
         const steps = ["College","Target UCs","Major","Courses"];
@@ -2341,9 +2356,9 @@ export default function PlannerClient() {
                   <div className="flex flex-col gap-4">
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {UC_OPTIONS.map(uc => (
-                        <button key={uc} onClick={() => toggleUC(uc)}
-                          className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition ${wizardUCs.includes(uc) ? "border-[#0b7f46] bg-[#f0faf5] text-[#0b7f46]" : "border-[#d8d0c3] bg-[#faf8f3] text-[#303236] hover:border-[#0b7f46] hover:text-[#0b7f46]"}`}>
-                          {wizardUCs.includes(uc) ? "✓ " : ""}{uc}
+                        <button key={uc.value} onClick={() => toggleUC(uc.value)}
+                          className={`rounded-2xl border px-3 py-3 text-sm font-semibold transition ${wizardUCs.includes(uc.value) ? "border-[#0b7f46] bg-[#f0faf5] text-[#0b7f46]" : "border-[#d8d0c3] bg-[#faf8f3] text-[#303236] hover:border-[#0b7f46] hover:text-[#0b7f46]"}`}>
+                          {wizardUCs.includes(uc.value) ? "✓ " : ""}{uc.label}
                         </button>
                       ))}
                     </div>

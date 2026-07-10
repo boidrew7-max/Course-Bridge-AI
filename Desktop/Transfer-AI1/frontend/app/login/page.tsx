@@ -25,9 +25,9 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <div className="mb-3 flex items-center justify-center gap-2">
-              <img src="/coursebridge-logo.png" alt="CourseBridge AI logo" className="h-9 w-auto" />
+              <img src="/coursebridge-logo.png" alt="CourseBridge logo" className="h-9 w-auto" />
               <span className="text-lg font-bold text-[#1a2e22]">
-                CourseBridge <span className="text-[#0b7f46]">AI</span>
+                CourseBridge
               </span>
             </div>
             <h1 className="text-2xl font-bold text-[#1a2e22]">Welcome back</h1>

@@ -45,10 +45,10 @@ export default function OnboardingPage() {
   const [courses, setCourses] = useState("");
   const [noCourses, setNoCourses] = useState(false);
   const [hsMath, setHsMath] = useState("");
-  const [honors, setHonors] = useState<boolean | null>(null);
   const [hasAp, setHasAp] = useState<boolean | null>(null);
   const [apCredits, setApCredits] = useState("");
-  const [mode, setMode] = useState<"competitive" | "efficiency" | null>(null);
+  const [transcriptParsing, setTranscriptParsing] = useState(false);
+  const [transcriptMessage, setTranscriptMessage] = useState("");
 
   useEffect(() => {
     if (!college || !ucs[0]) { setMajorOptions([]); return; }
@@ -62,6 +62,41 @@ export default function OnboardingPage() {
     setUcs((prev) => (prev.includes(value) ? prev.filter((u) => u !== value) : [...prev, value]));
   }
 
+  async function handleTranscriptUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-uploading the same file later
+    if (!file) return;
+
+    setTranscriptParsing(true);
+    setTranscriptMessage("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/parse-transcript", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.error) {
+        setTranscriptMessage(data.error);
+      } else if (!data.courses?.length) {
+        setTranscriptMessage(data.warning ?? "No courses found in that PDF.");
+      } else {
+        setNoCourses(false);
+        setCourses((prev) => {
+          const existing = new Set(prev.split(/[,;\n]/).map((c: string) => c.trim().toUpperCase()).filter(Boolean));
+          const merged = [...prev.split(/[,;\n]/).map((c) => c.trim()).filter(Boolean)];
+          for (const code of data.courses as string[]) {
+            if (!existing.has(code.toUpperCase())) merged.push(code);
+          }
+          return merged.join(", ");
+        });
+        setTranscriptMessage(`Added ${data.courses.length} course${data.courses.length === 1 ? "" : "s"} from your transcript — review the list below.`);
+      }
+    } catch {
+      setTranscriptMessage("Something went wrong reading that file. Try again or enter your courses manually.");
+    } finally {
+      setTranscriptParsing(false);
+    }
+  }
+
   function finish() {
     const profile = {
       firstName: firstName.trim(),
@@ -71,9 +106,9 @@ export default function OnboardingPage() {
       major,
       completedCourses: noCourses ? "" : courses,
       hsMath: noCourses ? hsMath : "",
-      honors: honors ?? true,
+      honors: false,
       apCredits,
-      mode: mode ?? "competitive",
+      mode: "competitive",
     };
     try {
       localStorage.setItem("cb_profile", JSON.stringify(profile));
@@ -288,13 +323,37 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 5 — Courses + preferences */}
+          {/* Step 5 — Courses */}
           {step === 5 && (
             <div className="flex flex-col gap-5">
               <div>
                 <h1 className="text-2xl font-bold text-[#1a2e22]">What courses have you completed?</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">List them in plain text — don&apos;t worry about formatting.</p>
+                <p className="mt-1.5 text-sm text-[#7b818b]">Upload your transcript or list your courses in plain text.</p>
               </div>
+
+              <label
+                htmlFor="transcript-upload"
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d8d8dc] bg-[#faf9f6] px-4 py-6 text-center transition hover:border-[#0b7f46]"
+              >
+                <input
+                  id="transcript-upload"
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={handleTranscriptUpload}
+                />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0b7f46" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <path d="M14 2v6h6" />
+                </svg>
+                <span className="text-sm font-semibold text-[#303236]">
+                  {transcriptParsing ? "Reading your transcript…" : "Upload transcript (PDF)"}
+                </span>
+                <span className="text-xs text-[#7b818b]">We&apos;ll pull your completed courses out automatically</span>
+              </label>
+              {transcriptMessage && (
+                <p className="text-xs text-[#7b818b]">{transcriptMessage}</p>
+              )}
 
               <label className="flex cursor-pointer items-center gap-3 select-none">
                 <input
@@ -313,7 +372,6 @@ export default function OnboardingPage() {
                   placeholder="e.g. Calc 1, English 1A, Intro to CS, Econ 1"
                   rows={4}
                   className="w-full resize-none rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
-                  autoFocus
                 />
               )}
               {noCourses && (
@@ -329,24 +387,6 @@ export default function OnboardingPage() {
                   />
                 </div>
               )}
-
-              <div className="rounded-xl border border-[#e5e0d5] bg-[#faf9f6] p-4">
-                <p className="mb-3 text-sm font-semibold text-[#303236]">Are you open to taking honors courses?</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setHonors(true)}
-                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${honors === true ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
-                  >
-                    Yes, include them
-                  </button>
-                  <button
-                    onClick={() => setHonors(false)}
-                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${honors === false ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
-                  >
-                    No, skip honors
-                  </button>
-                </div>
-              </div>
 
               <div className="rounded-xl border border-[#e5e0d5] bg-[#faf9f6] p-4">
                 <p className="mb-3 text-sm font-semibold text-[#303236]">Do you have any AP exam credit?</p>
@@ -375,35 +415,14 @@ export default function OnboardingPage() {
                 )}
               </div>
 
-              <div className="rounded-xl border border-[#e5e0d5] bg-[#faf9f6] p-4">
-                <p className="mb-1 text-sm font-semibold text-[#303236]">Planning mode</p>
-                <p className="mb-3 text-xs text-[#7b818b]">Competitive maximizes your transfer strength. Efficiency minimizes workload.</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setMode("competitive")}
-                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${mode === "competitive" ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
-                  >
-                    🏆 Competitive
-                  </button>
-                  <button
-                    onClick={() => setMode("efficiency")}
-                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${mode === "efficiency" ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
-                  >
-                    ⚡ Efficiency
-                  </button>
-                </div>
-              </div>
-
               <div className="flex justify-between pt-2">
                 <button onClick={() => setStep(4)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                 <button
                   onClick={finish}
                   disabled={
                     (!noCourses && !courses.trim()) ||
-                    honors === null ||
                     hasAp === null ||
-                    (hasAp === true && !apCredits.trim()) ||
-                    mode === null
+                    (hasAp === true && !apCredits.trim())
                   }
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >

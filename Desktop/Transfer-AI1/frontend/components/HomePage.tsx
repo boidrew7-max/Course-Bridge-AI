@@ -61,7 +61,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#5b6169]">
-              CourseBridge AI plans your UC transfer requirements using real ASSIST
+              CourseBridge plans your UC transfer requirements using real ASSIST
               articulation data — personalized to your community college, major, and
               target campus, so nothing falls through the cracks.
             </p>
@@ -125,7 +125,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-[#1a2e22]">Why CourseBridge</h2>
           <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169]">
             Transfer planning shouldn&apos;t depend on catching a counselor before
-            appointments fill up. Here&apos;s the problem CourseBridge AI solves.
+            appointments fill up. Here&apos;s the problem CourseBridge solves.
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -183,7 +183,7 @@ export default function HomePage() {
         <div className="rounded-3xl border border-[#e5e0d5] bg-white p-8 text-center shadow-sm">
           <h2 className="text-2xl font-bold text-[#1a2e22]">Free while in beta</h2>
           <p className="mx-auto mt-3 max-w-xl leading-7 text-[#5b6169]">
-            CourseBridge AI is currently free to use for all California community
+            CourseBridge is currently free to use for all California community
             college students while we build it out.
           </p>
         </div>
@@ -195,7 +195,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-white">Ready to see your plan?</h2>
           <p className="mx-auto mt-3 max-w-xl leading-7 text-white/85">
             Answer a few questions about your college, major, and target campus —
-            CourseBridge AI does the rest.
+            CourseBridge does the rest.
           </p>
           <Link
             href="/onboarding"

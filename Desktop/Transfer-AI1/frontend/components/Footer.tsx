@@ -5,9 +5,9 @@ export default function Footer() {
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="max-w-xs">
             <div className="flex items-center gap-2">
-              <img src="/coursebridge-logo.png" alt="CourseBridge AI logo" className="h-7 w-auto" />
+              <img src="/coursebridge-logo.png" alt="CourseBridge logo" className="h-7 w-auto" />
               <span className="font-bold text-[#1a2e22]">
-                CourseBridge <span className="text-[#0b7f46]">AI</span>
+                CourseBridge
               </span>
             </div>
             <p className="mt-3 text-sm leading-6 text-[#7b818b]">
@@ -36,7 +36,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 border-t border-[#e5e0d5] pt-6 text-xs leading-6 text-[#a3a9b3]">
-          Demo data only. CourseBridge AI is independent and not affiliated with ASSIST, UC, CSU, or CCSF.
+          Demo data only. CourseBridge is independent and not affiliated with ASSIST, UC, CSU, or CCSF.
           Always verify requirements through ASSIST.org, official college catalogs, and a counselor.
         </div>
       </div>

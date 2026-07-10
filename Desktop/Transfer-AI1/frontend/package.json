@@ -21,7 +21,8 @@
     "recharts": "^3.8.1",
     "tailwindcss": "latest",
     "tough-cookie": "^6.0.1",
-    "typescript": "latest"
+    "typescript": "latest",
+    "unpdf": "^1.6.2"
   },
   "name": "coursebridge-ai",
   "version": "1.0.0",

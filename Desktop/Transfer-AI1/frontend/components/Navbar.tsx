@@ -9,11 +9,11 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <img
             src="/coursebridge-logo.png"
-            alt="CourseBridge AI logo"
+            alt="CourseBridge logo"
             className="h-9 w-auto"
           />
           <span className="text-lg font-bold tracking-tight text-[#1a2e22]">
-            CourseBridge <span className="text-[#0b7f46]">AI</span>
+            CourseBridge
           </span>
         </Link>
 

@@ -852,33 +852,12 @@ def _resolve_major_prep(
         chosen = _pick_cc(list(valid_groups))
         _commit_chosen(chosen, uc_str, uc_key=uc_key)
 
-    # ── Split "Highly Recommended" (not required) courses out of not_articulated ──
-    # ASSIST's structured data can't distinguish "required for admission" from
-    # "highly recommended" — that distinction only lives in the UC's free-text
-    # admissions guidance. Pull it out here so students aren't alarmed by a
-    # "NOT ARTICULATED" label on a course that isn't actually a hard requirement.
-    recommended_optional = []
-    if not_articulated:
-        from advisor import _find_uc_hint
-        hint_text = _find_uc_hint(uc_normalized, college, major)
-        recommended_codes: set = set()
-        if hint_text:
-            m = re.search(
-                r"Highly Recommended Courses? for Admission(.*?)(?:\n\s*\n|Required Courses|$)",
-                hint_text, re.IGNORECASE | re.DOTALL,
-            )
-            if m:
-                for code_m in re.finditer(r"\b([A-Z]{2,10})\s+(\d{1,4}[A-Z]?)\b", m.group(1)):
-                    recommended_codes.add((code_m.group(1).upper(), code_m.group(2).upper()))
-        if recommended_codes:
-            still_gap = []
-            for entry in not_articulated:
-                prefix_num = tuple(entry.split(" - ", 1)[0].split(" ", 1))
-                if len(prefix_num) == 2 and (prefix_num[0].upper(), prefix_num[1].upper()) in recommended_codes:
-                    recommended_optional.append(entry)
-                else:
-                    still_gap.append(entry)
-            not_articulated = still_gap
+    # NOTE: a "Highly Recommended vs Required" reclassification pass using
+    # advisor._find_uc_hint() was tried here and reverted — loading a UC hints
+    # shard (tens of MB decompressed) on every plan_v2 request OOM-killed the
+    # gunicorn worker for the larger campuses (Berkeley/San Diego/Merced).
+    # Needs a lighter-weight data source before retrying.
+    recommended_optional: list = []
 
     return (list(committed.values()), audit_rows, post_transfer, multi_track,
             loser_cc_codes, not_articulated, stale_notes, recommended_optional)

@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .print-plan, .print-plan * { visibility: visible; }
+  .print-plan { position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
+}

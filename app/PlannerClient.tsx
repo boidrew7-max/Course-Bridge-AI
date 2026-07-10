@@ -972,18 +972,18 @@ const UC_STATS: Record<string, { rate: string; gpa: string; tag: boolean; tagGPA
   "UC Merced":         { rate: "72.1%", gpa: "3.0–3.4", tag: true,  tagGPA: "2.4" },
 };
 
-const IGETC_AREAS = [
+const CALGETC_AREAS = [
   { id: "1a", area: "1A", title: "English Composition", detail: "1 course (e.g. English 1A)" },
   { id: "1b", area: "1B", title: "Critical Thinking / Composition", detail: "1 course" },
-  { id: "1c", area: "1C", title: "Oral Communication", detail: "1 course (CSU only)" },
+  { id: "1c", area: "1C", title: "Oral Communication", detail: "1 course" },
   { id: "2",  area: "2",  title: "Mathematical Concepts", detail: "1 course (e.g. Calc, Stats)" },
   { id: "3a", area: "3A", title: "Arts",       detail: "1 course minimum" },
   { id: "3b", area: "3B", title: "Humanities",  detail: "1 course minimum" },
-  { id: "4",  area: "4",  title: "Social & Behavioral Sciences", detail: "3 courses, 2+ disciplines" },
+  { id: "4",  area: "4",  title: "Social & Behavioral Sciences", detail: "2 courses, 2 disciplines" },
   { id: "5a", area: "5A", title: "Physical Sciences", detail: "1 course" },
   { id: "5b", area: "5B", title: "Biological Sciences", detail: "1 course" },
   { id: "5c", area: "5C", title: "Lab Science",  detail: "1 lab (can overlap 5A or 5B)" },
-  { id: "6",  area: "6",  title: "Language Other Than English", detail: "2 years HS or 1 college course" },
+  { id: "6",  area: "6",  title: "Ethnic Studies", detail: "1 course" },
 ];
 
 const DEADLINES = [
@@ -1111,7 +1111,6 @@ export default function PlannerClient() {
   const [wizardApCredits, setWizardApCredits] = useState("");
   const [wizardHsMath, setWizardHsMath] = useState("");
   const [wizardMode, setWizardMode] = useState<"competitive" | "efficiency" | null>(null);
-  const [wizardGePattern, setWizardGePattern] = useState<"calgetc" | "igetc" | null>(null);
   // ── Multi-school tabs ─────────────────────────────────────────
   const [planSchools, setPlanSchools] = useState<string[]>([]);
   const [activeSchoolTab, setActiveSchoolTab] = useState("");
@@ -1125,11 +1124,11 @@ export default function PlannerClient() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const onboardingStarted = useRef(false);
 
-  // ── IGETC + tracker + panels ──────────────────────────────────
-  const [igetcChecked, setIgetcChecked] = useState<Record<string, boolean>>({});
+  // ── Cal-GETC + tracker + panels ──────────────────────────────────
+  const [calgetcChecked, setCalgetcChecked] = useState<Record<string, boolean>>({});
   const [trackerCourses, setTrackerCourses] = useState<{id:string;name:string;status:"planned"|"in-progress"|"done"}[]>([]);
   const [trackerInput, setTrackerInput] = useState("");
-  const [showIgetc, setShowIgetc] = useState(false);
+  const [showCalgetc, setShowCalgetc] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
   const [showDeadlines, setShowDeadlines] = useState(false);
   const [showTagChecker, setShowTagChecker] = useState(false);
@@ -1185,17 +1184,17 @@ export default function PlannerClient() {
     };
   }, [onboardingDone]);
 
-  // Persist IGETC and tracker to localStorage
+  // Persist Cal-GETC and tracker to localStorage
   useEffect(() => {
-    try { localStorage.setItem("igetc", JSON.stringify(igetcChecked)); } catch {}
-  }, [igetcChecked]);
+    try { localStorage.setItem("calgetc", JSON.stringify(calgetcChecked)); } catch {}
+  }, [calgetcChecked]);
   useEffect(() => {
     try { localStorage.setItem("tracker", JSON.stringify(trackerCourses)); } catch {}
   }, [trackerCourses]);
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("igetc");
-      if (saved) setIgetcChecked(JSON.parse(saved));
+      const saved = localStorage.getItem("calgetc");
+      if (saved) setCalgetcChecked(JSON.parse(saved));
       const saved2 = localStorage.getItem("tracker");
       if (saved2) setTrackerCourses(JSON.parse(saved2));
     } catch {}
@@ -1335,7 +1334,7 @@ export default function PlannerClient() {
     setTimeout(() => {
       document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
-    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses, wizardHonors ?? true, wizardApCredits, wizardGePattern ?? "calgetc", wizardMode ?? "competitive");
+    generateAIPlan(wizardCollege, wizardUCs[0] ?? "", wizardMajor, courses, wizardHonors ?? true, wizardApCredits, "calgetc", wizardMode ?? "competitive");
   }
 
   const sendChatMessage = useCallback(async (text?: string) => {
@@ -1727,7 +1726,7 @@ export default function PlannerClient() {
                     setTargetSchool(school);
                     setActiveSchoolTab(school);
                     setResult(null);
-                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardGePattern ?? "calgetc", wizardMode ?? "competitive");
+                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, "calgetc", wizardMode ?? "competitive");
                   }}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]"}`}>
                   {school}
@@ -2124,29 +2123,29 @@ export default function PlannerClient() {
               )}
             </div>
 
-            {/* IGETC Checklist */}
+            {/* Cal-GETC Checklist */}
             <div className="rounded-2xl border border-[#d8d0c3] bg-white overflow-hidden">
               <button
-                onClick={() => setShowIgetc(v => !v)}
+                onClick={() => setShowCalgetc(v => !v)}
                 className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3]"
               >
                 <div>
-                  <span className="text-sm font-bold text-[#303236]">IGETC Checklist</span>
+                  <span className="text-sm font-bold text-[#303236]">Cal-GETC Checklist</span>
                   <span className="ml-2 text-xs text-[#7b818b]">
-                    {Object.values(igetcChecked).filter(Boolean).length}/{IGETC_AREAS.length} areas done
+                    {Object.values(calgetcChecked).filter(Boolean).length}/{CALGETC_AREAS.length} areas done
                   </span>
                 </div>
-                <span className="text-[#7b818b] text-lg">{showIgetc ? "−" : "+"}</span>
+                <span className="text-[#7b818b] text-lg">{showCalgetc ? "−" : "+"}</span>
               </button>
-              {showIgetc && (
+              {showCalgetc && (
                 <div className="px-5 pb-5 space-y-2">
-                  <p className="text-xs text-[#7b818b] mb-3">Check off each IGETC area as you complete it. Progress is saved in your browser.</p>
-                  {IGETC_AREAS.map(area => (
-                    <label key={area.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${igetcChecked[area.id] ? "border-green-300 bg-green-50" : "border-[#d8d0c3] bg-[#faf8f3] hover:border-[#0b7f46]/40"}`}>
+                  <p className="text-xs text-[#7b818b] mb-3">Check off each Cal-GETC area as you complete it. Progress is saved in your browser.</p>
+                  {CALGETC_AREAS.map(area => (
+                    <label key={area.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${calgetcChecked[area.id] ? "border-green-300 bg-green-50" : "border-[#d8d0c3] bg-[#faf8f3] hover:border-[#0b7f46]/40"}`}>
                       <input
                         type="checkbox"
-                        checked={!!igetcChecked[area.id]}
-                        onChange={e => setIgetcChecked(prev => ({ ...prev, [area.id]: e.target.checked }))}
+                        checked={!!calgetcChecked[area.id]}
+                        onChange={e => setCalgetcChecked(prev => ({ ...prev, [area.id]: e.target.checked }))}
                         className="mt-0.5 h-4 w-4 rounded accent-[#0b7f46]"
                       />
                       <div>
@@ -2158,7 +2157,7 @@ export default function PlannerClient() {
                   <div className="mt-3 h-2 rounded-full bg-[#e0d9cf] overflow-hidden">
                     <div
                       className="h-full rounded-full bg-[#0b7f46] transition-all duration-300"
-                      style={{ width: `${Math.round((Object.values(igetcChecked).filter(Boolean).length / IGETC_AREAS.length) * 100)}%` }}
+                      style={{ width: `${Math.round((Object.values(calgetcChecked).filter(Boolean).length / CALGETC_AREAS.length) * 100)}%` }}
                     />
                   </div>
                 </div>
@@ -2466,20 +2465,6 @@ export default function PlannerClient() {
                       </div>
                     )}
                     <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
-                      <p className="text-sm font-semibold text-[#303236] mb-1">When did you first enroll at a CA community college?</p>
-                      <p className="text-xs text-[#7b818b] mb-3">This determines which GE pattern applies to your plan.</p>
-                      <div className="flex gap-3">
-                        <button onClick={() => setWizardGePattern("calgetc")}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardGePattern === "calgetc" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          Fall 2025 or later
-                        </button>
-                        <button onClick={() => setWizardGePattern("igetc")}
-                          className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition border ${wizardGePattern === "igetc" ? "bg-[#0b7f46] text-white border-[#0b7f46]" : "bg-white text-[#303236] border-[#d1c7b8] hover:border-[#0b7f46]"}`}>
-                          Before Fall 2025
-                        </button>
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-[#d1c7b8] bg-[#faf8f3] p-4">
                       <p className="text-sm font-semibold text-[#303236] mb-3">Are you open to taking honors courses?</p>
                       <div className="flex gap-3">
                         <button onClick={() => setWizardHonors(true)}
@@ -2527,7 +2512,7 @@ export default function PlannerClient() {
                     </div>
                     <div className="flex justify-between items-center pt-2">
                       <button onClick={() => setWizardStep(3)} className="text-sm text-[#7b818b] transition hover:text-[#303236]">← Back</button>
-                      <button onClick={completeWizard} disabled={(!wizardNoCourses && !wizardCourses.trim()) || wizardGePattern === null || wizardHonors === null || wizardHasAp === null || (wizardHasAp === true && !wizardApCredits.trim()) || wizardMode === null}
+                      <button onClick={completeWizard} disabled={(!wizardNoCourses && !wizardCourses.trim()) || wizardHonors === null || wizardHasAp === null || (wizardHasAp === true && !wizardApCredits.trim()) || wizardMode === null}
                         className="rounded-2xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40">
                         Build My Plan →
                       </button>

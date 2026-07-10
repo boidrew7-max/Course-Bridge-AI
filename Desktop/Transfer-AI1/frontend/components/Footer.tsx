@@ -4,12 +4,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-5 py-10 md:px-8">
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="max-w-xs">
-            <div className="flex items-center gap-2">
-              <img src="/coursebridge-logo.png" alt="CourseBridge logo" className="h-7 w-auto" />
-              <span className="font-bold text-[#1a2e22]">
-                CourseBridge
-              </span>
-            </div>
+            <img src="/coursebridge-logo.png" alt="CourseBridge" className="h-7 w-auto" />
             <p className="mt-3 text-sm leading-6 text-[#7b818b]">
               Transfer planning for California community college students,
               built on real ASSIST articulation data.

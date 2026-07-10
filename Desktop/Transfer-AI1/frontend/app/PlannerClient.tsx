@@ -1009,12 +1009,72 @@ function renderInline(text: string): ReactNode {
   );
 }
 
+const TABLE_ROW_RE = /^\s*\|(.*)\|\s*$/;
+const TABLE_SEPARATOR_RE = /^\s*\|?[\s:|-]+\|?\s*$/;
+
+function splitTableRow(line: string): string[] {
+  const match = line.match(TABLE_ROW_RE);
+  const inner = match ? match[1] : line;
+  return inner.split("|").map((cell) => cell.trim());
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  "MET": "bg-[#e7f3ed] text-[#0b7f46]",
+  "MET (CONDITIONAL)": "bg-[#fff7db] text-[#8a6100]",
+  "PASS": "bg-[#e7f3ed] text-[#0b7f46]",
+  "NOT MET": "bg-[#fff0f0] text-[#9b1c1c]",
+  "NOT COMPLETE": "bg-[#fff0f0] text-[#9b1c1c]",
+  "NOT ARTICULATED": "bg-[#f1f0ee] text-[#6f7680]",
+  "POST-TRANSFER": "bg-[#eef5ff] text-[#2f5fa8]",
+};
+
+function StatusBadge({ value }: { value: string }) {
+  const style = STATUS_STYLES[value.trim().toUpperCase()];
+  if (!style) return <>{renderInline(value)}</>;
+  return (
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${style}`}>
+      {value.trim()}
+    </span>
+  );
+}
+
+function MarkdownTable({ rows }: { rows: string[][] }) {
+  const [header, ...body] = rows;
+  return (
+    <div className="my-3 overflow-x-auto rounded-xl border border-[#e5e0d5]">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-[#faf9f6]">
+            {header.map((cell, i) => (
+              <th key={i} className="border-b border-[#e5e0d5] px-3 py-2 text-left font-semibold text-[#303236]">
+                {renderInline(cell)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {body.map((row, ri) => (
+            <tr key={ri} className={ri % 2 === 1 ? "bg-[#faf9f6]/60" : undefined}>
+              {row.map((cell, ci) => (
+                <td key={ci} className="border-b border-[#eceae4] px-3 py-2 align-top text-[#4d535c] last:border-b-0">
+                  {ci === row.length - 1 ? <StatusBadge value={cell} /> : renderInline(cell)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function SimpleMarkdown({ text }: { text: string }) {
   const lines = text.split("\n");
   const out: ReactNode[] = [];
   let listBuf: string[] = [];
+  let tableBuf: string[][] = [];
 
-  function flush() {
+  function flushList() {
     if (!listBuf.length) return;
     out.push(
       <ul key={out.length} className="my-2 space-y-1 pl-5 list-disc">
@@ -1024,8 +1084,41 @@ function SimpleMarkdown({ text }: { text: string }) {
     listBuf = [];
   }
 
-  for (const raw of lines) {
-    const line = raw.trimEnd();
+  function flushTable() {
+    if (!tableBuf.length) return;
+    out.push(<MarkdownTable key={out.length} rows={tableBuf} />);
+    tableBuf = [];
+  }
+
+  function flush() {
+    flushList();
+    flushTable();
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trimEnd();
+
+    // Table: a "| ... |" row followed by a "|---|---|" separator starts a table block.
+    if (
+      !tableBuf.length &&
+      TABLE_ROW_RE.test(line) &&
+      lines[i + 1] !== undefined &&
+      TABLE_SEPARATOR_RE.test(lines[i + 1]) &&
+      lines[i + 1].includes("-")
+    ) {
+      flushList();
+      tableBuf.push(splitTableRow(line));
+      i++; // skip the separator row
+      continue;
+    }
+    if (tableBuf.length) {
+      if (TABLE_ROW_RE.test(line)) {
+        tableBuf.push(splitTableRow(line));
+        continue;
+      }
+      flushTable();
+    }
+
     if (/^###\s/.test(line)) {
       flush();
       out.push(<h4 key={out.length} className="mt-4 mb-1 font-bold text-[#303236]">{line.slice(4)}</h4>);

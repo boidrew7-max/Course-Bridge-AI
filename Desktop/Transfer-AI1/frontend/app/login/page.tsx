@@ -24,12 +24,7 @@ export default function LoginPage() {
       <main className="flex flex-1 items-center justify-center px-5 py-16 md:px-8">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
-            <div className="mb-3 flex items-center justify-center gap-2">
-              <img src="/coursebridge-logo.png" alt="CourseBridge logo" className="h-9 w-auto" />
-              <span className="text-lg font-bold text-[#1a2e22]">
-                CourseBridge
-              </span>
-            </div>
+            <img src="/coursebridge-logo.png" alt="CourseBridge" className="mx-auto mb-3 h-9 w-auto" />
             <h1 className="text-2xl font-bold text-[#1a2e22]">Welcome back</h1>
             <p className="mt-2 text-sm text-[#7b818b]">
               Log in to pick up your transfer plan where you left off.

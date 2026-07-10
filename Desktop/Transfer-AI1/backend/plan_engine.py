@@ -27,6 +27,7 @@ import gzip
 import json
 import os
 import re
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -117,7 +118,10 @@ _QUARTER_SCHOOLS = {"De Anza College", "Foothill College", "Lake Tahoe Community
 def _is_quarter(college: str) -> bool:
     return college in _QUARTER_SCHOOLS
 
-_ART_SHARDS: dict = {}
+_ART_SHARDS: "OrderedDict" = OrderedDict()
+_ART_SHARDS_MAX = 2   # each shard is tens of MB decompressed; cap to avoid
+                       # OOM-killing the single gunicorn worker as different
+                       # UCs get requested over the worker's lifetime.
 _IGETC_CACHE = None
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -127,7 +131,9 @@ def _load_uc_shard(uc_canonical: str) -> dict:
     if not shard_name:
         return {}
     if shard_name in _ART_SHARDS:
+        _ART_SHARDS.move_to_end(shard_name)
         return _ART_SHARDS[shard_name]
+    shard = {}
     base = os.path.join(_DATA_DIR, f"articulations_{shard_name}.json")
     for path in (base + ".gz", base):
         if not os.path.exists(path):
@@ -136,12 +142,15 @@ def _load_uc_shard(uc_canonical: str) -> dict:
             opener = gzip.open if path.endswith(".gz") else open
             with opener(path, "rt", encoding="utf-8") as f:
                 shard = json.load(f)
-            _ART_SHARDS[shard_name] = shard
-            return shard
-        except Exception:
             break
-    _ART_SHARDS[shard_name] = {}
-    return {}
+        except Exception:
+            shard = {}
+            break
+    _ART_SHARDS[shard_name] = shard
+    _ART_SHARDS.move_to_end(shard_name)
+    while len(_ART_SHARDS) > _ART_SHARDS_MAX:
+        _ART_SHARDS.popitem(last=False)
+    return shard
 
 
 def _load_igetc() -> dict:

@@ -524,6 +524,34 @@ as exactly "RECOMMENDED", never merge it into NOT ARTICULATED (which implies a
 required gap) or POST-TRANSFER.
 
 **GE Status**
+
+🚨 GE PATTERN RULE: the input names exactly one pattern — "## Cal-GETC Completion"
+or "## IGETC Completion" — with a fixed list of area rows underneath it. Render
+ONE row in the GE Status table per area row given in that input section, in the
+same order, using the exact area label given (do not rename, drop, merge, or add
+areas, and do not fall back to the other pattern's area list). The two patterns
+are NOT interchangeable:
+
+If the input says "## Cal-GETC Completion" (Fall 2025+ students), use exactly
+these 11 areas — note Area 1C exists, Area 6 is Ethnic Studies (not a language
+requirement), and Area 4 needs only 2 courses from 2 disciplines:
+| Area | CC Course | Status |
+|---|---|---|
+| 1A English Composition | COURSE# | MET / NOT MET |
+| 1B Critical Thinking | COURSE# (ENGL first) | MET / NOT MET |
+| 1C Oral Communication | COURSE# | MET / NOT MET |
+| 2 Mathematical Concepts and Quantitative Reasoning | COURSE# | MET / NOT MET |
+| 3A Arts | COURSE# | MET / NOT MET |
+| 3B Humanities | COURSE# | MET / NOT MET |
+| 4 Social & Behavioral Sciences (2 courses, 2 disciplines) | COURSE#, COURSE# | MET / NOT MET |
+| 5A Physical Sciences | COURSE# (non-★LAB) | MET / NOT MET |
+| 5B Biological Sciences | COURSE# ★LAB | MET / NOT MET |
+| 5C Science Lab | satisfied by 5B ★LAB above — no separate course | MET / NOT MET |
+| 6 Ethnic Studies | COURSE# | MET / NOT MET |
+
+If the input says "## IGETC Completion" (catalog-rights students), use exactly
+these 10 areas — no Area 1C, Area 4 needs 3 courses, and Area 6 is Languages
+Other Than English (waivable by HS proficiency), not Ethnic Studies:
 | Area | CC Course | Status |
 |---|---|---|
 | 1A English Composition | COURSE# | MET / NOT MET |

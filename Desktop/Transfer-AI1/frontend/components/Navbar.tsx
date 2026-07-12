@@ -7,8 +7,12 @@ import { useRouter } from "next/navigation";
 export default function Navbar() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
+  const [hasLocalPlan, setHasLocalPlan] = useState(false);
 
   useEffect(() => {
+    try {
+      setHasLocalPlan(!!localStorage.getItem("cb_profile"));
+    } catch {}
     (async () => {
       try {
         const res = await fetch("/api/auth/me");
@@ -24,6 +28,7 @@ export default function Navbar() {
     try { await fetch("/api/auth/logout", { method: "POST" }); } catch {}
     try { localStorage.removeItem("cb_profile"); } catch {}
     setEmail(null);
+    setHasLocalPlan(false);
     // Full reload (not router.push) so app/page.tsx re-runs its auth/local
     // check from a clean slate — otherwise the already-mounted dashboard
     // component keeps showing the plan that was in memory before logout.
@@ -51,12 +56,12 @@ export default function Navbar() {
           <Link href="/#pricing" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
             Pricing
           </Link>
-          {email ? (
+          {email || hasLocalPlan ? (
             <button
               type="button"
               onClick={handleLogout}
               className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]"
-              title={email}
+              title={email ?? "Clear saved plan"}
             >
               Log out
             </button>

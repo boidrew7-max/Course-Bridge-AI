@@ -218,42 +218,45 @@ def search_static(query):
                 lines.append("\nUC systemwide minimum transfer GPA: 2.4 (competitive campuses need 3.5+)")
                 parts.append("\n".join(lines))
 
-    # --- IGETC ---
-    if any(w in q for w in ["igetc", "general ed", "general education", "area 1", "area 2", "area 3", "area 4", "area 5", "area 6"]):
-        data = _load("igetc_map.json")
+    # --- Cal-GETC ---
+    if any(w in q for w in ["cal-getc", "calgetc", "igetc", "general ed", "general education", "area 1", "area 2", "area 3", "area 4", "area 5", "area 6"]):
+        data = _load("calgetc_map.json.gz")
         if data:
             from search_agreements import detect_cc
             cc = detect_cc(query)
-            area_map = {"1a": "1A", "1b": "1B", "2a": "2A", "3a": "3A", "3b": "3B",
-                        "4": "4", "5a": "5A", "5b": "5B", "5c": "5C", "6a": "6A"}
+            area_map = {"1a": "1A", "1b": "1B", "1c": "1C", "2": "2", "3a": "3A", "3b": "3B",
+                        "4": "4", "5a": "5A", "5b": "5B", "5c": "5C", "6": "6"}
             area_hint = None
             for code in area_map:
                 if code in q:
                     area_hint = area_map[code]
                     break
 
-            schools = data.get("schools", {})
+            schools = data.get("bySchool", {})
             if cc and schools:
                 school_key = next((k for k in schools if cc.lower() in k.lower() or k.lower() in cc.lower()), None)
                 if school_key:
                     school_data = schools[school_key]
-                    areas = school_data.get("areas", {}) if isinstance(school_data, dict) else {}
+                    areas = school_data.get("byArea", {}) if isinstance(school_data, dict) else {}
                     if area_hint and area_hint in areas:
                         courses = areas[area_hint]
-                        lines = [f"IGETC Area {area_hint} courses at {school_key}:"]
+                        lines = [f"Cal-GETC Area {area_hint} courses at {school_key}:"]
                         for c in (courses[:10] if isinstance(courses, list) else []):
                             if isinstance(c, dict):
-                                lines.append(f"  {c.get('prefix','')} {c.get('courseNumber','')} - {c.get('courseTitle','')} ({c.get('maxUnits','?')} units)")
+                                lines.append(f"  {c.get('prefix','')} {c.get('number','')} - {c.get('title','')} ({c.get('units','?')} units)")
                         parts.append("\n".join(lines))
                     else:
                         covered = sorted(areas.keys()) if isinstance(areas, dict) else []
-                        parts.append(f"IGETC areas covered at {school_key}: {', '.join(covered)}")
+                        parts.append(f"Cal-GETC areas covered at {school_key}: {', '.join(covered)}")
             else:
                 parts.append(
-                    "IGETC areas: 1A (English Comp), 1B (Critical Thinking), 2A (Math), "
-                    "3A (Arts), 3B (Humanities), 4 (Social Science), "
-                    "5A (Physical Science), 5B (Bio Science), 5C (Lab), 6A (Foreign Language). "
-                    "Completing IGETC satisfies lower-division GE requirements at all UC campuses."
+                    "Cal-GETC areas: 1A (English Comp), 1B (Critical Thinking), 1C (Oral Communication), "
+                    "2 (Math/Quantitative Reasoning), 3A (Arts), 3B (Humanities), "
+                    "4 (Social & Behavioral Sciences, 2 courses/2 disciplines), "
+                    "5A (Physical Science), 5B (Bio Science), 5C (Lab, satisfied via 5B), "
+                    "6 (Ethnic Studies). Cal-GETC replaced IGETC for students who first enroll "
+                    "at a CA community college Fall 2025 or later, and satisfies lower-division "
+                    "GE requirements at all UC campuses."
                 )
 
     # --- Essay evaluation (student submits their own essay for review) ---

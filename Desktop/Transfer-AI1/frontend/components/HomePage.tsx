@@ -37,7 +37,7 @@ const HOW_IT_WORKS = [
 const WHAT_YOU_GET = [
   { title: "Major prep tracking", body: "See exactly which lower-division major requirements you've completed and which are still missing." },
   { title: "Prerequisite sequencing", body: "Courses are ordered by prerequisite chains so you never plan a class before you're ready for it." },
-  { title: "General education coverage", body: "Track Cal-GETC / IGETC areas alongside your major prep in one place." },
+  { title: "General education coverage", body: "Track Cal-GETC areas alongside your major prep in one place." },
   { title: "A generated semester plan", body: "A term-by-term schedule built from real ASSIST articulation data for your college, major, and target campus." },
   { title: "TAG eligibility checker", body: "Check your GPA and major against Transfer Admission Guarantee requirements for participating UCs." },
   { title: "Application deadline reminders", body: "Keep TAG, UC application, and financial aid deadlines in view as your plan comes together." },

@@ -188,10 +188,14 @@ def reset():
 # ── College/UC/Major options (built once from articulations index) ─────────
 
 _OPTIONS_CACHE = None
+_OPTIONS_CACHE_AT = 0.0
+_OPTIONS_CACHE_TTL = 6 * 3600  # rebuild periodically so a data-only redeploy
+                                # (shards updated without a process restart)
+                                # doesn't leave stale college/major lists forever.
 
 def _build_options():
-    global _OPTIONS_CACHE
-    if _OPTIONS_CACHE is not None:
+    global _OPTIONS_CACHE, _OPTIONS_CACHE_AT
+    if _OPTIONS_CACHE is not None and (time.time() - _OPTIONS_CACHE_AT) < _OPTIONS_CACHE_TTL:
         return _OPTIONS_CACHE
     import gzip as _gz
     from collections import defaultdict
@@ -226,6 +230,7 @@ def _build_options():
         "targetsByCollege": {c: sorted(v) for c, v in targets.items()},
         "majorsByCollegeAndTarget": {c: {u: sorted(v) for u, v in ucs.items()} for c, ucs in majors.items()},
     }
+    _OPTIONS_CACHE_AT = time.time()
     return _OPTIONS_CACHE
 
 
@@ -323,12 +328,6 @@ def plan_v2():
     if mode not in ("competitive", "efficiency"):
         mode = "competitive"
 
-    # ge_pattern: "calgetc" for F2025+ (default), "igetc" for catalog-rights students.
-    # Frontend derives this from "When did you first enroll at a CC?":
-    #   before fall 2025 → "igetc";  fall 2025 or later → "calgetc"
-    ge_pattern_raw = data.get("gePattern", data.get("enrollmentYear", "calgetc"))
-    ge_pattern = "igetc" if str(ge_pattern_raw).strip().lower() == "igetc" else "calgetc"
-
     # completed courses: may be a string ("MATH 1A, ENGL C1000") or list
     completed_raw = data.get("completedCourses", "")
     if isinstance(completed_raw, list):
@@ -352,7 +351,6 @@ def plan_v2():
             accept_honors=accept_honors,
             completed=completed_set,
             ap_credits=ap_credits,
-            ge_pattern=ge_pattern,
         )
     except Exception as e:
         app.logger.error("plan_v2_build_fail college=%r school=%r major=%r err=%.200s",
@@ -458,6 +456,7 @@ def onboard():
             for chunk in ask_advisor_onboarding_stream(history):
                 yield f"data: {json.dumps(chunk)}\n\n"
         except Exception as e:
+            app.logger.error("onboard_fail err=%.200s", str(e))
             yield f"data: {json.dumps('Something went wrong. Please try again.')}\n\n"
         yield "data: [DONE]\n\n"
 
@@ -657,7 +656,7 @@ def api_messages_post(sid):
         return jsonify({"error": "messages list required"}), 400
     # Validate shape
     for m in msgs:
-        if m.get("role") not in ("user", "assistant") or not m.get("content"):
+        if not isinstance(m, dict) or m.get("role") not in ("user", "assistant") or not m.get("content"):
             return jsonify({"error": "Each message needs role and content"}), 400
     if not add_messages(sid, uid, msgs):
         return jsonify({"error": "Not found"}), 404
@@ -681,7 +680,10 @@ def api_feedback():
 @app.route("/tag-check", methods=["POST"])
 def tag_check():
     data   = request.get_json() or {}
-    gpa    = float(data.get("gpa", 0))
+    try:
+        gpa = float(data.get("gpa", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "gpa must be a number"}), 400
     major  = data.get("major", "").strip().lower()
 
     tag_path = os.path.join(os.path.dirname(__file__), "data", "tag_requirements.json")

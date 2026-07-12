@@ -1285,7 +1285,6 @@ export default function PlannerClient() {
           profile.completedCourses ?? "",
           profile.honors ?? true,
           profile.apCredits ?? "",
-          "calgetc",
           profile.mode ?? "competitive"
         );
       }
@@ -1387,14 +1386,14 @@ export default function PlannerClient() {
     }
   }, [streamResponse]);
 
-  async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", gePattern = "calgetc", mode = "competitive") {
+  async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
     setAiPlanLoading(true);
     setAiPlan("");
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ college, school, major, completedCourses: courses, acceptHonors, apCredits, gePattern, mode }),
+        body: JSON.stringify({ college, school, major, completedCourses: courses, acceptHonors, apCredits, mode }),
       });
       if (!res.ok || !res.body) throw new Error("Plan request failed");
       const reader = res.body.getReader();
@@ -1666,7 +1665,7 @@ export default function PlannerClient() {
                     setTargetSchool(school);
                     setActiveSchoolTab(school);
                     setResult(null);
-                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, "calgetc", wizardMode ?? "competitive");
+                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardMode ?? "competitive");
                   }}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]"}`}>
                   {school}

@@ -193,13 +193,11 @@ CASES = [
     # and Area 6 (Ethnic Studies) — not proxy/NOT ASSIGNED.
     (29, "De Anza -> Berkeley -> CS [Cal-GETC: Area 1C and Area 6 must be real courses]",
          "De Anza College", "Berkeley", "Computer Science B.S.", False,
-         {"ge_pattern": "calgetc",
-          "must_include_ge_areas": {"1C", "6"},
+         {"must_include_ge_areas": {"1C", "6"},
           "must_not_include_ge_strings": {"NOT ASSIGNED", "via Area 4C"}}),
-    (30, "Foothill -> UCLA -> Psychology [Cal-GETC: Area 1C and Area 6, IGETC mode contrast]",
+    (30, "Foothill -> UCLA -> Psychology [Cal-GETC: Area 1C and Area 6]",
          "Foothill College", "Los Angeles", "Psychology B.A.", False,
-         {"ge_pattern": "calgetc",
-          "must_include_ge_areas": {"1C", "6"},
+         {"must_include_ge_areas": {"1C", "6"},
           "must_not_include_ge_strings": {"NOT ASSIGNED", "via Area 4C"}}),
 
     # ── Integration: calgetc × term-system × elective-filling ─────────────────
@@ -207,8 +205,7 @@ CASES = [
     #     and elective filling reaches 90 QU
     (31, "Foothill -> UC Davis -> Psychology B.A. [INTEGRATION: quarter + calgetc]",
          "Foothill College", "Davis", "Psychology B.A.", False,
-         {"ge_pattern": "calgetc",
-          "min_total_units": 90.0,
+         {"min_total_units": 90.0,
           "must_include_ge_areas": {"1C", "6"},
           "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
 
@@ -216,18 +213,8 @@ CASES = [
     #     elective filling reaches 60 SU
     (32, "ARC -> UCLA -> History B.A. [INTEGRATION: semester + calgetc]",
          "American River College", "Los Angeles", "History B.A.", False,
-         {"ge_pattern": "calgetc",
-          "min_total_units": 60.0,
+         {"min_total_units": 60.0,
           "must_include_ge_areas": {"1C", "6"},
-          "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
-
-    # (c) quarter + igetc: regression — quarter school still works correctly when
-    #     IGETC GE pattern selected; Area 2A (IGETC math) must be assigned
-    (33, "De Anza -> Berkeley -> CS B.S. [INTEGRATION: quarter + igetc regression]",
-         "De Anza College", "Berkeley", "Computer Science B.S.", False,
-         {"ge_pattern": "igetc",
-          "min_total_units": 90.0,
-          "must_include_ge_areas": {"2A"},
           "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
 ]
 
@@ -435,7 +422,6 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
     extra = extra or {}
     completed   = extra.get("completed", set())
     ap_credits  = extra.get("ap_credits", "")
-    ge_pattern  = extra.get("ge_pattern", "calgetc")
     exp_short   = extra.get("expect_shortfall", False)
 
     print(f"\n{'-'*70}")
@@ -447,7 +433,7 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
 
     try:
         result = build_plan(college, uc, major, accept_honors=accept_honors,
-                            completed=completed, ap_credits=ap_credits, ge_pattern=ge_pattern)
+                            completed=completed, ap_credits=ap_credits)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()

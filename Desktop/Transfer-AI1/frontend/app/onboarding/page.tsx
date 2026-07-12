@@ -113,7 +113,7 @@ export default function OnboardingPage() {
     try {
       localStorage.setItem("cb_profile", JSON.stringify(profile));
     } catch {}
-    router.push("/");
+    router.push("/dashboard");
   }
 
   const majorPool = majorOptions.length > 0 ? majorOptions : MAJOR_SUGGESTIONS;

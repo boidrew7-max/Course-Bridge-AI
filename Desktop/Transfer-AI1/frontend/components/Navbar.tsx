@@ -73,10 +73,10 @@ export default function Navbar() {
         </div>
 
         <Link
-          href="/onboarding"
+          href={email || hasLocalPlan ? "/dashboard" : "/onboarding"}
           className="shrink-0 rounded-xl bg-[#0b7f46] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
         >
-          Build My Plan
+          {email || hasLocalPlan ? "My Plan" : "Build My Plan"}
         </Link>
       </nav>
     </header>

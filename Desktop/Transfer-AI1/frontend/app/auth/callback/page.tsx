@@ -27,7 +27,9 @@ function AuthCallbackInner() {
           body: JSON.stringify({ token }),
         });
         if (!res.ok) throw new Error("store failed");
-        router.replace("/onboarding");
+        // /dashboard loads an existing saved plan, or sends to /onboarding
+        // itself if this Google account has none yet.
+        router.replace("/dashboard");
       } catch {
         setError("Something went wrong finishing sign-in. Please try again.");
       }

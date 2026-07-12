@@ -32,10 +32,10 @@ export default function LoginPage() {
         setError(data.error || "Something went wrong. Please try again.");
         return;
       }
-      // "/" checks auth state and shows either the dashboard (existing
-      // saved plan or the wizard, if none yet) — don't force the wizard
-      // here, that would restart returning users who already have a plan.
-      router.push("/");
+      // /dashboard checks for an existing saved plan (or sends to the
+      // wizard if none yet) — don't force the wizard here directly, that
+      // would restart returning users who already have a plan.
+      router.push("/dashboard");
     } catch {
       setError("Could not reach the server. Please try again.");
     } finally {

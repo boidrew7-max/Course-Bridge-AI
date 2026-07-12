@@ -81,6 +81,65 @@ _UC_SHARD_MAP = {
     "merced":        "Merced",
 }
 
+# ── GE strategy: CERTIFY vs MAJOR-PREP-FIRST ────────────────────────────────
+# UC's own published campus guidance says the "certify full Cal-GETC as early
+# as possible" strategy is wrong for engineering/science-heavy programs at
+# several campuses — GE crowds out major prep and screened-on prerequisites.
+# This is curation of UC's own guidance pages, not new scraping.
+#   CERTIFY            — default; matches Berkeley L&S's explicit requirement.
+#   MAJOR_PREP_FIRST    — complete required + recommended major prep first,
+#                          GE only as schedule capacity allows.
+_STEM_MAJOR_WORDS = (
+    "engineer", "computer science", "computer engineering", "electrical",
+    "mechanical", "civil engineer", "chemical engineer", "aerospace",
+    "materials science", "bioengineer", "biomedical engineer",
+    "physics", "chemistry", "biochemistry", "molecular", "cell biology",
+    "biology", "applied math", "mathematics", "statistics", "data science",
+    "computer science and engineering",
+)
+
+_GE_STRATEGY_MAJOR_PREP_FIRST_UCS = {"davis", "irvine", "santa cruz", "santa barbara"}
+
+def _ge_strategy(uc_normalized: str, major: str) -> tuple[str, str]:
+    """Return (strategy, note) for how hard to push Cal-GETC certification.
+
+    Source: UC's own published campus transfer-guidance pages, curated per
+    campus. Not derived from ASSIST articulation data.
+    """
+    major_l = (major or "").lower()
+    is_stem = any(w in major_l for w in _STEM_MAJOR_WORDS)
+
+    if uc_normalized == "san diego":
+        return (
+            "CERTIFY",
+            "UC San Diego: some colleges (e.g. Revelle, Roosevelt) require "
+            "additional lower-division GE coursework beyond Cal-GETC "
+            "certification — certifying Cal-GETC does not guarantee full GE "
+            "completion at every UCSD college. Confirm your assigned "
+            "college's specific GE requirements with a counselor.",
+        )
+    if is_stem and uc_normalized in _GE_STRATEGY_MAJOR_PREP_FIRST_UCS:
+        campus_label = {
+            "davis": "UC Davis", "irvine": "UC Irvine",
+            "santa cruz": "UC Santa Cruz", "santa barbara": "UC Santa Barbara",
+        }.get(uc_normalized, uc_normalized.title())
+        return (
+            "MAJOR_PREP_FIRST",
+            f"{campus_label} does not recommend full Cal-GETC certification for "
+            "engineering, math, and science majors — complete required and "
+            "recommended major preparation first, and finish remaining Cal-GETC "
+            "requirements after transfer or as schedule capacity allows.",
+        )
+    if uc_normalized == "berkeley":
+        return (
+            "CERTIFY",
+            "UC Berkeley L&S requires full Cal-GETC certification as a "
+            "selection criterion for admission — completing it is expected, "
+            "not optional, for this campus.",
+        )
+    return ("CERTIFY", "")
+
+
 # Cal-GETC (default — for students who first enrolled at a CCC fall 2025 or later).
 # Area 6 (Ethnic Studies) is processed before Area 4 so the Ethnic Studies course doesn't
 # also compete for an Area 4 slot.
@@ -199,6 +258,13 @@ class PlanResult:
     summer_overflow: bool = False  # True when overflow term is light (<10u)
     multi_track: bool = False  # True when agreement has duplicate OR-menus (emphasis tracks detected)
     is_quarter: bool = False   # True for De Anza, Foothill, Lake Tahoe
+    sparse_major_prep: bool = False  # True when ASSIST shows ≤2 real (CC-articulated) major
+                                      # requirements for this combo — plan is mostly GE/electives,
+                                      # which is often legitimate (humanities majors) but must be
+                                      # called out explicitly rather than silently looking thin.
+    ge_strategy: str = "CERTIFY"     # "CERTIFY" (default) or "MAJOR_PREP_FIRST" — per campus/major
+                                      # guidance on whether to complete full Cal-GETC as a priority.
+    ge_strategy_note: str = ""       # human-readable rationale, surfaced in Key Notes.
 
     def all_courses(self) -> list:
         out = []
@@ -1460,6 +1526,17 @@ def build_plan(
     result.recommended_optional = recommended_optional
     result.warnings.extend(stale_notes)
 
+    # A combo can legitimately match a shard entry (best_key found, score OK)
+    # yet have almost nothing CC-articulated — e.g. a niche major at a small
+    # college, or a humanities major with few lower-division requirements.
+    # Count real MET/NOT MET rows (actual CC-completable requirements) —
+    # POST-TRANSFER/NOT ARTICULATED/RECOMMENDED rows don't count since those
+    # aren't "articulated" in the sense that matters here.
+    _articulated_rows = sum(1 for _, _, status in audit_rows if status in ("MET", "NOT MET", "MET (CONDITIONAL)"))
+    result.sparse_major_prep = _articulated_rows <= 2
+
+    result.ge_strategy, result.ge_strategy_note = _ge_strategy(uc_l, major)
+
     # Use matched CC name from shard key for IGETC lookup so typos in the
     # user's college string still resolve to the correct IGETC school entry.
     matched_cc_name = best_key.split("__")[0].replace("_", " ")
@@ -1685,6 +1762,50 @@ def build_render_prompt(
             "all tracks — meeting with a counselor to choose a specific emphasis may reduce "
             "the total course load.'\n"
         )
+
+    if result.sparse_major_prep:
+        n_rows = len(result.requirement_audit)
+        if n_rows == 0:
+            lines.append(
+                "WARNING: ZERO ARTICULATED MAJOR REQUIREMENTS — ASSIST has no CC-articulated "
+                f"course requirements on file for {result.major} at {result.college} -> {result.uc}. "
+                "This is NOT necessarily an error — it can mean this major has no CC-completable "
+                "lower-division prep, or that this specific college/major pairing isn't fully "
+                "documented in ASSIST yet. In Key Notes, add a prominent note: "
+                "'No specific major-prep articulation was found for this major at this college. "
+                "This plan covers Cal-GETC general education only. Meet with a counselor or check "
+                "ASSIST.org directly to confirm major requirements before registering — this could "
+                "mean the major has no lower-division CC prep, or that this pairing needs manual "
+                "review.'\n"
+            )
+        else:
+            lines.append(
+                "NOTE: MINIMAL MAJOR PREP — Only a small number of CC-articulated major requirements "
+                "exist for this major/college pairing (this is often legitimate — many humanities and "
+                "social science majors have few lower-division prerequisites). The plan below is "
+                "correct, but will look mostly like GE + electives. In Key Notes, add: "
+                "'This major has minimal CC-articulated lower-division requirements at this college. "
+                "Most of this plan is general education and electives — that is expected for this "
+                "major, not a data gap. Confirm with a counselor that no additional department-level "
+                "recommendations apply.'\n"
+            )
+
+    if result.ge_strategy_note:
+        if result.ge_strategy == "MAJOR_PREP_FIRST":
+            lines.append(
+                "NOTE: GE STRATEGY — this campus/major does NOT recommend prioritizing full Cal-GETC "
+                "certification. The schedule below still includes Cal-GETC courses to fill unit "
+                "minimums, but in Key Notes, add this exact guidance so the student sequences "
+                "correctly: "
+                f"'{result.ge_strategy_note} If your schedule is tight, it is OK to leave some "
+                "Cal-GETC areas incomplete at transfer and finish them at the university — do not "
+                "sacrifice required or recommended major prep to finish GE early.'\n"
+            )
+        else:
+            lines.append(
+                f"NOTE: GE STRATEGY — In Key Notes, add this exact guidance: "
+                f"'{result.ge_strategy_note}'\n"
+            )
 
     base_terms    = 6 if result.is_quarter else 4
     overflow_term = base_terms + 1

@@ -199,6 +199,27 @@ def _load_uc_shard(uc_canonical: str) -> dict:
 
 _CALGETC_CACHE: dict | None = None
 
+def _strip_course_fields(data: dict) -> dict:
+    """Some source rows have stray whitespace baked into prefix/number
+    (e.g. calgetc_map's "C1000 " with a trailing space). Normalize once at
+    load time so it can never leak into a matching key, a dedup tuple, or
+    rendered display text — every downstream consumer reads raw dict
+    values directly rather than going through CourseSlot."""
+    for school in data.get("bySchool", {}).values():
+        for courses in school.get("byArea", {}).values():
+            for c in courses:
+                if "prefix" in c:
+                    c["prefix"] = c["prefix"].strip()
+                if "number" in c:
+                    c["number"] = c["number"].strip()
+        for c in school.get("allCourses", []):
+            if "prefix" in c:
+                c["prefix"] = c["prefix"].strip()
+            if "number" in c:
+                c["number"] = c["number"].strip()
+    return data
+
+
 def _load_calgetc() -> dict:
     global _CALGETC_CACHE
     if _CALGETC_CACHE is not None:
@@ -207,7 +228,7 @@ def _load_calgetc() -> dict:
     if os.path.exists(path):
         try:
             with gzip.open(path, "rt", encoding="utf-8") as f:
-                _CALGETC_CACHE = json.load(f)
+                _CALGETC_CACHE = _strip_course_fields(json.load(f))
             return _CALGETC_CACHE
         except Exception:
             pass
@@ -227,6 +248,14 @@ class CourseSlot:
     tags: list = field(default_factory=list)
     uc_reqs: list = field(default_factory=list)
     explicit_prereqs: list = field(default_factory=list)
+
+    def __post_init__(self):
+        # Source data occasionally has stray whitespace baked into prefix/
+        # number (e.g. calgetc_map's "C1000 " with a trailing space) — strip
+        # it here so it can never leak into a rendered course code, a
+        # dedup/lookup key, or the ghost-course sanity check.
+        self.prefix = self.prefix.strip()
+        self.number = self.number.strip()
 
     @property
     def code(self) -> str:
@@ -916,9 +945,25 @@ def _select_calgetc(
         return [], {}
 
     by_school = data.get("bySchool", {})
-    school_key = next((k for k in by_school if k.lower() == college.lower()), None)
+    # Some entries are empty stubs (0 courses) left over from a stale/
+    # alternate college name in the source scrape — e.g. "Compton Community
+    # College" (0 courses) sits alongside the real "Compton College" (186
+    # courses) entry. Skip any match with no actual course data rather than
+    # silently returning an empty GE section.
+    def _has_courses(key: str) -> bool:
+        return bool(by_school[key].get("byArea"))
+
+    candidates = [k for k in by_school if k.lower() == college.lower()]
+    candidates += [k for k in by_school if college.lower() in k.lower() and k not in candidates]
+    school_key = next((k for k in candidates if _has_courses(k)), None)
     if not school_key:
-        school_key = next((k for k in by_school if college.lower() in k.lower()), None)
+        # Many CA colleges dropped "Community" from their name over the
+        # years (e.g. "Compton Community College" -> "Compton College").
+        # Retry without it before giving up.
+        stripped = college.lower().replace(" community ", " ").strip()
+        if stripped != college.lower():
+            retry = [k for k in by_school if k.lower() == stripped or stripped in k.lower()]
+            school_key = next((k for k in retry if _has_courses(k)), None)
     if not school_key:
         return [], {}
 
@@ -1460,6 +1505,7 @@ def build_plan(
     accept_honors: bool = False,
     completed: set = None,
     ap_credits: str = "",
+    _known_key: str = None,
 ) -> PlanResult:
     if completed is None:
         completed = set()
@@ -1479,35 +1525,46 @@ def build_plan(
         r.warnings.append(f"No shard data found for UC: {uc}")
         return r
 
-    # Fuzzy key match — stop-word filtered, prefix-aware
-    # _CC_STOP_WORDS ("college", "community") are excluded from cc_words so
-    # generic inputs like "Nonexistent Community College" don't score.
-    # Threshold 3.0 requires the CC name OR the major to have a real hit.
-    college_l = college.lower()
-    major_l   = major.lower()
-    best_score, best_key = 0.0, None
-    for key in shard:
-        if key.startswith("_"):
-            continue
-        parts = key.split("__")
-        if len(parts) < 3:
-            continue
-        cc_l_k  = parts[0].replace("_", " ").lower()
-        # Replace both underscores and hyphens so "Psychology-B.A." → "psychology b.a."
-        maj_l_k = "__".join(parts[2:]).replace("_", " ").replace("-", " ").lower()
-        cc_words  = [w for w in cc_l_k.split()  if len(w) >= 3 and w not in _CC_STOP_WORDS]
-        # Exclude degree suffixes (e.g. "b.a.", "b.s.") — they contain dots and match
-        # any major with the same suffix, causing short-named majors like "Art B.A."
-        # to score 10.0 against unrelated queries like "Economics B.A.".
-        maj_words = [w for w in maj_l_k.split() if len(w) >= 3 and "." not in w]
-        cc_hit  = sum(1 for w in cc_words  if _prefix_hit(w, college_l))     / max(len(cc_words), 1)
-        maj_hit = sum(1 for w in maj_words if _major_word_hit(w, major_l))   / max(len(maj_words), 1)
-        score = cc_hit * 5 + maj_hit * 5
-        if score > best_score:
-            best_score = score
-            best_key   = key
+    if _known_key is not None:
+        # Internal fast path (offline batch auditing only): caller already
+        # knows the exact shard key, so skip the O(n) fuzzy-match scan below
+        # entirely. Never used by the real /plan_v2 request path.
+        best_key = _known_key if _known_key in shard else None
+    else:
+        # Fuzzy key match — stop-word filtered, prefix-aware
+        # _CC_STOP_WORDS ("college", "community") are excluded from cc_words so
+        # generic inputs like "Nonexistent Community College" don't score.
+        # Threshold 3.0 requires the CC name OR the major to have a real hit.
+        college_l = college.lower()
+        major_l   = major.lower()
+        best_score, best_key = 0.0, None
+        for key in shard:
+            if key.startswith("_"):
+                continue
+            parts = key.split("__")
+            if len(parts) < 3:
+                continue
+            cc_l_k  = parts[0].replace("_", " ").lower()
+            # Replace both underscores and hyphens so "Psychology-B.A." → "psychology b.a."
+            maj_l_k = "__".join(parts[2:]).replace("_", " ").replace("-", " ").lower()
+            cc_words  = [w for w in cc_l_k.split()  if len(w) >= 3 and w not in _CC_STOP_WORDS]
+            # Exclude degree suffixes (e.g. "b.a.", "b.s.") — they contain dots and match
+            # any major with the same suffix, causing short-named majors like "Art B.A."
+            # to score 10.0 against unrelated queries like "Economics B.A.".
+            maj_words = [w for w in maj_l_k.split() if len(w) >= 3 and "." not in w]
+            cc_hit  = sum(1 for w in cc_words  if _prefix_hit(w, college_l))     / max(len(cc_words), 1)
+            maj_hit = sum(1 for w in maj_words if _major_word_hit(w, major_l))   / max(len(maj_words), 1)
+            score = cc_hit * 5 + maj_hit * 5
+            if score > best_score:
+                best_score = score
+                best_key   = key
 
-    if not best_key or best_score < 3.0:
+        if not best_key or best_score < 3.0:
+            r = PlanResult(college=college, uc=uc, major=major)
+            r.warnings.append(f"No articulation data found for {college} -> {uc} | {major}")
+            return r
+
+    if best_key is None:
         r = PlanResult(college=college, uc=uc, major=major)
         r.warnings.append(f"No articulation data found for {college} -> {uc} | {major}")
         return r

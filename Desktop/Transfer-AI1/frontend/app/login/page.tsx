@@ -8,13 +8,36 @@ import Footer from "../../components/Footer";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Real authentication isn't wired up yet — route straight into onboarding.
-    router.push("/onboarding");
+    setError("");
+    setLoading(true);
+    try {
+      const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+      const body = mode === "login" ? { email, password } : { email, password, username };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+      router.push("/onboarding");
+    } catch {
+      setError("Could not reach the server. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -25,13 +48,36 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <img src="/coursebridge-logo.png" alt="CourseBridge" className="mx-auto mb-3 h-9 w-auto" />
-            <h1 className="text-2xl font-bold text-[#1a2e22]">Welcome back</h1>
+            <h1 className="text-2xl font-bold text-[#1a2e22]">
+              {mode === "login" ? "Welcome back" : "Create your account"}
+            </h1>
             <p className="mt-2 text-sm text-[#7b818b]">
-              Log in to pick up your transfer plan where you left off.
+              {mode === "login"
+                ? "Log in to pick up your transfer plan where you left off."
+                : "Save your plan, college, and target school to come back to anytime."}
             </p>
           </div>
 
+          {error && (
+            <div className="mb-4 rounded-xl border border-[#f3c6c6] bg-[#fff0f0] px-4 py-3 text-sm text-[#9b1c1c]">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "signup" && (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Name (optional)</span>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Jordan"
+                  className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                />
+              </label>
+            )}
+
             <label className="block">
               <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Email</span>
               <input
@@ -49,6 +95,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
+                minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -58,9 +105,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-[#0b7f46] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#0b7f46] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md disabled:opacity-60"
             >
-              Continue
+              {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
             </button>
           </form>
 
@@ -70,9 +118,8 @@ export default function LoginPage() {
             <div className="h-px flex-1 bg-[#e5e0d5]" />
           </div>
 
-          <button
-            type="button"
-            onClick={() => router.push("/onboarding")}
+          <a
+            href="/api/auth/google/start"
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm font-semibold text-[#303236] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -82,12 +129,36 @@ export default function LoginPage() {
               <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .9 4.97l3.05 2.33C4.66 5.17 6.65 3.58 9 3.58z"/>
             </svg>
             Continue with Google
-          </button>
+          </a>
 
           <p className="mt-8 text-center text-sm text-[#7b818b]">
-            New to CourseBridge?{" "}
-            <Link href="/onboarding" className="font-semibold text-[#0b7f46] hover:underline">
-              Build your plan
+            {mode === "login" ? (
+              <>
+                New to CourseBridge?{" "}
+                <button
+                  type="button"
+                  onClick={() => { setMode("signup"); setError(""); }}
+                  className="font-semibold text-[#0b7f46] hover:underline"
+                >
+                  Create an account
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => { setMode("login"); setError(""); }}
+                  className="font-semibold text-[#0b7f46] hover:underline"
+                >
+                  Log in
+                </button>
+              </>
+            )}
+          </p>
+          <p className="mt-3 text-center text-xs text-[#a3a9b3]">
+            <Link href="/onboarding" className="hover:text-[#0b7f46] hover:underline">
+              Continue without an account
             </Link>
           </p>
         </div>

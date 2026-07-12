@@ -2,7 +2,8 @@ import json
 import os
 import time
 from collections import defaultdict
-from flask import Flask, request, Response, stream_with_context, session, jsonify
+import requests
+from flask import Flask, request, Response, stream_with_context, jsonify, redirect
 from advisor import (
     ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream,
 )
@@ -18,6 +19,9 @@ from db import (
     add_messages, get_session_messages,
     create_reset_token, redeem_reset_token,
     save_feedback,
+    create_session_token, get_user_by_token, delete_session_token,
+    get_or_create_google_user,
+    save_plan, get_user_plans, get_plan, delete_plan,
 )
 from dotenv import load_dotenv
 
@@ -38,6 +42,26 @@ app.config.update(
 )
 
 init_db()
+
+# ── Auth: opaque bearer tokens ──────────────────────────────────────────────
+# The frontend and backend live on different Railway domains, so a normal
+# Flask session cookie set by this server is never reliably sent back by the
+# browser on cross-origin requests. Instead the frontend's own API routes
+# store this token as an HttpOnly cookie on THEIR domain and forward it here
+# as "Authorization: Bearer <token>" on every authenticated request.
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://coursebridge-frontend.up.railway.app")
+GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI  = os.getenv("GOOGLE_REDIRECT_URI", "")  # e.g. https://<backend>/auth/google/callback
+
+
+def _current_uid():
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    user = get_user_by_token(auth[7:].strip())
+    return user["id"] if user else None
+
 
 # ── Rate limiting ──────────────────────────────────────────────
 # 100 requests per IP per hour
@@ -150,7 +174,7 @@ def chat():
     if len(history) > 20:
         history = history[-20:]
 
-    uid = session.get("user_id")
+    uid = _current_uid()
     user_profile = get_user_by_id(uid) if uid else None
 
     def generate():
@@ -471,12 +495,11 @@ def onboard():
 
 @app.route("/auth/me")
 def auth_me():
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "not authenticated"}), 401
     user = get_user_by_id(uid)
     if not user:
-        session.clear()
         return jsonify({"error": "not authenticated"}), 401
     return jsonify(_public(user))
 
@@ -491,6 +514,7 @@ def _public(user):
         "major":          user.get("major", ""),
         "target_schools": user.get("target_schools", ""),
         "onboarded":      bool(user.get("onboarded", 0)),
+        "hasGoogle":      bool(user.get("google_id")),
     }
 
 
@@ -509,9 +533,9 @@ def auth_register():
         return jsonify({"error": "An account with that email already exists."}), 409
 
     try:
-        user = create_user(email, password, username or None)
-        session["user_id"] = user["id"]
-        return jsonify(_public(user))
+        user  = create_user(email, password, username or None)
+        token = create_session_token(user["id"])
+        return jsonify({"token": token, "user": _public(user)})
     except Exception:
         return jsonify({"error": "Could not create account. Please try again."}), 500
 
@@ -526,14 +550,70 @@ def auth_login():
     if not user or not verify_password(user, password):
         return jsonify({"error": "Incorrect email or password."}), 401
 
-    session["user_id"] = user["id"]
-    return jsonify(_public(user))
+    token = create_session_token(user["id"])
+    return jsonify({"token": token, "user": _public(user)})
 
 
 @app.route("/auth/logout", methods=["POST"])
 def auth_logout():
-    session.clear()
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        delete_session_token(auth[7:].strip())
     return ("", 204)
+
+
+@app.route("/auth/google/start")
+def auth_google_start():
+    if not (GOOGLE_CLIENT_ID and GOOGLE_REDIRECT_URI):
+        return jsonify({"error": "Google sign-in is not configured on this server."}), 503
+    from urllib.parse import urlencode
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "prompt": "select_account",
+    }
+    return redirect("https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params))
+
+
+@app.route("/auth/google/callback")
+def auth_google_callback():
+    if not (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and GOOGLE_REDIRECT_URI):
+        return jsonify({"error": "Google sign-in is not configured on this server."}), 503
+    code = request.args.get("code", "")
+    if not code:
+        return redirect(f"{FRONTEND_URL}/login?error=google_auth_failed")
+
+    try:
+        token_res = requests.post("https://oauth2.googleapis.com/token", data={
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": GOOGLE_REDIRECT_URI,
+        }, timeout=10)
+        token_res.raise_for_status()
+        access_token = token_res.json()["access_token"]
+
+        info_res = requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"}, timeout=10,
+        )
+        info_res.raise_for_status()
+        info = info_res.json()
+        google_id = info.get("sub", "")
+        email     = (info.get("email") or "").lower().strip()
+        name      = info.get("name", "")
+        if not google_id or not email:
+            raise ValueError("Google did not return a usable sub/email")
+    except Exception as e:
+        app.logger.error("google_oauth_fail err=%.200s", str(e))
+        return redirect(f"{FRONTEND_URL}/login?error=google_auth_failed")
+
+    user  = get_or_create_google_user(google_id, email, name)
+    token = create_session_token(user["id"])
+    return redirect(f"{FRONTEND_URL}/auth/callback?token={token}")
 
 
 @app.route("/auth/forgot-password", methods=["POST"])
@@ -571,7 +651,7 @@ def auth_reset():
 
 @app.route("/api/profile", methods=["GET"])
 def api_profile_get():
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     user = get_user_by_id(uid)
@@ -582,7 +662,7 @@ def api_profile_get():
 
 @app.route("/api/profile", methods=["PUT"])
 def api_profile_put():
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     data = request.json or {}
@@ -596,11 +676,58 @@ def api_profile_put():
     return jsonify(_public(get_user_by_id(uid)))
 
 
+# ── Saved plans ──────────────────────────────────────────────────────
+
+@app.route("/api/plans", methods=["GET"])
+def api_plans_list():
+    uid = _current_uid()
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+    return jsonify(get_user_plans(uid))
+
+
+@app.route("/api/plans", methods=["POST"])
+def api_plans_save():
+    uid = _current_uid()
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+    data    = request.json or {}
+    college = (data.get("college") or "").strip()
+    uc      = (data.get("uc") or "").strip()
+    major   = (data.get("major") or "").strip()
+    plan_text = data.get("planText") or ""
+    completed = data.get("completedCourses") or ""
+    if not (college and uc and major):
+        return jsonify({"error": "college, uc, and major are required"}), 400
+    save_plan(uid, college, uc, major, plan_text, completed)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/plans/<int:pid>", methods=["GET"])
+def api_plans_get(pid):
+    uid = _current_uid()
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+    plan = get_plan(pid, uid)
+    if not plan:
+        return jsonify({"error": "Not found"}), 404
+    return jsonify(plan)
+
+
+@app.route("/api/plans/<int:pid>", methods=["DELETE"])
+def api_plans_delete(pid):
+    uid = _current_uid()
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+    delete_plan(pid, uid)
+    return ("", 204)
+
+
 # ── Chat sessions ──────────────────────────────────────────────────
 
 @app.route("/api/sessions", methods=["GET"])
 def api_sessions_list():
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     return jsonify(get_user_sessions(uid))
@@ -608,7 +735,7 @@ def api_sessions_list():
 
 @app.route("/api/sessions", methods=["POST"])
 def api_sessions_create():
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     title = ((request.json or {}).get("title") or "New chat")[:80]
@@ -618,7 +745,7 @@ def api_sessions_create():
 
 @app.route("/api/sessions/<int:sid>", methods=["PATCH"])
 def api_sessions_update(sid):
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     title = ((request.json or {}).get("title") or "")[:80].strip()
@@ -629,7 +756,7 @@ def api_sessions_update(sid):
 
 @app.route("/api/sessions/<int:sid>", methods=["DELETE"])
 def api_sessions_delete(sid):
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     delete_session(sid, uid)
@@ -640,7 +767,7 @@ def api_sessions_delete(sid):
 
 @app.route("/api/sessions/<int:sid>/messages", methods=["GET"])
 def api_messages_get(sid):
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     msgs = get_session_messages(sid, uid)
@@ -651,7 +778,7 @@ def api_messages_get(sid):
 
 @app.route("/api/sessions/<int:sid>/messages", methods=["POST"])
 def api_messages_post(sid):
-    uid = session.get("user_id")
+    uid = _current_uid()
     if not uid:
         return jsonify({"error": "Not authenticated"}), 401
     data = request.json or {}
@@ -671,7 +798,7 @@ def api_messages_post(sid):
 
 @app.route("/api/feedback", methods=["POST"])
 def api_feedback():
-    uid  = session.get("user_id")
+    uid  = _current_uid()
     data = request.json or {}
     sid  = data.get("session_id")
     rating = data.get("rating")

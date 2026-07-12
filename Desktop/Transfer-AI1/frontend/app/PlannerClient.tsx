@@ -1215,6 +1215,34 @@ export default function PlannerClient() {
   const [aiPlanLoading, setAiPlanLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // ── Account (email/password or Google sign-in) ────────────────
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authedEmail, setAuthedEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const user = await res.json();
+          setAuthedEmail(user.email ?? null);
+        }
+      } catch {}
+      setAuthChecked(true);
+    })();
+  }, []);
+
+  async function savePlanToAccount(college: string, uc: string, major: string, planText: string, completed: string) {
+    if (!authedEmail || !planText) return;
+    try {
+      await fetch("/api/plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ college, uc, major, planText, completedCourses: completed }),
+      });
+    } catch {}
+  }
+
   // ── Cal-GETC + tracker + panels ──────────────────────────────────
   const [calgetcChecked, setCalgetcChecked] = useState<Record<string, boolean>>({});
   const [trackerCourses, setTrackerCourses] = useState<{id:string;name:string;status:"planned"|"in-progress"|"done"}[]>([]);
@@ -1260,35 +1288,71 @@ export default function PlannerClient() {
   // Hydrate from the profile /onboarding saved to localStorage, then kick
   // off plan generation for it — this replaces the old in-page wizard's
   // completeWizard() now that onboarding lives on its own route.
+  // If there's no local profile (new device, cleared cache) but the user is
+  // signed in, fall back to their most recently saved plan from the account
+  // instead of bouncing them back to onboarding.
   useEffect(() => {
-    let raw: string | null = null;
-    try { raw = localStorage.getItem("cb_profile"); } catch {}
-    if (!raw) { router.replace("/"); return; }
-    try {
-      const profile = JSON.parse(raw);
-      setFirstName(profile.firstName ?? "");
-      setCommunityCollege(profile.college ?? "");
-      setTargetSchool(profile.school ?? "");
-      setTargetMajor(profile.major ?? "");
-      setCompletedCourses(profile.completedCourses ?? "");
-      setWizardHonors(profile.honors ?? true);
-      setWizardApCredits(profile.apCredits ?? "");
-      setWizardMode(profile.mode ?? "competitive");
-      const schools: string[] = profile.planSchools?.length ? profile.planSchools : [profile.school].filter(Boolean);
-      setPlanSchools(schools);
-      setActiveSchoolTab(profile.school ?? "");
-      if (profile.college && profile.school && profile.major) {
-        generateAIPlan(
-          profile.college,
-          profile.school,
-          profile.major,
-          profile.completedCourses ?? "",
-          profile.honors ?? true,
-          profile.apCredits ?? "",
-          profile.mode ?? "competitive"
-        );
+    (async () => {
+      let raw: string | null = null;
+      try { raw = localStorage.getItem("cb_profile"); } catch {}
+      if (raw) {
+        try {
+          const profile = JSON.parse(raw);
+          setFirstName(profile.firstName ?? "");
+          setCommunityCollege(profile.college ?? "");
+          setTargetSchool(profile.school ?? "");
+          setTargetMajor(profile.major ?? "");
+          setCompletedCourses(profile.completedCourses ?? "");
+          setWizardHonors(profile.honors ?? true);
+          setWizardApCredits(profile.apCredits ?? "");
+          setWizardMode(profile.mode ?? "competitive");
+          const schools: string[] = profile.planSchools?.length ? profile.planSchools : [profile.school].filter(Boolean);
+          setPlanSchools(schools);
+          setActiveSchoolTab(profile.school ?? "");
+          if (profile.college && profile.school && profile.major) {
+            generateAIPlan(
+              profile.college,
+              profile.school,
+              profile.major,
+              profile.completedCourses ?? "",
+              profile.honors ?? true,
+              profile.apCredits ?? "",
+              profile.mode ?? "competitive"
+            );
+          }
+        } catch {}
+        return;
       }
-    } catch {}
+
+      // No local profile — check whether a signed-in account has a saved plan.
+      try {
+        const meRes = await fetch("/api/auth/me");
+        if (meRes.ok) {
+          const user = await meRes.json();
+          setAuthedEmail(user.email ?? null);
+          const plansRes = await fetch("/api/plans");
+          if (plansRes.ok) {
+            const plans = await plansRes.json();
+            if (Array.isArray(plans) && plans.length > 0) {
+              const latest = plans[0]; // API returns most-recently-updated first
+              setFirstName(user.username ?? "");
+              setCommunityCollege(latest.college ?? "");
+              setTargetSchool(latest.uc ?? "");
+              setTargetMajor(latest.major ?? "");
+              setCompletedCourses(latest.completed_courses ?? "");
+              setPlanSchools([latest.uc].filter(Boolean));
+              setActiveSchoolTab(latest.uc ?? "");
+              setWizardHonors(true);
+              setWizardMode("competitive");
+              setAiPlan(latest.plan_text ?? "");
+              return;
+            }
+          }
+        }
+      } catch {}
+
+      router.replace("/");
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1389,6 +1453,7 @@ export default function PlannerClient() {
   async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
     setAiPlanLoading(true);
     setAiPlan("");
+    let accumulated = "";
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
@@ -1398,7 +1463,6 @@ export default function PlannerClient() {
       if (!res.ok || !res.body) throw new Error("Plan request failed");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let accumulated = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -1413,6 +1477,9 @@ export default function PlannerClient() {
             setAiPlan(accumulated);
           } catch {}
         }
+      }
+      if (accumulated && !accumulated.startsWith("\n\n[Error")) {
+        savePlanToAccount(college, school, major, accumulated, courses);
       }
     } catch {
       setAiPlan("Something went wrong generating your plan. Please try again in a moment.");

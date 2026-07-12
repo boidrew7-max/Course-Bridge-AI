@@ -1,8 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+  const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const user = await res.json();
+          setEmail(user.email ?? null);
+        }
+      } catch {}
+    })();
+  }, []);
+
+  async function handleLogout() {
+    try { await fetch("/api/auth/logout", { method: "POST" }); } catch {}
+    setEmail(null);
+    router.push("/");
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-[#e5e0d5] bg-white/90 backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8">
@@ -24,9 +47,20 @@ export default function Navbar() {
           <Link href="/#pricing" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
             Pricing
           </Link>
-          <Link href="/login" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
-            Login
-          </Link>
+          {email ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]"
+              title={email}
+            >
+              Log out
+            </button>
+          ) : (
+            <Link href="/login" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
+              Login
+            </Link>
+          )}
         </div>
 
         <Link

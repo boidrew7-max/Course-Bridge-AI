@@ -74,13 +74,42 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS users (
                     id            SERIAL PRIMARY KEY,
                     email         TEXT    UNIQUE NOT NULL,
-                    password_hash TEXT    NOT NULL,
+                    password_hash TEXT,
                     username      TEXT    NOT NULL,
                     college       TEXT    NOT NULL DEFAULT '',
                     major         TEXT    NOT NULL DEFAULT '',
                     target_schools TEXT   NOT NULL DEFAULT '',
                     onboarded     INTEGER NOT NULL DEFAULT 0,
+                    google_id     TEXT    UNIQUE,
                     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            # Idempotent — safe to run every startup even if already applied.
+            # (try/except is unsafe here: a failed statement aborts the whole
+            # PG transaction and would break every statement after it.)
+            cur.execute("ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT UNIQUE")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS session_tokens (
+                    id         SERIAL PRIMARY KEY,
+                    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    token      TEXT    NOT NULL UNIQUE,
+                    expires_at TEXT    NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS saved_plans (
+                    id           SERIAL PRIMARY KEY,
+                    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    college      TEXT    NOT NULL,
+                    uc           TEXT    NOT NULL,
+                    major        TEXT    NOT NULL,
+                    plan_text    TEXT    NOT NULL DEFAULT '',
+                    completed_courses TEXT NOT NULL DEFAULT '',
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (user_id, college, uc, major)
                 )
             """)
             cur.execute("""
@@ -133,11 +162,36 @@ def init_db():
                 ("major",          "TEXT NOT NULL DEFAULT ''"),
                 ("target_schools", "TEXT NOT NULL DEFAULT ''"),
                 ("onboarded",      "INTEGER NOT NULL DEFAULT 0"),
+                # Not UNIQUE here — SQLite's ALTER TABLE ADD COLUMN rejects a
+                # UNIQUE constraint. Uniqueness is enforced in
+                # get_or_create_google_user() (checked before insert).
+                ("google_id",      "TEXT"),
             ]:
                 try:
                     cur.execute(f"ALTER TABLE users ADD COLUMN {col} {typedef}")
                 except Exception:
                     pass
+            cur.execute("""CREATE TABLE IF NOT EXISTS session_tokens (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL,
+                token      TEXT    NOT NULL UNIQUE,
+                expires_at TEXT    NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS saved_plans (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id      INTEGER NOT NULL,
+                college      TEXT    NOT NULL,
+                uc           TEXT    NOT NULL,
+                major        TEXT    NOT NULL,
+                plan_text    TEXT    NOT NULL DEFAULT '',
+                completed_courses TEXT NOT NULL DEFAULT '',
+                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE (user_id, college, uc, major)
+            )""")
             cur.execute("""CREATE TABLE IF NOT EXISTS chat_sessions (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id    INTEGER NOT NULL,
@@ -192,7 +246,7 @@ def get_user_by_email(email):
     with _connect() as conn:
         cur = conn.cursor()
         cur.execute(
-            f"SELECT id,email,password_hash,username,college,major,target_schools,onboarded FROM users WHERE email={_p()}",
+            f"SELECT id,email,password_hash,username,college,major,target_schools,onboarded,google_id FROM users WHERE email={_p()}",
             (email.lower().strip(),),
         )
         return _row(cur.fetchone())
@@ -202,14 +256,57 @@ def get_user_by_id(uid):
     with _connect() as conn:
         cur = conn.cursor()
         cur.execute(
-            f"SELECT id,email,username,college,major,target_schools,onboarded FROM users WHERE id={_p()}",
+            f"SELECT id,email,username,college,major,target_schools,onboarded,google_id FROM users WHERE id={_p()}",
             (uid,),
         )
         return _row(cur.fetchone())
 
 
 def verify_password(user, password):
+    if not user.get("password_hash"):
+        return False
     return check_password_hash(user["password_hash"], password)
+
+
+# ── Google OAuth ─────────────────────────────────────────────────
+
+def get_user_by_google_id(google_id):
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT id,email,username,college,major,target_schools,onboarded,google_id FROM users WHERE google_id={_p()}",
+            (google_id,),
+        )
+        return _row(cur.fetchone())
+
+
+def get_or_create_google_user(google_id, email, name=None):
+    """Link a Google account to an existing email-matched user, or create a new one."""
+    existing = get_user_by_google_id(google_id)
+    if existing:
+        return existing
+
+    by_email = get_user_by_email(email)
+    if by_email:
+        with _connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                f"UPDATE users SET google_id={_p()} WHERE id={_p()}",
+                (google_id, by_email["id"]),
+            )
+        return get_user_by_id(by_email["id"])
+
+    username = (name or "").strip() or _gen_username()
+    # Unusable placeholder hash — this account can only sign in via Google
+    # until/unless the user later sets a real password.
+    placeholder_hash = generate_password_hash(secrets.token_urlsafe(32))
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"INSERT INTO users (email, password_hash, username, google_id) VALUES ({_p(4)})",
+            (email.lower().strip(), placeholder_hash, username, google_id),
+        )
+    return get_user_by_email(email)
 
 
 def email_exists(email):
@@ -381,4 +478,98 @@ def save_feedback(uid, session_id, rating):
         cur.execute(
             f"INSERT INTO message_feedback (user_id,session_id,rating) VALUES ({_p(3)})",
             (uid, session_id, rating),
+        )
+
+
+# ── Session tokens (cross-origin auth: frontend and backend are on ────────────
+#    different Railway domains, so a normal Flask session cookie can't be
+#    relied on — the frontend proxies auth calls and stores this opaque
+#    token itself, sending it back as an Authorization: Bearer header.) ───────
+
+def create_session_token(uid, days=30):
+    token = secrets.token_urlsafe(32)
+    expires = (datetime.utcnow() + timedelta(days=days)).isoformat()
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"INSERT INTO session_tokens (user_id, token, expires_at) VALUES ({_p(3)})",
+            (uid, token, expires),
+        )
+    return token
+
+
+def get_user_by_token(token):
+    if not token:
+        return None
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT user_id, expires_at FROM session_tokens WHERE token={_p()}",
+            (token,),
+        )
+        row = _row(cur.fetchone())
+    if not row or datetime.utcnow().isoformat() > row["expires_at"]:
+        return None
+    return get_user_by_id(row["user_id"])
+
+
+def delete_session_token(token):
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(f"DELETE FROM session_tokens WHERE token={_p()}", (token,))
+
+
+# ── Saved plans ───────────────────────────────────────────────────
+
+def save_plan(uid, college, uc, major, plan_text, completed_courses=""):
+    with _connect() as conn:
+        cur = conn.cursor()
+        if _USE_PG:
+            cur.execute(
+                f"""INSERT INTO saved_plans (user_id, college, uc, major, plan_text, completed_courses)
+                    VALUES ({_p(6)})
+                    ON CONFLICT (user_id, college, uc, major)
+                    DO UPDATE SET plan_text={_p()}, completed_courses={_p()}, updated_at=CURRENT_TIMESTAMP""",
+                (uid, college, uc, major, plan_text, completed_courses, plan_text, completed_courses),
+            )
+        else:
+            cur.execute(
+                f"""INSERT INTO saved_plans (user_id, college, uc, major, plan_text, completed_courses)
+                    VALUES ({_p(6)})
+                    ON CONFLICT (user_id, college, uc, major)
+                    DO UPDATE SET plan_text=excluded.plan_text,
+                                  completed_courses=excluded.completed_courses,
+                                  updated_at=CURRENT_TIMESTAMP""",
+                (uid, college, uc, major, plan_text, completed_courses),
+            )
+
+
+def get_user_plans(uid):
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"""SELECT id, college, uc, major, plan_text, completed_courses, created_at, updated_at
+                FROM saved_plans WHERE user_id={_p()} ORDER BY updated_at DESC""",
+            (uid,),
+        )
+        return [_row(r) for r in cur.fetchall()]
+
+
+def get_plan(pid, uid):
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"""SELECT id, college, uc, major, plan_text, completed_courses, created_at, updated_at
+                FROM saved_plans WHERE id={_p()} AND user_id={_p()}""",
+            (pid, uid),
+        )
+        return _row(cur.fetchone())
+
+
+def delete_plan(pid, uid):
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"DELETE FROM saved_plans WHERE id={_p()} AND user_id={_p()}",
+            (pid, uid),
         )

@@ -932,6 +932,22 @@ def _resolve_major_prep(
             loser_cc_codes, not_articulated, stale_notes, recommended_optional)
 
 
+# Colleges that have been renamed/rebranded since some ASSIST articulation
+# entries were scraped, so calgetc_map (scraped more recently, under the
+# current name) has no entry under the old name at all. Confirmed via
+# manual lookup — NOT guessed — before adding. Deliberately excludes
+# "Rancho Santiago College", which is a community college DISTRICT name
+# covering two separate campuses (Santa Ana College, Santiago Canyon
+# College) with no way to know which one a given record means; that one
+# is left as a genuine unresolved data gap rather than silently guessing.
+_CALGETC_COLLEGE_ALIASES = {
+    "kings river college": "Reedley College",
+    "vista community college": "Berkeley City College",
+    "west hills college coalinga": "Coalinga College",
+    "west hills college lemoore": "Lemoore College",
+}
+
+
 # ── Cal-GETC selection ─────────────────────────────────────────────────────────
 
 def _select_calgetc(
@@ -964,6 +980,10 @@ def _select_calgetc(
         if stripped != college.lower():
             retry = [k for k in by_school if k.lower() == stripped or stripped in k.lower()]
             school_key = next((k for k in retry if _has_courses(k)), None)
+    if not school_key:
+        aliased = _CALGETC_COLLEGE_ALIASES.get(college.lower())
+        if aliased and aliased in by_school and _has_courses(aliased):
+            school_key = aliased
     if not school_key:
         return [], {}
 

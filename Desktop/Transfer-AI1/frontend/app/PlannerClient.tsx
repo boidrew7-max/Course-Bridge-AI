@@ -1410,13 +1410,12 @@ export default function PlannerClient() {
           try {
             const chunk = JSON.parse(payload);
             accumulated += chunk;
-            const cleaned = accumulated.replace(/\[Note: switching to faster model[^\]]*\]/g, "").trimStart();
-            setAiPlan(cleaned);
+            setAiPlan(accumulated);
           } catch {}
         }
       }
     } catch {
-      setAiPlan("Something went wrong generating your plan. Try asking Transfer AI directly.");
+      setAiPlan("Something went wrong generating your plan. Please try again in a moment.");
     } finally {
       setAiPlanLoading(false);
     }
@@ -1438,9 +1437,9 @@ export default function PlannerClient() {
     try {
       setChatMessages([...newHistory, { role: "assistant", content: "" }]);
       const reply = await streamResponse("/api/chat", newHistory.map(m => ({ ...m, content: m.content })), (r) => {
-        setChatMessages([...newHistory, { role: "assistant", content: r.replace(/\[Note: switching to faster model[^\]]*\]/g, "").trimStart() }]);
+        setChatMessages([...newHistory, { role: "assistant", content: r }]);
       });
-      setChatMessages([...newHistory, { role: "assistant", content: reply.replace(/\[Note: switching to faster model[^\]]*\]/g, "").trimStart() }]);
+      setChatMessages([...newHistory, { role: "assistant", content: reply }]);
     } catch {
       setChatMessages([...newHistory, { role: "assistant", content: "Something went wrong. Please try again." }]);
     } finally {

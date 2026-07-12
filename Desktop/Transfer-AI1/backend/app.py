@@ -162,7 +162,7 @@ def chat():
             # If the primary model is rate-limited, fall back to the faster/smaller model
             if any(kw in err_str for kw in ["rate_limit", "rate limit", "429", "quota", "tokens per"]):
                 try:
-                    yield f"data: {json.dumps('[Note: switching to faster model — high demand right now]')}\n\n"
+                    app.logger.info("chat_fallback_model_used reason=%.150s", err_str)
                     for chunk in ask_advisor_stream_fallback(history, user_profile=user_profile):
                         yield f"data: {json.dumps(chunk)}\n\n"
                 except Exception:
@@ -543,8 +543,12 @@ def auth_forgot():
         return jsonify({"error": "Enter your email address."}), 400
     token, user = create_reset_token(email)
     # Always return the same response — don't reveal whether the account exists
-    if token:
-        # Log token server-side for manual delivery until SMTP is configured
+    if token and os.getenv("DEBUG_LOG_RESET_TOKENS") == "1":
+        # Opt-in only (unset by default, including on Railway): log token for
+        # manual delivery since SMTP isn't configured yet. NEVER log this by
+        # default — anyone with log access could take over any account. Real
+        # email delivery (SMTP) must land before this route can safely relay
+        # a token to real users in production.
         app.logger.info("Password reset token for %s: %s", email, token)
     return jsonify({"ok": True, "message": "If an account exists for that email, a reset link has been sent."})
 

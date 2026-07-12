@@ -1348,6 +1348,11 @@ export default function PlannerClient() {
               return;
             }
           }
+          // Signed in but no saved plan yet — send to the wizard, not "/".
+          // "/" would re-detect this same signed-in state and render this
+          // component again, looping forever.
+          router.replace("/onboarding");
+          return;
         }
       } catch {}
 

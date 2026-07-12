@@ -9,10 +9,28 @@ export default function Home() {
   const [onboarded, setOnboarded] = useState(false);
 
   useEffect(() => {
-    try {
-      setOnboarded(!!localStorage.getItem("cb_profile"));
-    } catch {}
-    setReady(true);
+    (async () => {
+      let hasLocal = false;
+      try {
+        hasLocal = !!localStorage.getItem("cb_profile");
+      } catch {}
+      if (hasLocal) {
+        setOnboarded(true);
+        setReady(true);
+        return;
+      }
+      // No local profile — a signed-in account still counts as "has a
+      // plan" even on a new device / cleared cache. PlannerClient's own
+      // hydration effect loads their most recent saved plan (or sends
+      // them to onboarding if the account has none yet).
+      try {
+        const res = await fetch("/api/auth/me");
+        setOnboarded(res.ok);
+      } catch {
+        setOnboarded(false);
+      }
+      setReady(true);
+    })();
   }, []);
 
   if (!ready) return null;

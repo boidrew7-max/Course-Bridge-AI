@@ -32,7 +32,10 @@ export default function LoginPage() {
         setError(data.error || "Something went wrong. Please try again.");
         return;
       }
-      router.push("/onboarding");
+      // "/" checks auth state and shows either the dashboard (existing
+      // saved plan or the wizard, if none yet) — don't force the wizard
+      // here, that would restart returning users who already have a plan.
+      router.push("/");
     } catch {
       setError("Could not reach the server. Please try again.");
     } finally {

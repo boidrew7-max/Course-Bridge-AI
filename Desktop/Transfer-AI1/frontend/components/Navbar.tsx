@@ -22,8 +22,12 @@ export default function Navbar() {
 
   async function handleLogout() {
     try { await fetch("/api/auth/logout", { method: "POST" }); } catch {}
+    try { localStorage.removeItem("cb_profile"); } catch {}
     setEmail(null);
-    router.push("/");
+    // Full reload (not router.push) so app/page.tsx re-runs its auth/local
+    // check from a clean slate — otherwise the already-mounted dashboard
+    // component keeps showing the plan that was in memory before logout.
+    window.location.href = "/";
   }
 
   return (

@@ -1881,7 +1881,9 @@ def build_render_prompt(
             )
     lines.append("")
 
-    lines.append("## Cal-GETC Completion (mark checkmark for every area listed here):")
+    lines.append("Cal-GETC Completion data (mark checkmark for every area listed here — "
+                 "this is input data, not the output header; your output's GE Completion "
+                 "section header is dictated separately by your system instructions):")
     area_labels = {
         "1A": "Area 1A English Composition",
         "1B": "Area 1B Critical Thinking",

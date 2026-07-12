@@ -9,7 +9,7 @@ Usage:
 All cases must PASS before plan_engine replaces /plan.
 
 Fail criteria (hard errors):
-  - Ghost course: course in igetc_completion but not in any scheduled term
+  - Ghost course: course in ge_completion but not in any scheduled term
   - Prereq violation: same-prefix letter-sequence course in wrong term order
   - AND-group incomplete: multiple CC courses required but not all scheduled
   - Match failure: no articulation data found (empty schedule)
@@ -246,7 +246,7 @@ GPA_NOTES = {
 def check_ghost_courses(result: PlanResult) -> list:
     placed = {s.code for s in result.all_courses()}
     errors = []
-    for area, course_code in result.igetc_completion.items():
+    for area, course_code in result.ge_completion.items():
         for code in course_code.split(", "):
             code = code.strip()
             if not code or "via" in code or "satisfied" in code or "already completed" in code or "NOT ASSIGNED" in code:
@@ -386,9 +386,9 @@ def check_ge_areas(result: PlanResult, must_include_ge_areas: set, must_not_incl
     """Verify specific GE area codes have real course assignments (not placeholder strings)."""
     errors = []
     for area in sorted(must_include_ge_areas or set()):
-        val = result.igetc_completion.get(area)
+        val = result.ge_completion.get(area)
         if not val:
-            errors.append(f"GE area {area} not in igetc_completion — no assignment made")
+            errors.append(f"GE area {area} not in ge_completion — no assignment made")
             continue
         for bad in (must_not_include_ge_strings or set()):
             if bad.lower() in str(val).lower():
@@ -498,7 +498,7 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
         t_units = sum(s.units for s in result.terms.get(t, []))
         names   = ", ".join(s.code for s in result.terms.get(t, []))
         print(f"    Term {t}: {t_units:.0f}u  [{names}]")
-    print(f"  IGETC: {sorted(result.igetc_completion.keys())}")
+    print(f"  Cal-GETC: {sorted(result.ge_completion.keys())}")
     print(f"  Post-transfer: {len(result.post_transfer)}")
     print(f"  Render prompt: ~{len(prompt) // 4} tokens")
 

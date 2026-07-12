@@ -3,7 +3,7 @@ Deterministic UC transfer plan builder — plan_engine.py
 
 Replaces LLM-based schedule generation with Python for:
   1. Option resolution  (pick one option per multi-option UC requirement)
-  2. IGETC selection    (rule-based, one course per area)
+  2. Cal-GETC selection (rule-based, one course per area)
   3. Term bin-packing   (prereq-respecting greedy assignment, 20u/term hard cap)
   4. Compact LLM call   (~600-1200 tokens vs ~12 000 for rendering only)
 
@@ -246,7 +246,7 @@ class PlanResult:
     uc: str
     major: str
     terms: dict = field(default_factory=lambda: {t: [] for t in range(1, 7)})
-    igetc_completion: dict = field(default_factory=dict)
+    ge_completion: dict = field(default_factory=dict)
     requirement_audit: list = field(default_factory=list)
     post_transfer: list = field(default_factory=list)
     not_articulated: list = field(default_factory=list)  # required, zero CC equivalent per ASSIST
@@ -365,7 +365,7 @@ def _cc_names_related(user_college: str, matched_cc: str) -> bool:
     """True when user_college and matched_cc refer to the same institution.
 
     Used as a sanity check: if the shard fuzzy-match found major-prep data
-    but IGETC came back empty, verify the matched CC name overlaps the user's
+    but Cal-GETC came back empty, verify the matched CC name overlaps the user's
     input before returning a partial plan.
     """
     user_l  = user_college.lower()
@@ -425,7 +425,7 @@ _CC_PREREQ_CHAINS: dict = {
     # PHYS 4A→4B: sequence detection handles ordering (same base 4, A<B).
     # MATH 1C→1D: sequence detection handles ordering (same base 1, C<D).
     # ENGR 37 itself needs explicit cross-prefix deps on PHYS 4B and MATH 1D.
-    # PHYS 4A also satisfies IGETC Area 5A (it IS in De Anza's 5A list), so it
+    # PHYS 4A also satisfies Cal-GETC Area 5A (it IS in De Anza's 5A list), so it
     # double-labels automatically once it's in scheduled_keys — no PHYS 10 needed.
     ("de anza college", "ENGR", "37"): {
         "inject": [
@@ -905,7 +905,7 @@ def _resolve_major_prep(
 
 # ── Cal-GETC selection ─────────────────────────────────────────────────────────
 
-def _select_igetc(
+def _select_calgetc(
     college: str,
     scheduled_keys: set,
     accept_honors: bool,
@@ -929,10 +929,10 @@ def _select_igetc(
 
     required = _CALGETC_REQUIRED
 
-    igetc_courses: list[CourseSlot] = []
+    ge_courses: list[CourseSlot] = []
     area_assignments: dict = {}
     five_b_has_lab = False
-    placed_igetc_keys: set = set()
+    placed_ge_keys: set = set()
 
     def _ok(c):
         pfx = c.get("prefix","").upper()
@@ -987,7 +987,7 @@ def _select_igetc(
                 if not _ok(c):
                     continue
                 ck = (c.get("prefix",""), c.get("number",""))
-                if ck in seen_4 or ck in placed_igetc_keys:
+                if ck in seen_4 or ck in placed_ge_keys:
                     continue
                 seen_4.add(ck)
                 if ck in completed_set or ck in scheduled_keys:
@@ -1031,9 +1031,9 @@ def _select_igetc(
                 ck = (c.get("prefix",""), c.get("number",""))
                 if is_new:
                     slot = _make_slot(c, tag)
-                    igetc_courses.append(slot)
+                    ge_courses.append(slot)
                     codes.append(slot.code)
-                    placed_igetc_keys.add(ck)
+                    placed_ge_keys.add(ck)
                 else:
                     suffix = " (already completed)" if ck in completed_set else ""
                     codes.append(f"{c.get('prefix','')} {c.get('number','')}{suffix}")
@@ -1078,7 +1078,7 @@ def _select_igetc(
             if not _ok(c):
                 continue
             k = (c.get("prefix",""), c.get("number",""))
-            if k in completed_set or k in placed_igetc_keys:
+            if k in completed_set or k in placed_ge_keys:
                 continue
             if k not in seen:
                 seen.add(k)
@@ -1095,20 +1095,20 @@ def _select_igetc(
         pick = unique[0]
         pk = (pick.get("prefix",""), pick.get("number",""))
         slot = _make_slot(pick, tag)
-        igetc_courses.append(slot)
+        ge_courses.append(slot)
         area_assignments[area_code] = slot.code
-        placed_igetc_keys.add(pk)
+        placed_ge_keys.add(pk)
         if area_code in ("5A","5B") and pk in lab_keys:
             five_b_has_lab = True
 
-    return igetc_courses, area_assignments
+    return ge_courses, area_assignments
 
 
 # ── Term bin-packing ──────────────────────────────────────────────────────────
 
 def _assign_terms(
     major_courses: list,
-    igetc_courses: list,
+    ge_courses: list,
     major: str,
     is_quarter: bool = False,
 ) -> tuple[dict, dict]:
@@ -1125,7 +1125,7 @@ def _assign_terms(
     base_terms = 6 if is_quarter else 4
 
     # Pre-calculate needed terms from total unit load so the cap is never breached
-    total_u   = sum(s.units for s in major_courses + igetc_courses)
+    total_u   = sum(s.units for s in major_courses + ge_courses)
     max_terms = max(base_terms, min(math.ceil(total_u / max_units), _MAX_TERMS_HARD))
 
     terms: dict      = {t: []   for t in range(1, max_terms + 1)}
@@ -1209,32 +1209,32 @@ def _assign_terms(
         t     = _earliest_valid_term(slot, preds, term_units, max_units, max_terms)
         _place(slot, t)
 
-    # Pass 3: IGETC courses — prefer standard terms (1-4) first, then extended.
-    # Track placed IGETC area terms to enforce 1A-before-1B ordering.
-    igetc_area_term: dict = {}   # area_code -> term where it was placed
+    # Pass 3: Cal-GETC courses — prefer standard terms (1-4) first, then extended.
+    # Track placed Cal-GETC area terms to enforce 1A-before-1B ordering.
+    ge_area_term: dict = {}   # area_code -> term where it was placed
 
-    def _igetc_min_term(slot: CourseSlot) -> int:
+    def _ge_min_term(slot: CourseSlot) -> int:
         """Return earliest allowed term for this GE slot."""
         for tag in slot.tags:
             if "Area 1B" in tag:
-                return igetc_area_term.get("1A", 1) + 1  # 1B must come strictly after 1A
+                return ge_area_term.get("1A", 1) + 1  # 1B must come strictly after 1A
         return 1
 
-    def _record_igetc_area(slot: CourseSlot, t: int):
+    def _record_ge_area(slot: CourseSlot, t: int):
         for tag in slot.tags:
             if "Area " in tag:
-                igetc_area_term[tag.split("Area ")[1]] = t
+                ge_area_term[tag.split("Area ")[1]] = t
 
-    for slot in igetc_courses:
+    for slot in ge_courses:
         placed = False
-        min_t  = _igetc_min_term(slot)
+        min_t  = _ge_min_term(slot)
         # Try standard terms in load order, respecting min_t
         for t in sorted(range(1, 5), key=lambda t: term_units[t]):
             if t < min_t:
                 continue
             if term_units[t] + slot.units <= max_units:
                 _place(slot, t)
-                _record_igetc_area(slot, t)
+                _record_ge_area(slot, t)
                 placed = True
                 break
         if not placed and max_terms > 4:
@@ -1244,7 +1244,7 @@ def _assign_terms(
                     continue
                 if term_units[t] + slot.units <= max_units:
                     _place(slot, t)
-                    _record_igetc_area(slot, t)
+                    _record_ge_area(slot, t)
                     placed = True
                     break
         if not placed:
@@ -1254,12 +1254,12 @@ def _assign_terms(
                 terms[max_terms] = []
                 term_units[max_terms] = 0.0
                 _place(slot, max_terms)
-                _record_igetc_area(slot, max_terms)
+                _record_ge_area(slot, max_terms)
             else:
                 # At hard ceiling — put in least-loaded term (cap breached by ≤1 course)
                 t = min(range(1, max_terms + 1), key=lambda t: term_units[t])
                 _place(slot, t)
-                _record_igetc_area(slot, t)
+                _record_ge_area(slot, t)
 
     return terms, term_units
 
@@ -1310,7 +1310,7 @@ def _earliest_valid_term(
 
 def _apply_double_labels(result: PlanResult):
     ge_prefix = "Cal-GETC"
-    for area_code, course_code in result.igetc_completion.items():
+    for area_code, course_code in result.ge_completion.items():
         if "NOT ASSIGNED" in str(course_code):
             continue
         for t in range(1, result.active_terms + 1):
@@ -1325,7 +1325,7 @@ def _apply_double_labels(result: PlanResult):
 def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None = None,
                      accept_honors: bool = False) -> None:
     """
-    Fill unit shortfall with UC-transferable courses from the school's IGETC pool.
+    Fill unit shortfall with UC-transferable courses from the school's Cal-GETC pool.
 
     Picks courses from varied disciplines (round-robin by prefix), respects per-term
     caps, and tags each added course [Elective — transfer unit minimum].
@@ -1537,21 +1537,21 @@ def build_plan(
 
     result.ge_strategy, result.ge_strategy_note = _ge_strategy(uc_l, major)
 
-    # Use matched CC name from shard key for IGETC lookup so typos in the
-    # user's college string still resolve to the correct IGETC school entry.
+    # Use matched CC name from shard key for Cal-GETC lookup so typos in the
+    # user's college string still resolve to the correct Cal-GETC school entry.
     matched_cc_name = best_key.split("__")[0].replace("_", " ")
 
     # Inject CC-side prerequisite chains (e.g. CIS 22A→26A before CIS 26B,
     # PHYS 4A→4B and MATH 1D before ENGR 37).  Must run before scheduled_keys
-    # is built so injected courses (like PHYS 4A) can double-label IGETC areas.
+    # is built so injected courses (like PHYS 4A) can double-label Cal-GETC areas.
     _inject_cc_prereqs(major_courses, matched_cc_name, completed_keys)
 
     scheduled_keys = {(s.prefix, s.number) for s in major_courses}
-    igetc_courses, area_assignments = _select_igetc(matched_cc_name, scheduled_keys, accept_honors,
+    ge_courses, area_assignments = _select_calgetc(matched_cc_name, scheduled_keys, accept_honors,
                                                      completed_keys=completed_keys)
-    result.igetc_completion = area_assignments
+    result.ge_completion = area_assignments
 
-    # Sanity check: if major prep was found but IGETC is empty, the shard
+    # Sanity check: if major prep was found but Cal-GETC is empty, the shard
     # match may have slipped past the threshold on a marginal score.
     # Verify the matched CC name loosely matches the user's input before
     # returning a partial plan.
@@ -1562,7 +1562,7 @@ def build_plan(
             return r
 
     result.is_quarter = _is_quarter(college)
-    result.terms, _ = _assign_terms(major_courses, igetc_courses, major, is_quarter=result.is_quarter)
+    result.terms, _ = _assign_terms(major_courses, ge_courses, major, is_quarter=result.is_quarter)
 
     # Compute how many terms have courses
     base_terms = 6 if result.is_quarter else 4
@@ -1614,12 +1614,12 @@ def _sanity_check(result: PlanResult):
 
     # Ghost course check
     placed = {s.code for s in result.all_courses()}
-    for area_code, course_code in result.igetc_completion.items():
+    for area_code, course_code in result.ge_completion.items():
         for code in course_code.split(", "):
             code = code.strip()
             if code and "via" not in code and "satisfied" not in code and "already completed" not in code and "NOT ASSIGNED" not in code and code not in placed:
                 result.warnings.append(
-                    f"Ghost: {code} listed in IGETC area {area_code} but not placed in any term."
+                    f"Ghost: {code} listed in Cal-GETC area {area_code} but not placed in any term."
                 )
 
     # Extended plan warning
@@ -1743,7 +1743,7 @@ def build_render_prompt(
     lines = [
         "Render this pre-computed UC transfer plan into the exact output format "
         "from your system instructions. DO NOT change any course, term, unit count, "
-        "status, or IGETC assignment. Copy all values verbatim.\n"
+        "status, or Cal-GETC assignment. Copy all values verbatim.\n"
         "CRITICAL — TERM HEADERS: Each '## Term N (LABEL)' section below has a "
         "pre-assigned label. Copy the label VERBATIM, character for character. "
         "Do NOT simplify, reorder, paraphrase, or drop the quarter suffix. "
@@ -1898,9 +1898,9 @@ def build_render_prompt(
         "5C": "Area 5C Science Lab",
     }
     for area_code, label in area_labels.items():
-        course = result.igetc_completion.get(area_code, "NOT ASSIGNED")
+        course = result.ge_completion.get(area_code, "NOT ASSIGNED")
         if area_code == "5C":
-            five_b = result.igetc_completion.get("5B", "")
+            five_b = result.ge_completion.get("5B", "")
             lines.append(f"  {label}: SATISFIED by {five_b} LAB -- no separate course needed")
         elif "NOT ASSIGNED" in str(course):
             lines.append(f"  {label}: {course}")

@@ -1310,7 +1310,7 @@ export default function PlannerClient() {
           setPlanSchools(schools);
           setActiveSchoolTab(profile.school ?? "");
           if (profile.college && profile.school && profile.major) {
-            generateAIPlan(
+            loadOrGeneratePlan(
               profile.college,
               profile.school,
               profile.major,
@@ -1491,6 +1491,33 @@ export default function PlannerClient() {
     } finally {
       setAiPlanLoading(false);
     }
+  }
+
+  // Show an already-saved plan for this exact combo instead of burning a
+  // fresh (slow, Groq-quota-consuming) generation every time — e.g.
+  // navigating home and back, or re-clicking a school tab you already saw.
+  async function loadOrGeneratePlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
+    try {
+      const meRes = await fetch("/api/auth/me");
+      if (meRes.ok) {
+        const user = await meRes.json();
+        setAuthedEmail(user.email ?? null);
+        const plansRes = await fetch("/api/plans");
+        if (plansRes.ok) {
+          const plans = await plansRes.json();
+          if (Array.isArray(plans)) {
+            const existing = plans.find((p: { college?: string; uc?: string; major?: string; plan_text?: string }) =>
+              p.college === college && p.uc === school && p.major === major
+            );
+            if (existing?.plan_text) {
+              setAiPlan(existing.plan_text);
+              return;
+            }
+          }
+        }
+      }
+    } catch {}
+    generateAIPlan(college, school, major, courses, acceptHonors, apCredits, mode);
   }
 
   const sendChatMessage = useCallback(async (text?: string) => {
@@ -1736,7 +1763,7 @@ export default function PlannerClient() {
                     setTargetSchool(school);
                     setActiveSchoolTab(school);
                     setResult(null);
-                    generateAIPlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardMode ?? "competitive");
+                    loadOrGeneratePlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardMode ?? "competitive");
                   }}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]"}`}>
                   {school}

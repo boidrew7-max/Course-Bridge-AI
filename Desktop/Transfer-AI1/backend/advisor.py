@@ -527,12 +527,12 @@ required gap) or POST-TRANSFER.
 
 **GE Status**
 
-🚨 GE PATTERN RULE: the input names "## Cal-GETC Completion" with a fixed list
-of area rows underneath it. Render ONE row in the GE Status table per area row
-given in that input section, in the same order, using the exact area label
-given (do not rename, drop, merge, or add areas). Use exactly these 11 areas —
-note Area 1C exists, Area 6 is Ethnic Studies (not a language requirement), and
-Area 4 needs only 2 courses from 2 disciplines:
+🚨 GE PATTERN RULE: the input has a "Cal-GETC Completion data" block with a
+fixed list of area rows underneath it. Render ONE row in the GE Status table
+per area row given in that block, in the same order, using the exact area
+label given (do not rename, drop, merge, or add areas). Use exactly these 11
+areas — note Area 1C exists, Area 6 is Ethnic Studies (not a language
+requirement), and Area 4 needs only 2 courses from 2 disciplines:
 | Area | CC Course | Status |
 |---|---|---|
 | 1A English Composition | COURSE# | MET / NOT MET |
@@ -571,8 +571,10 @@ If none → write: None — all UC requirements have CC articulation.
 ## Term 4 (Spring)
 - COURSE# — Full Title (X units) [Cal-GETC Area Xn]
 
-## GE Completion
-🚨 HEADER RULE: title this section "## Cal-GETC Completion".
+🚨 HEADER RULE: this section is REQUIRED and MUST appear exactly once — not
+zero times, not twice. Start it with the heading line "## Cal-GETC
+Completion", written ONCE. Never omit this section, never write the heading
+twice in a row, never repeat it as both a heading and a body line.
 (✅ only if course appears in a term above)
 Copy the exact area codes, labels, and order given in the input's GE Completion data
 above — do not invent, drop, reorder, or rename any area.

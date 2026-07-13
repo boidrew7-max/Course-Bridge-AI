@@ -1810,6 +1810,62 @@ def repair_term_headers(text: str, result: PlanResult) -> tuple:
     return repaired, repairs
 
 
+_GE_COMPLETION_HEADER_RE = re.compile(r"##\s*Cal-GETC Completion\s*\n")
+
+
+def repair_ge_completion_section(text: str, result: PlanResult) -> tuple:
+    """
+    The LLM occasionally drops the "## Cal-GETC Completion" section entirely
+    (observed under real load, not just in testing — the model's instruction
+    -following gets less reliable as the rest of the plan grows long) or
+    duplicates its own header line. Since this section is 100% deterministic
+    data already computed by the engine, don't leave correctness to chance:
+    detect both failure modes and fix them directly rather than re-prompting.
+    Returns (repaired_text, repair_description or None).
+    """
+    headers = _GE_COMPLETION_HEADER_RE.findall(text)
+
+    def _build_section() -> str:
+        lines = ["## Cal-GETC Completion"]
+        for area_code, course_code in result.ge_completion.items():
+            label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+            mark = "❌" if "NOT ASSIGNED" in str(course_code) else "✅"
+            lines.append(f"- {label}: {mark} {course_code}")
+        return "\n".join(lines) + "\n"
+
+    if len(headers) == 0:
+        if not result.ge_completion:
+            return text, None
+        section = _build_section()
+        if "## Key Notes" in text:
+            repaired = text.replace("## Key Notes", section + "\n## Key Notes", 1)
+        else:
+            repaired = text.rstrip() + "\n\n" + section
+        return repaired, "GE Completion section was missing — inserted"
+
+    if len(headers) > 1:
+        # Collapse consecutive duplicate header lines into one.
+        repaired = re.sub(r"(##\s*Cal-GETC Completion\s*\n){2,}", "## Cal-GETC Completion\n", text)
+        return repaired, f"GE Completion header repeated {len(headers)}x — collapsed to 1"
+
+    return text, None
+
+
+_CALGETC_AREA_LABELS = {
+    "1A": "Area 1A English Composition",
+    "1B": "Area 1B Critical Thinking",
+    "1C": "Area 1C Oral Communication",
+    "2":  "Area 2 Mathematical Concepts and Quantitative Reasoning",
+    "3A": "Area 3A Arts",
+    "3B": "Area 3B Humanities",
+    "6":  "Area 6 Ethnic Studies",
+    "4":  "Area 4 Social & Behavioral Sciences",
+    "5A": "Area 5A Physical Sciences",
+    "5B": "Area 5B Biological Sciences",
+    "5C": "Area 5C Science Lab",
+}
+
+
 def build_render_prompt(
     result: PlanResult,
     tag_note: str,

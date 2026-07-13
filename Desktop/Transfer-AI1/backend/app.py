@@ -10,6 +10,7 @@ from advisor import (
 from plan_engine import (build_plan as _engine_build_plan,
                          render_plan_stream as _engine_render_stream,
                          repair_term_headers as _engine_repair_term_headers,
+                         repair_ge_completion_section as _engine_repair_ge_section,
                          _UC_SHARD_MAP)
 from db import (
     init_db, create_user, get_user_by_email, get_user_by_id,
@@ -439,6 +440,16 @@ def plan_v2():
             app.logger.warning(
                 "term_header_repair college=%r school=%r major=%r repairs=%d",
                 college, school, major, n_repairs,
+            )
+
+        # GE Completion section is 100% deterministic data — don't leave its
+        # presence/uniqueness to LLM instruction-following, which has been
+        # observed to drop or duplicate it under real load. Repair directly.
+        full_text, ge_repair = _engine_repair_ge_section(full_text, result)
+        if ge_repair:
+            app.logger.warning(
+                "ge_completion_repair college=%r school=%r major=%r note=%s",
+                college, school, major, ge_repair,
             )
 
         # Truncation / ghost-course checks

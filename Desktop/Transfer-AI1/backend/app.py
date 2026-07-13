@@ -81,10 +81,18 @@ def _get_ip():
 def _check_rate(ip):
     now    = time.time()
     cutoff = now - RATE_WINDOW
-    _rate_log[ip] = [t for t in _rate_log[ip] if t > cutoff]
-    if len(_rate_log[ip]) >= RATE_LIMIT:
+    recent = [t for t in _rate_log[ip] if t > cutoff]
+    if len(recent) >= RATE_LIMIT:
+        _rate_log[ip] = recent
         return False
-    _rate_log[ip].append(now)
+    recent.append(now)
+    _rate_log[ip] = recent
+    # Every IP that has ever hit this process otherwise stays as a dict key
+    # forever (its list just goes empty) — a slow unbounded leak under real
+    # traffic. Occasionally sweep out entries with nothing left in-window.
+    if len(_rate_log) > 5000:
+        for k in [k for k, v in _rate_log.items() if not v]:
+            del _rate_log[k]
     return True
 
 

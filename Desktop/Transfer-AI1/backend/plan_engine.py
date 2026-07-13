@@ -164,7 +164,7 @@ def _is_quarter(college: str) -> bool:
     return college in _QUARTER_SCHOOLS
 
 _ART_SHARDS: "OrderedDict" = OrderedDict()
-_ART_SHARDS_MAX = 1   # each shard is tens of MB decompressed; cap to avoid
+_ART_SHARDS_MAX = 2   # each shard is tens of MB decompressed; cap to avoid
                        # OOM-killing the single gunicorn worker as different
                        # UCs get requested over the worker's lifetime.
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")

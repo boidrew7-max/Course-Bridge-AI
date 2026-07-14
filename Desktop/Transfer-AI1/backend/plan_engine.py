@@ -28,6 +28,7 @@ import json
 import os
 import re
 from collections import OrderedDict
+from difflib import SequenceMatcher
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -234,6 +235,56 @@ def _load_calgetc() -> dict:
             pass
     _CALGETC_CACHE = {}
     return _CALGETC_CACHE
+
+
+_RECOMMENDED_COURSES_CACHE: dict | None = None
+
+
+def _load_recommended_courses() -> dict:
+    """Pre-extracted "highly recommended, not required" course codes per
+    (uc, cc, major) — see build_recommended_courses.py. This is a ~1KB file,
+    not the full hints shards (tens of MB each) — a prior attempt to use
+    advisor._find_uc_hint() directly per-request OOM-killed the backend."""
+    global _RECOMMENDED_COURSES_CACHE
+    if _RECOMMENDED_COURSES_CACHE is not None:
+        return _RECOMMENDED_COURSES_CACHE
+    path = os.path.join(_DATA_DIR, "recommended_courses.json.gz")
+    if os.path.exists(path):
+        try:
+            with gzip.open(path, "rt", encoding="utf-8") as f:
+                _RECOMMENDED_COURSES_CACHE = json.load(f)
+            return _RECOMMENDED_COURSES_CACHE
+        except Exception:
+            pass
+    _RECOMMENDED_COURSES_CACHE = {}
+    return _RECOMMENDED_COURSES_CACHE
+
+
+def _find_recommended_courses(uc_normalized: str, college: str, major: str) -> list:
+    """Fuzzy-match (college, major) against the tiny pre-extracted lookup.
+    Safe to do a full linear scan here (unlike advisor._find_uc_hint, which
+    scans full hint text) — the whole file is ~1KB, well under 200 entries."""
+    shard_name = _UC_SHARD_MAP.get(uc_normalized)
+    if not shard_name or not college or not major:
+        return []
+    data = _load_recommended_courses()
+    if not data:
+        return []
+    college_l, major_l = college.lower(), major.lower()
+    prefix = f"{shard_name}||"
+    best_score, best_codes = 0.0, []
+    for key, codes in data.items():
+        if not key.startswith(prefix):
+            continue
+        _, cc, maj = key.split("||", 2)
+        cc_score = SequenceMatcher(None, college_l, cc.lower()).ratio()
+        if cc_score < 0.75:
+            continue
+        maj_score = SequenceMatcher(None, major_l, maj.lower()).ratio()
+        score = cc_score * 0.4 + maj_score * 0.6
+        if score > best_score:
+            best_score, best_codes = score, codes
+    return best_codes if best_score >= 0.55 else []
 
 
 # ── Data structures ───────────────────────────────────────────────────────────
@@ -921,12 +972,27 @@ def _resolve_major_prep(
         chosen = _pick_cc(list(valid_groups))
         _commit_chosen(chosen, uc_str, uc_key=uc_key)
 
-    # NOTE: a "Highly Recommended vs Required" reclassification pass using
-    # advisor._find_uc_hint() was tried here and reverted — loading a UC hints
-    # shard (tens of MB decompressed) on every plan_v2 request OOM-killed the
-    # gunicorn worker for the larger campuses (Berkeley/San Diego/Merced).
-    # Needs a lighter-weight data source before retrying.
+    # "Highly Recommended vs Required" reclassification — a course listed
+    # under "Not Articulated" might actually be optional per the UC's own
+    # admissions guidance (e.g. Berkeley CS: COMPSCI 61A/61C are "Highly
+    # Recommended", not required). An earlier attempt loaded a full UC hints
+    # shard (tens of MB decompressed) per request and OOM-killed the backend;
+    # this uses build_recommended_courses.py's pre-extracted ~1KB lookup
+    # instead, so there's no per-request memory cost.
     recommended_optional: list = []
+    if not_articulated:
+        recommended_codes = {
+            c.upper() for c in _find_recommended_courses(uc_normalized, college, major)
+        }
+        if recommended_codes:
+            still_not_articulated = []
+            for entry in not_articulated:
+                prefix_num = entry.split(" - ", 1)[0].strip().upper()
+                if prefix_num in recommended_codes:
+                    recommended_optional.append(entry)
+                else:
+                    still_not_articulated.append(entry)
+            not_articulated = still_not_articulated
 
     return (list(committed.values()), audit_rows, post_transfer, multi_track,
             loser_cc_codes, not_articulated, stale_notes, recommended_optional)

@@ -1252,6 +1252,33 @@ export default function PlannerClient() {
   const [showDeadlines, setShowDeadlines] = useState(false);
   const [showTagChecker, setShowTagChecker] = useState(false);
 
+  // ── Plan feedback ("report an issue") ─────────────────────────
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function submitPlanFeedback() {
+    if (!feedbackText.trim()) return;
+    setFeedbackStatus("sending");
+    try {
+      const res = await fetch("/api/plan-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          college: communityCollege,
+          uc: activeSchoolTab || targetSchool,
+          major: targetMajor,
+          message: feedbackText.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("failed");
+      setFeedbackStatus("sent");
+      setFeedbackText("");
+    } catch {
+      setFeedbackStatus("error");
+    }
+  }
+
   // ── TAG eligibility checker ───────────────────────────────────
   type TagCampusResult = {
     campus: string; eligible: boolean; requiredGPA: number;
@@ -1615,23 +1642,6 @@ export default function PlannerClient() {
 
   const selectedPlan = targetMajor ? selectedSchoolData[targetMajor] : null;
 
-  const previewPlan =
-    activeRequirements.CCSF?.["UC Berkeley"]?.["Economics, B.A."] ??
-    activeRequirements.CCSF?.["UC Berkeley"]?.Economics ??
-    defaultRequirements.CCSF["UC Berkeley"].Economics;
-
-  const previewCompleted = previewPlan.requiredCourses.filter((course) =>
-    ["ECON 1", "MATH 110A"].includes(course.code)
-  );
-
-  const previewMissing = previewPlan.requiredCourses.filter((course) =>
-    ["ECON 3", "MATH 110B", "STAT 20"].includes(course.code)
-  );
-
-  const previewRecommended = previewPlan.requiredCourses.filter((course) =>
-    ["MATH 110B", "ECON 3", "STAT 20"].includes(course.code)
-  );
-
   const readinessLabel = useMemo(() => {
     if (!result) return "Preview";
     if (result.readinessScore >= 80) return "Strong";
@@ -1894,6 +1904,56 @@ export default function PlannerClient() {
                       )}
                   </div>
                   {aiPlan && activeSchoolTab && <UCStatsPanel school={activeSchoolTab} />}
+
+                  {aiPlan && !aiPlanLoading && (
+                    <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4 text-xs text-[#7b818b] print:hidden">
+                      <p>
+                        This plan is built from real ASSIST.org and Cal-GETC data, but requirements can change
+                        and every combination isn&apos;t equally well-documented. Always confirm your final plan
+                        with a counselor before registering.
+                      </p>
+                      {!feedbackOpen ? (
+                        <button
+                          type="button"
+                          onClick={() => { setFeedbackOpen(true); setFeedbackStatus("idle"); }}
+                          className="mt-2 font-semibold text-[#0b7f46] hover:underline"
+                        >
+                          Something look wrong? Report it
+                        </button>
+                      ) : feedbackStatus === "sent" ? (
+                        <p className="mt-2 font-semibold text-[#0b7f46]">Thanks — we&apos;ll take a look.</p>
+                      ) : (
+                        <div className="mt-3 space-y-2">
+                          <textarea
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            placeholder="What looked wrong with this plan?"
+                            className="w-full min-h-20 rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+                          />
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={submitPlanFeedback}
+                              disabled={feedbackStatus === "sending" || !feedbackText.trim()}
+                              className="rounded-lg bg-[#0b7f46] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#08683a] disabled:opacity-50"
+                            >
+                              {feedbackStatus === "sending" ? "Sending…" : "Send"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setFeedbackOpen(false); setFeedbackText(""); }}
+                              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#7b818b] hover:text-[#303236]"
+                            >
+                              Cancel
+                            </button>
+                            {feedbackStatus === "error" && (
+                              <span className="text-xs text-[#9b1c1c]">Couldn&apos;t send — try again.</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

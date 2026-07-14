@@ -214,11 +214,35 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
+
+              {college.trim().toLowerCase() === "rancho santiago college" && (
+                <div className="rounded-xl border border-[#f0d99b] bg-[#fffaf0] p-4">
+                  <p className="text-sm font-semibold text-[#7a5a12]">
+                    &quot;Rancho Santiago College&quot; is the district name, not a specific campus —
+                    which college do you actually attend?
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setCollege("Santa Ana College")}
+                      className="rounded-full border border-[#0b7f46] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b7f46] transition hover:bg-[#0b7f46] hover:text-white"
+                    >
+                      Santa Ana College
+                    </button>
+                    <button
+                      onClick={() => setCollege("Santiago Canyon College")}
+                      className="rounded-full border border-[#0b7f46] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b7f46] transition hover:bg-[#0b7f46] hover:text-white"
+                    >
+                      Santiago Canyon College
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-between pt-2">
                 <button onClick={() => setStep(1)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                 <button
                   onClick={() => setStep(3)}
-                  disabled={!college.trim()}
+                  disabled={!college.trim() || college.trim().toLowerCase() === "rancho santiago college"}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
                   Next →

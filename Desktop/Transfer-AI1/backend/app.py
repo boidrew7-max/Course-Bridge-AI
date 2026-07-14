@@ -23,6 +23,7 @@ from db import (
     create_session_token, get_user_by_token, delete_session_token,
     get_or_create_google_user,
     save_plan, get_user_plans, get_plan, delete_plan,
+    save_plan_feedback,
 )
 from dotenv import load_dotenv
 
@@ -825,6 +826,25 @@ def api_feedback():
         return jsonify({"error": "rating must be 1 or -1"}), 400
     save_feedback(uid, sid, rating)
     return ("", 204)
+
+
+@app.route("/api/plan-feedback", methods=["POST"])
+def api_plan_feedback():
+    # Anonymous-friendly on purpose — this is the main signal for catching a
+    # wrong/bad data combination, and requiring an account would cut off most
+    # of the students actually hitting a bad plan.
+    uid = _current_uid()
+    data = request.json or {}
+    college = (data.get("college") or "").strip()
+    uc = (data.get("uc") or "").strip()
+    major = (data.get("major") or "").strip()
+    message = (data.get("message") or "").strip()
+    if not message:
+        return jsonify({"error": "Please describe what looked wrong."}), 400
+    if len(message) > 2000:
+        message = message[:2000]
+    save_plan_feedback(college, uc, major, message, uid=uid)
+    return jsonify({"ok": True})
 
 
 @app.route("/tag-check", methods=["POST"])

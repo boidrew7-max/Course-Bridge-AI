@@ -149,6 +149,17 @@ def init_db():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS plan_feedback (
+                    id         SERIAL PRIMARY KEY,
+                    user_id    INTEGER,
+                    college    TEXT NOT NULL DEFAULT '',
+                    uc         TEXT NOT NULL DEFAULT '',
+                    major      TEXT NOT NULL DEFAULT '',
+                    message    TEXT NOT NULL DEFAULT '',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
         else:
             cur.execute("""CREATE TABLE IF NOT EXISTS users (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -221,6 +232,15 @@ def init_db():
                 user_id    INTEGER,
                 session_id INTEGER,
                 rating     INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS plan_feedback (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER,
+                college    TEXT NOT NULL DEFAULT '',
+                uc         TEXT NOT NULL DEFAULT '',
+                major      TEXT NOT NULL DEFAULT '',
+                message    TEXT NOT NULL DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )""")
 
@@ -572,4 +592,15 @@ def delete_plan(pid, uid):
         cur.execute(
             f"DELETE FROM saved_plans WHERE id={_p()} AND user_id={_p()}",
             (pid, uid),
+        )
+
+
+# ── Plan feedback (student-reported issues with a specific plan) ─────────────
+
+def save_plan_feedback(college, uc, major, message, uid=None):
+    with _connect() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"INSERT INTO plan_feedback (user_id, college, uc, major, message) VALUES ({_p(5)})",
+            (uid, college, uc, major, message),
         )

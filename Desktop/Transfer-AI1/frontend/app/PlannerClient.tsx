@@ -1069,6 +1069,125 @@ function MarkdownTable({ rows }: { rows: string[][] }) {
   );
 }
 
+// ── Term timeline (parsed from the rendered plan's "## Term N (Label)" blocks) ──
+
+type TimelineCourse = { code: string; title: string; units: string; category: "major" | "breadth" | "english" };
+type TimelineTerm = { label: string; units: number; courses: TimelineCourse[] };
+
+const TERM_HEADER_RE = /^##\s*Term\s+\d+\s*\(([^)]+)\)/;
+const COURSE_LINE_RE = /^-\s*([A-Z]{1,10}\s+[A-Z0-9]+H?)\s*[—-]{1,2}\s*(.+?)\s*\((\d+(?:\.\d+)?)u\)(?:\s*\[([^\]]*)\])?\s*$/;
+
+function categorizeCourse(code: string, tags: string): TimelineCourse["category"] {
+  const t = tags.toLowerCase();
+  if (t.includes("english") || /^(ENGL|EWRT)\b/i.test(code)) return "english";
+  if (t.includes("major prep")) return "major";
+  return "breadth";
+}
+
+function parseTimeline(text: string): TimelineTerm[] {
+  const lines = text.split("\n");
+  const terms: TimelineTerm[] = [];
+  let current: TimelineTerm | null = null;
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    const headerMatch = TERM_HEADER_RE.exec(line);
+    if (headerMatch) {
+      if (current) terms.push(current);
+      current = { label: headerMatch[1].trim(), units: 0, courses: [] };
+      continue;
+    }
+    if (!current) continue;
+    const courseMatch = COURSE_LINE_RE.exec(line);
+    if (courseMatch) {
+      const [, code, title, units, tags] = courseMatch;
+      const u = parseFloat(units);
+      current.units += u;
+      current.courses.push({ code: code.trim(), title: title.trim(), units, category: categorizeCourse(code, tags ?? "") });
+    } else if (line.trim() === "" || /^##\s/.test(line)) {
+      if (/^##\s/.test(line) && !TERM_HEADER_RE.test(line)) {
+        terms.push(current);
+        current = null;
+      }
+    }
+  }
+  if (current) terms.push(current);
+  return terms.filter((t) => t.courses.length > 0);
+}
+
+const CATEGORY_STYLES: Record<TimelineCourse["category"], { dot: string; label: string }> = {
+  major:   { dot: "bg-[#0b7f46]", label: "Major prep" },
+  breadth: { dot: "bg-[#c9862f]", label: "Breadth / GE" },
+  english: { dot: "bg-[#8a6a4f]", label: "English" },
+};
+
+function PlanTimeline({ text, school, major }: { text: string; school: string; major: string }) {
+  const terms = useMemo(() => parseTimeline(text), [text]);
+  if (terms.length === 0) return null;
+
+  const totalUnits = terms.reduce((sum, t) => sum + t.units, 0);
+  const usedCategories = new Set(terms.flatMap((t) => t.courses.map((c) => c.category)));
+
+  return (
+    <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-5">
+      <div className="flex items-baseline justify-between">
+        <p className="text-xs font-bold uppercase tracking-widest text-[#0b7f46]">Recommended Plan</p>
+        <p className="text-xs font-medium text-[#7b818b]">
+          {terms.length} term{terms.length > 1 ? "s" : ""} · {totalUnits % 1 === 0 ? totalUnits : totalUnits.toFixed(1)} units
+        </p>
+      </div>
+
+      <div className="mt-4 space-y-5">
+        {terms.map((term, ti) => (
+          <div key={ti} className="relative pl-5">
+            <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-[#0b7f46]" />
+            {ti < terms.length - 1 && (
+              <span className="absolute left-[4.5px] top-4 bottom-[-20px] w-px bg-[#d8d0c3]" />
+            )}
+            <div className="flex items-baseline justify-between">
+              <h4 className="text-sm font-bold text-[#1a2e22]">{term.label}</h4>
+              <span className="text-xs text-[#7b818b]">{term.units % 1 === 0 ? term.units : term.units.toFixed(1)} units</span>
+            </div>
+            <div className="mt-2 space-y-1.5">
+              {term.courses.map((c, ci) => (
+                <div key={ci} className="flex items-center justify-between gap-3 rounded-xl border border-[#e5e0d5] bg-white px-3 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className={`h-2 w-2 shrink-0 rounded-sm ${CATEGORY_STYLES[c.category].dot}`} />
+                    <span className="truncate text-xs text-[#303236]">
+                      <span className="font-semibold">{c.code}</span>
+                      <span className="text-[#7b818b]"> · {c.title}</span>
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-xs text-[#7b818b]">{c.units}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <div className="relative pl-5">
+          <span className="absolute left-0 top-1.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-[#0b7f46] text-[6px] text-white">
+            ✓
+          </span>
+          <div className="rounded-xl border border-[#bfe0cd] bg-[#e7f3ed] px-3 py-2.5">
+            <p className="text-sm font-bold text-[#0b7f46]">Transfer to {school || "your UC"}</p>
+            {major && <p className="text-xs text-[#4d7a63]">{major}</p>}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#e5e0d5] pt-3">
+        {Array.from(usedCategories).map((cat) => (
+          <span key={cat} className="flex items-center gap-1.5 text-xs text-[#7b818b]">
+            <span className={`h-2 w-2 rounded-sm ${CATEGORY_STYLES[cat].dot}`} />
+            {CATEGORY_STYLES[cat].label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SimpleMarkdown({ text }: { text: string }) {
   const lines = text.split("\n");
   const out: ReactNode[] = [];
@@ -1892,6 +2011,9 @@ export default function PlannerClient() {
                   )}
                 </div>
                 <div className="p-6 space-y-4">
+                  {aiPlan && (
+                    <PlanTimeline text={aiPlan} school={activeSchoolTab || targetSchool} major={targetMajor} />
+                  )}
                   <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4 text-sm text-[#303236]">
                     {aiPlan
                       ? <SimpleMarkdown text={aiPlan} />

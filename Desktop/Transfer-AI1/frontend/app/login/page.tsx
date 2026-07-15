@@ -69,9 +69,10 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <label className="block">
-                <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Name (optional)</span>
+                <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Name</span>
                 <input
                   type="text"
+                  required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Jordan"

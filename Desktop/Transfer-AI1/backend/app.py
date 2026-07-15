@@ -549,11 +549,13 @@ def auth_register():
         return jsonify({"error": "Enter a valid email address."}), 400
     if len(password) < 6:
         return jsonify({"error": "Password must be at least 6 characters."}), 400
+    if not username:
+        return jsonify({"error": "Enter your name."}), 400
     if email_exists(email):
         return jsonify({"error": "An account with that email already exists."}), 409
 
     try:
-        user  = create_user(email, password, username or None)
+        user  = create_user(email, password, username)
         token = create_session_token(user["id"])
         return jsonify({"token": token, "user": _public(user)})
     except Exception:

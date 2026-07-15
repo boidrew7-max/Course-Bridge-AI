@@ -66,18 +66,18 @@ export default function HomePage() {
               target campus, so nothing falls through the cracks.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <Link
                 href="/onboarding"
                 className="rounded-xl bg-[#0b7f46] px-6 py-3.5 text-center font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
               >
-                Build My Plan
+                Build my plan
               </Link>
               <Link
                 href="/login"
-                className="rounded-xl border border-[#d8d8dc] bg-white px-6 py-3.5 text-center font-semibold text-[#2f3135] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
+                className="text-sm font-semibold text-[#4d535c] transition hover:text-[#0b7f46]"
               >
-                Log In
+                Already have a plan? Log in
               </Link>
             </div>
 
@@ -201,7 +201,7 @@ export default function HomePage() {
             href="/onboarding"
             className="mt-8 inline-block rounded-xl bg-white px-7 py-3.5 font-semibold text-[#0b7f46] shadow-sm transition hover:bg-[#f0faf5]"
           >
-            Build My Plan
+            Build my plan
           </Link>
         </div>
       </section>

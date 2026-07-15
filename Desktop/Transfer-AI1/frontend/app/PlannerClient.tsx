@@ -1155,10 +1155,10 @@ function PlanTimeline({ text, school, major }: { text: string; school: string; m
                     <span className={`h-2 w-2 shrink-0 rounded-sm ${CATEGORY_STYLES[c.category].dot}`} />
                     <span className="truncate text-xs text-[#303236]">
                       <span className="font-semibold">{c.code}</span>
-                      <span className="text-[#7b818b]"> · {c.title}</span>
+                      <span className="text-[#6E6A5C]"> · {c.title}</span>
                     </span>
                   </div>
-                  <span className="shrink-0 text-xs text-[#7b818b]">{c.units}</span>
+                  <span className="shrink-0 text-xs text-[#6E6A5C]">{c.units}</span>
                 </div>
               ))}
             </div>

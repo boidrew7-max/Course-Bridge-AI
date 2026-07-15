@@ -67,7 +67,7 @@ export default function Navbar() {
             </button>
           ) : (
             <Link href="/login" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
-              Login
+              Log in
             </Link>
           )}
         </div>
@@ -76,7 +76,7 @@ export default function Navbar() {
           href={email || hasLocalPlan ? "/dashboard" : "/onboarding"}
           className="shrink-0 rounded-xl bg-[#0b7f46] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
         >
-          {email || hasLocalPlan ? "My Plan" : "Build My Plan"}
+          {email || hasLocalPlan ? "My Plan" : "Build my plan"}
         </Link>
       </nav>
     </header>

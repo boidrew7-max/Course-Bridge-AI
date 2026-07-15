@@ -23,8 +23,8 @@ export default function Footer() {
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#a3a9b3]">Account</p>
               <ul className="mt-3 space-y-2 text-sm text-[#4d535c]">
-                <li><a href="/login" className="hover:text-[#0b7f46]">Login</a></li>
-                <li><a href="/onboarding" className="hover:text-[#0b7f46]">Build My Plan</a></li>
+                <li><a href="/login" className="hover:text-[#0b7f46]">Log in</a></li>
+                <li><a href="/onboarding" className="hover:text-[#0b7f46]">Build my plan</a></li>
               </ul>
             </div>
           </div>

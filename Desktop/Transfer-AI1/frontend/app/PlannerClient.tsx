@@ -1188,11 +1188,65 @@ function PlanTimeline({ text, school, major }: { text: string; school: string; m
   );
 }
 
+// ── Key Notes card (parsed out of the "## Key Notes" bullet list) ──────────
+
+const KEY_NOTE_LABELS: Record<string, string> = {
+  "tag": "TAG Eligibility",
+  "gpa target": "GPA Target",
+  "total units": "Total Units",
+};
+
+function KeyNotesCard({ items }: { items: string[] }) {
+  const stats: { label: string; value: string }[] = [];
+  const notes: string[] = [];
+
+  for (const raw of items) {
+    const m = /^([^:]{2,20}):\s*(.+)$/.exec(raw);
+    const key = m?.[1].trim().toLowerCase() ?? "";
+    if (m && KEY_NOTE_LABELS[key]) {
+      stats.push({ label: KEY_NOTE_LABELS[key], value: m[2].trim() });
+    } else {
+      notes.push(raw);
+    }
+  }
+
+  return (
+    <div className="my-2 space-y-3">
+      {stats.length > 0 && (
+        <div className="grid gap-2 sm:grid-cols-3">
+          {stats.map((s, i) => (
+            <div key={i} className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#7b818b]">{s.label}</p>
+              <p className="mt-1 text-sm font-semibold text-[#1a2e22] leading-snug">{renderInline(s.value)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {notes.map((n, i) => (
+        <div key={i} className="rounded-lg border-l-2 border-[#0b7f46] bg-[#faf8f3] py-2 pl-3 pr-3 text-sm leading-6 text-[#4d535c]">
+          {renderInline(n)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SimpleMarkdown({ text }: { text: string }) {
   const lines = text.split("\n");
   const out: ReactNode[] = [];
   let listBuf: string[] = [];
   let tableBuf: string[][] = [];
+  let skippingTermSection = false;   // term schedule already shown by PlanTimeline
+  let inKeyNotes = false;
+  let keyNotesBuf: string[] = [];
+
+  function flushKeyNotes() {
+    if (keyNotesBuf.length) {
+      out.push(<KeyNotesCard key={out.length} items={keyNotesBuf} />);
+      keyNotesBuf = [];
+    }
+    inKeyNotes = false;
+  }
 
   function flushList() {
     if (!listBuf.length) return;
@@ -1218,6 +1272,23 @@ function SimpleMarkdown({ text }: { text: string }) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trimEnd();
 
+    // Term schedule is already shown by the PlanTimeline card above — skip
+    // the plain-text restatement of it here to avoid showing it twice.
+    if (/^##\s*Term\s+\d+\s*\(/.test(line)) {
+      flush();
+      flushKeyNotes();
+      skippingTermSection = true;
+      continue;
+    }
+    if (skippingTermSection) {
+      if (/^##\s/.test(line) && !/^##\s*Term\s+\d+\s*\(/.test(line)) {
+        skippingTermSection = false;
+        // fall through to normal handling of this (non-Term) header below
+      } else {
+        continue;
+      }
+    }
+
     // Table: a "| ... |" row followed by a "|---|---|" separator starts a table block.
     if (
       !tableBuf.length &&
@@ -1239,6 +1310,27 @@ function SimpleMarkdown({ text }: { text: string }) {
       flushTable();
     }
 
+    if (/^##\s*Key Notes/.test(line)) {
+      flush();
+      flushKeyNotes();
+      inKeyNotes = true;
+      out.push(<h3 key={out.length} className="mt-5 mb-1 text-base font-bold text-[#0b7f46]">Key Notes</h3>);
+      continue;
+    }
+    if (inKeyNotes) {
+      if (/^##\s/.test(line)) {
+        flushKeyNotes();
+        // fall through — this is a new, different section
+      } else if (/^[\*\-]\s/.test(line)) {
+        keyNotesBuf.push(line.slice(2));
+        continue;
+      } else if (line.trim() === "") {
+        continue;
+      } else {
+        continue; // ignore stray non-bullet text inside Key Notes
+      }
+    }
+
     if (/^###\s/.test(line)) {
       flush();
       out.push(<h4 key={out.length} className="mt-4 mb-1 font-bold text-[#303236]">{line.slice(4)}</h4>);
@@ -1258,6 +1350,7 @@ function SimpleMarkdown({ text }: { text: string }) {
     }
   }
   flush();
+  flushKeyNotes();
   return <div>{out}</div>;
 }
 

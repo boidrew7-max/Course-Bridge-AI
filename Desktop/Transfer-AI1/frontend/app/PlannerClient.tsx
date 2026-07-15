@@ -1445,7 +1445,12 @@ export default function PlannerClient() {
   }, []);
 
   async function savePlanToAccount(college: string, uc: string, major: string, planText: string, completed: string) {
-    if (!authedEmail || !planText) return;
+    if (!planText) return;
+    // Don't gate on the authedEmail React state here — it's frequently stale
+    // (set via setAuthedEmail() earlier in the very same async flow that
+    // leads to this call, so the closure still sees its pre-update value
+    // until the next render). The backend already requires a valid session
+    // and silently no-ops here on 401, so it's safe to just always try.
     try {
       await fetch("/api/plans", {
         method: "POST",

@@ -41,6 +41,7 @@ export default function OnboardingPage() {
   const [ucs, setUcs] = useState<string[]>([]);
   const [major, setMajor] = useState("");
   const [majorOptions, setMajorOptions] = useState<string[]>([]);
+  const [majorOptionsLoading, setMajorOptionsLoading] = useState(false);
   const [majorFocused, setMajorFocused] = useState(false);
   const [courses, setCourses] = useState("");
   const [noCourses, setNoCourses] = useState(false);
@@ -75,11 +76,13 @@ export default function OnboardingPage() {
   }, []);
 
   useEffect(() => {
-    if (!college || !ucs[0]) { setMajorOptions([]); return; }
+    if (!college || !ucs[0]) { setMajorOptions([]); setMajorOptionsLoading(false); return; }
+    setMajorOptionsLoading(true);
     fetch(`/api/options/majors?college=${encodeURIComponent(college)}&uc=${encodeURIComponent(ucs[0])}`)
       .then((r) => r.json())
       .then((data) => setMajorOptions(data.majors ?? []))
-      .catch(() => setMajorOptions([]));
+      .catch(() => setMajorOptions([]))
+      .finally(() => setMajorOptionsLoading(false));
   }, [college, ucs]);
 
   function toggleUc(value: string) {
@@ -140,7 +143,12 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   }
 
-  const majorPool = majorOptions.length > 0 ? majorOptions : MAJOR_SUGGESTIONS;
+  // Once college + UC are picked, always use the real ASSIST major list —
+  // never the plain hardcoded suggestions. Falling back to them while the
+  // real list is still loading meant the exact same search (e.g. "Economics")
+  // could match a plain name one moment and "Economics, B.A." the next,
+  // depending purely on network timing.
+  const majorPool = college && ucs[0] ? majorOptions : MAJOR_SUGGESTIONS;
   const majorQuery = major.trim().toLowerCase();
   const majorMatches = majorQuery
     ? majorPool.filter((m) => m.toLowerCase().includes(majorQuery))
@@ -332,13 +340,13 @@ export default function OnboardingPage() {
                     ))}
                   </div>
                 )}
-                {majorFocused && majorQuery && majorMatches.length === 0 && (
+                {majorFocused && majorQuery && majorMatches.length === 0 && !majorOptionsLoading && (
                   <div className="absolute z-10 mt-1 w-full rounded-xl border border-[#e5e0d5] bg-white px-4 py-3 text-sm text-[#7b818b] shadow-lg">
                     No major matches &quot;{major}&quot; — you can still type it exactly and continue.
                   </div>
                 )}
               </div>
-              {majorOptions.length === 0 && (
+              {majorOptionsLoading && (
                 <p className="text-xs text-[#7b818b]">Loading the full major list for {college} → {ucs[0]}…</p>
               )}
               <div className="flex justify-between pt-2">

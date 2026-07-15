@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
@@ -158,11 +157,6 @@ export default function LoginPage() {
                 </button>
               </>
             )}
-          </p>
-          <p className="mt-3 text-center text-xs text-[#a3a9b3]">
-            <Link href="/onboarding" className="hover:text-[#0b7f46] hover:underline">
-              Continue without an account
-            </Link>
           </p>
         </div>
       </main>

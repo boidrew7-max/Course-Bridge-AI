@@ -49,6 +49,27 @@ export default function OnboardingPage() {
   const [apCredits, setApCredits] = useState("");
   const [transcriptParsing, setTranscriptParsing] = useState(false);
   const [transcriptMessage, setTranscriptMessage] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // An account is required before building a plan — check auth first and
+  // bounce to /login if there isn't one, rather than letting anyone into
+  // the wizard anonymously.
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!res.ok) {
+          router.replace("/login");
+          return;
+        }
+      } catch {
+        router.replace("/login");
+        return;
+      }
+      setAuthChecked(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!college || !ucs[0]) { setMajorOptions([]); return; }
@@ -121,6 +142,17 @@ export default function OnboardingPage() {
   const majorMatches = majorQuery
     ? majorPool.filter((m) => m.toLowerCase().includes(majorQuery))
     : majorPool;
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-[#faf9f6]">
+        <Navbar />
+        <main className="mx-auto max-w-2xl px-5 py-10 md:px-8">
+          <p className="text-sm text-[#7b818b]">Checking your account…</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#faf9f6]">

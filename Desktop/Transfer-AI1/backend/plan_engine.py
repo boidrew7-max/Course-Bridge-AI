@@ -2145,7 +2145,7 @@ def render_plan_stream(
     """
     Stream markdown from LLM.  The LLM only formats —
     all scheduling decisions are already fixed in result.
-    Uses llama-4-scout as primary; falls back to llama-3.3-70b if needed.
+    Uses llama-3.3-70b as primary; falls back to llama-3.1-8b if needed.
     """
     from advisor import _get_client
 
@@ -2156,10 +2156,11 @@ def render_plan_stream(
         {"role": "user",   "content": prompt},
     ]
 
-    for model, max_tok in [
-        ("meta-llama/llama-4-scout-17b-16e-instruct", 5000),
+    models = [
         ("llama-3.3-70b-versatile", 6000),
-    ]:
+        ("llama-3.1-8b-instant", 6000),
+    ]
+    for i, (model, max_tok) in enumerate(models):
         try:
             stream = _get_client().chat.completions.create(
                 model=model, messages=messages,
@@ -2171,8 +2172,6 @@ def render_plan_stream(
                     yield delta
             return
         except Exception as e:
-            err_str = str(e).lower()
-            if "rate" in err_str or "quota" in err_str or "429" in err_str:
-                continue  # try next model
+            if i < len(models) - 1:
+                continue  # any error -- try the next model, not just rate limits
             raise
-    yield "\n\n[Error: all rendering models unavailable — please retry]"

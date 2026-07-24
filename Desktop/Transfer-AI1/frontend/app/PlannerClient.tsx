@@ -2607,7 +2607,7 @@ export default function PlannerClient() {
         }`}>
           <div className={`pointer-events-auto flex flex-col bg-white shadow-2xl ${
             onboardingDone
-              ? "w-full rounded-t-3xl border border-[#d8d0c3] sm:rounded-2xl sm:w-[460px] sm:h-[680px] h-full"
+              ? "w-full rounded-t-3xl border border-[#d8d0c3] sm:rounded-2xl sm:w-[22rem] sm:h-[32rem] h-full"
               : "w-full max-w-lg rounded-2xl border border-[#d8d0c3] h-[90vh] sm:h-[640px]"
           }`}>
             {/* Header */}

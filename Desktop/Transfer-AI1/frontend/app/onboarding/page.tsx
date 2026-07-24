@@ -31,11 +31,11 @@ const MAJOR_SUGGESTIONS = [
   "Kinesiology", "Communications", "Accounting", "Architecture", "Film & Media Studies",
 ];
 
-const STEPS = ["College", "Target UCs", "Major", "Courses"];
+const STEPS = ["Name", "College", "Target UCs", "Major", "Courses"];
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
   const [firstName, setFirstName] = useState("");
   const [college, setCollege] = useState("");
@@ -55,8 +55,9 @@ export default function OnboardingPage() {
 
   // An account is required before building a plan — check auth first and
   // bounce to /login if there isn't one, rather than letting anyone into
-  // the wizard anonymously. The account already has a name from signup, so
-  // pull it here instead of asking again as its own wizard step.
+  // the wizard anonymously. Prefill the name from the account (e.g. email
+  // signup already has one), but Google accounts sometimes don't carry a
+  // usable name through, so the wizard still asks/confirms it as step 1.
   useEffect(() => {
     (async () => {
       try {
@@ -201,8 +202,35 @@ export default function OnboardingPage() {
         </div>
 
         <div className="rounded-3xl border border-[#e5e0d5] bg-white p-8 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
-          {/* Step 1 — College */}
+          {/* Step 1 — Name */}
           {step === 1 && (
+            <div className="flex flex-col gap-5">
+              <div>
+                <h1 className="text-2xl font-bold text-[#1a2e22]">What&apos;s your name?</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b]">We&apos;ll use this to personalize your plan.</p>
+              </div>
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && firstName.trim()) setStep(2); }}
+                placeholder="e.g. Jordan"
+                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                autoFocus
+              />
+              <div className="flex justify-end pt-2">
+                <button
+                  onClick={() => setStep(2)}
+                  disabled={!firstName.trim()}
+                  className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2 — College */}
+          {step === 2 && (
             <div className="flex flex-col gap-5">
               <div>
                 <h1 className="text-2xl font-bold text-[#1a2e22]">Where do you go to school?</h1>
@@ -212,7 +240,7 @@ export default function OnboardingPage() {
                 list="cc-list"
                 value={college}
                 onChange={(e) => setCollege(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && college.trim()) setStep(2); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && college.trim()) setStep(3); }}
                 placeholder="e.g. De Anza College"
                 className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                 autoFocus
@@ -224,7 +252,7 @@ export default function OnboardingPage() {
                 {CC_SUGGESTIONS.slice(0, 6).map((cc) => (
                   <button
                     key={cc}
-                    onClick={() => { setCollege(cc); setStep(2); }}
+                    onClick={() => { setCollege(cc); setStep(3); }}
                     className="rounded-full border border-[#e5e0d5] bg-white px-3 py-1 text-xs text-[#4d535c] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
                   >
                     {cc}
@@ -255,9 +283,10 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-between pt-2">
+                <button onClick={() => setStep(1)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                 <button
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(3)}
                   disabled={!college.trim() || college.trim().toLowerCase() === "rancho santiago college"}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
@@ -267,8 +296,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 2 — Target UCs */}
-          {step === 2 && (
+          {/* Step 3 — Target UCs */}
+          {step === 3 && (
             <div className="flex flex-col gap-5">
               <div>
                 <h1 className="text-2xl font-bold text-[#1a2e22]">Which UCs are you targeting?</h1>
@@ -296,9 +325,9 @@ export default function OnboardingPage() {
                 </p>
               )}
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(1)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
+                <button onClick={() => setStep(2)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                 <button
-                  onClick={() => setStep(3)}
+                  onClick={() => setStep(4)}
                   disabled={ucs.length === 0}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
@@ -308,8 +337,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3 — Major */}
-          {step === 3 && (
+          {/* Step 4 — Major */}
+          {step === 4 && (
             <div className="flex flex-col gap-5">
               <div>
                 <h1 className="text-2xl font-bold text-[#1a2e22]">What do you want to study?</h1>
@@ -321,7 +350,7 @@ export default function OnboardingPage() {
                   onChange={(e) => setMajor(e.target.value)}
                   onFocus={() => setMajorFocused(true)}
                   onBlur={() => setTimeout(() => setMajorFocused(false), 150)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && major.trim()) setStep(4); }}
+                  onKeyDown={(e) => { if (e.key === "Enter" && major.trim()) setStep(5); }}
                   placeholder="e.g. Computer Science"
                   className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                   autoFocus
@@ -333,7 +362,7 @@ export default function OnboardingPage() {
                       <button
                         key={m}
                         type="button"
-                        onMouseDown={() => { setMajor(m); setMajorFocused(false); setStep(4); }}
+                        onMouseDown={() => { setMajor(m); setMajorFocused(false); setStep(5); }}
                         className="block w-full px-4 py-2.5 text-left text-sm text-[#303236] transition hover:bg-[#f0faf5] hover:text-[#0b7f46]"
                       >
                         {m}
@@ -351,9 +380,9 @@ export default function OnboardingPage() {
                 <p className="text-xs text-[#7b818b]">Loading the full major list for {college} → {ucs[0]}…</p>
               )}
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(2)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
+                <button onClick={() => setStep(3)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                 <button
-                  onClick={() => setStep(4)}
+                  onClick={() => setStep(5)}
                   disabled={!major.trim()}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
@@ -363,8 +392,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 4 — Courses */}
-          {step === 4 && (
+          {/* Step 5 — Courses */}
+          {step === 5 && (
             <div className="flex flex-col gap-5">
               <div>
                 <h1 className="text-2xl font-bold text-[#1a2e22]">What courses have you completed?</h1>
@@ -456,7 +485,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(3)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
+                <button onClick={() => setStep(4)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
                 <button
                   onClick={finish}
                   disabled={

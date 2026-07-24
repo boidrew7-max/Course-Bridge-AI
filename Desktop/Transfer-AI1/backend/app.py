@@ -56,6 +56,28 @@ GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI  = os.getenv("GOOGLE_REDIRECT_URI", "")  # e.g. https://<backend>/auth/google/callback
 
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+EMAIL_FROM     = os.getenv("EMAIL_FROM", "CourseBridge <onboarding@resend.dev>")
+
+
+def _send_email(to_email: str, subject: str, html: str) -> bool:
+    """Send an email via Resend. Returns False (never raises) if unconfigured or the API errors."""
+    if not RESEND_API_KEY:
+        app.logger.warning("email_not_configured to=%s subject=%r", to_email, subject)
+        return False
+    try:
+        res = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+            json={"from": EMAIL_FROM, "to": [to_email], "subject": subject, "html": html},
+            timeout=10,
+        )
+        res.raise_for_status()
+        return True
+    except Exception as e:
+        app.logger.error("email_send_fail to=%s err=%.200s", to_email, str(e))
+        return False
+
 
 def _current_uid():
     auth = request.headers.get("Authorization", "")
@@ -645,13 +667,23 @@ def auth_forgot():
         return jsonify({"error": "Enter your email address."}), 400
     token, user = create_reset_token(email)
     # Always return the same response — don't reveal whether the account exists
-    if token and os.getenv("DEBUG_LOG_RESET_TOKENS") == "1":
-        # Opt-in only (unset by default, including on Railway): log token for
-        # manual delivery since SMTP isn't configured yet. NEVER log this by
-        # default — anyone with log access could take over any account. Real
-        # email delivery (SMTP) must land before this route can safely relay
-        # a token to real users in production.
-        app.logger.info("Password reset token for %s: %s", email, token)
+    if token:
+        reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
+        _send_email(
+            email,
+            "Reset your CourseBridge password",
+            f"""
+            <p>Someone requested a password reset for this CourseBridge account.</p>
+            <p><a href="{reset_link}">Click here to set a new password</a> (expires in 1 hour).</p>
+            <p>If you didn't request this, you can safely ignore this email.</p>
+            """,
+        )
+        if os.getenv("DEBUG_LOG_RESET_TOKENS") == "1":
+            # Opt-in only (unset by default, including on Railway) — useful if
+            # email delivery isn't configured yet in a given environment.
+            # NEVER log this by default: anyone with log access could take
+            # over any account.
+            app.logger.info("Password reset token for %s: %s", email, token)
     return jsonify({"ok": True, "message": "If an account exists for that email, a reset link has been sent."})
 
 

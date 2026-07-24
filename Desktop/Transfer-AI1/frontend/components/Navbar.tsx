@@ -51,7 +51,7 @@ export default function Navbar() {
             For Students
           </Link>
           <Link href="/#counselors" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
-            For Counselors
+            What You Get
           </Link>
           <Link href="/#pricing" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
             Pricing

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 
@@ -113,6 +114,14 @@ export default function LoginPage() {
             >
               {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
             </button>
+
+            {mode === "login" && (
+              <p className="text-center">
+                <Link href="/forgot-password" className="text-sm font-semibold text-[#4d535c] hover:text-[#0b7f46]">
+                  Forgot password?
+                </Link>
+              </p>
+            )}
           </form>
 
           <div className="my-6 flex items-center gap-3">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
+import TransferAIWidget from "../../components/TransferAIWidget";
 
 const UC_OPTIONS: { label: string; value: string }[] = [
   { label: "UCLA",             value: "Los Angeles" },
@@ -472,6 +473,7 @@ export default function OnboardingPage() {
           )}
         </div>
       </main>
+      <TransferAIWidget />
     </div>
   );
 }

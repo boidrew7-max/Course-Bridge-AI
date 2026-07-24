@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import TransferAIWidget from "./TransferAIWidget";
 
 const PAIN_POINTS = [
   "ASSIST.org can be hard to read.",
@@ -207,6 +208,7 @@ export default function HomePage() {
       </section>
 
       <Footer />
+      <TransferAIWidget />
     </div>
   );
 }

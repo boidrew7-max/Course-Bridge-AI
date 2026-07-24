@@ -63,7 +63,7 @@ export default function TransferAIWidget() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          Ask Transfer AI
+          Ask CourseBridge AI
         </button>
       )}
 
@@ -71,7 +71,7 @@ export default function TransferAIWidget() {
         <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[#e5e0d5] bg-white shadow-2xl">
           <div className="flex items-center justify-between bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4">
             <div>
-              <p className="text-base font-bold text-white">Transfer AI</p>
+              <p className="text-base font-bold text-white">CourseBridge AI</p>
               <p className="text-xs text-white/80">Ask me anything about UC transfer</p>
             </div>
             <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white" aria-label="Close chat">

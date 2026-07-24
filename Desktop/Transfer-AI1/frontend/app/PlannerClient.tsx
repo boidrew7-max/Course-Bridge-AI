@@ -2086,7 +2086,7 @@ export default function PlannerClient() {
                 <div className="bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456] px-6 pt-6 pb-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-1">Transfer AI Plan</p>
+                      <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-1">CourseBridge Plan</p>
                       <h3 className="text-xl font-bold text-white truncate">{activeSchoolTab || targetSchool || "Your UC"}</h3>
                       {targetMajor && <p className="text-sm text-white/75 mt-0.5">{targetMajor}</p>}
                     </div>
@@ -2595,7 +2595,7 @@ export default function PlannerClient() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
-          {onboardingDone ? "Ask Transfer AI" : "Build My Plan with AI"}
+          {onboardingDone ? "Ask CourseBridge AI" : "Build My Plan with AI"}
         </button>
       )}
 
@@ -2613,7 +2613,7 @@ export default function PlannerClient() {
             {/* Header */}
             <div className="flex items-center justify-between rounded-t-3xl sm:rounded-t-2xl bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4">
               <div>
-                <p className="text-base font-bold text-white">Transfer AI</p>
+                <p className="text-base font-bold text-white">CourseBridge AI</p>
                 {communityCollege && targetSchool
                   ? <p className="text-xs text-white/80 mt-0.5">{communityCollege} → {targetSchool}{targetMajor ? ` · ${targetMajor}` : ""}</p>
                   : <p className="text-xs text-white/80 mt-0.5">{onboardingDone ? "Ask me anything about your transfer" : "Setting up your plan…"}</p>
@@ -2635,7 +2635,7 @@ export default function PlannerClient() {
               {chatMessages.length === 0 && chatLoading && (
                 <div className="flex justify-start">
                   <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] px-4 py-3 text-sm text-[#7b818b]">
-                    <span className="animate-pulse">Transfer AI is thinking…</span>
+                    <span className="animate-pulse">CourseBridge AI is thinking…</span>
                   </div>
                 </div>
               )}

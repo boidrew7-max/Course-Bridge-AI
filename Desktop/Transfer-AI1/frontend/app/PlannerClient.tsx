@@ -1412,6 +1412,7 @@ export default function PlannerClient() {
   const [majorOptions2, setMajorOptions2] = useState<string[]>([]);
 
   const [communityCollege, setCommunityCollege] = useState("");
+  const isDeAnza = communityCollege.trim().toLowerCase() === "de anza college";
   const [targetSchool, setTargetSchool] = useState("");
   const [targetMajor, setTargetMajor] = useState("");
   const [completedCourses, setCompletedCourses] = useState("");
@@ -2021,17 +2022,26 @@ export default function PlannerClient() {
             {onboardingDone ? (
               <div className="flex flex-col">
                 {/* Green gradient header */}
-                <div className="bg-gradient-to-br from-[#0a6e3d] to-[#0d9456] px-6 pt-6 pb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-white font-bold text-lg shrink-0">
-                      {(communityCollege || "?").slice(0,1).toUpperCase()}
+                <div className="relative overflow-hidden bg-gradient-to-br from-[#0a6e3d] to-[#0d9456] px-6 pt-6 pb-5">
+                  {isDeAnza && (
+                    <img
+                      src="/deanza-campus.jpg"
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover opacity-20 mix-blend-luminosity"
+                    />
+                  )}
+                  <div className="relative flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden">
+                      {isDeAnza
+                        ? <img src="/deanza-logo.png" alt="De Anza College" className="h-full w-full object-contain p-1" />
+                        : (communityCollege || "?").slice(0,1).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-white/60 uppercase tracking-widest">Your Profile</p>
                       <p className="text-base font-bold text-white truncate">{communityCollege || "—"}</p>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="relative mt-3 flex flex-wrap gap-2">
                     {(planSchools.length > 1 ? planSchools : [targetSchool]).filter(Boolean).map(s => (
                       <span key={s} className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">{s}</span>
                     ))}

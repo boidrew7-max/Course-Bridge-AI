@@ -2121,15 +2121,10 @@ export default function PlannerClient() {
                     </>
                   )}
                   <div className="relative flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex items-center gap-3">
-                      {isBerkeley && (
-                        <img src="/berkeley-logo.png" alt="UC Berkeley" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">CourseBridge Plan</p>
-                        <h3 className="text-xl font-bold text-white truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{activeSchoolTab || targetSchool || "Your UC"}</h3>
-                        {targetMajor && <p className="text-sm text-white/85 mt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{targetMajor}</p>}
-                      </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">CourseBridge Plan</p>
+                      <h3 className="text-xl font-bold text-white truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{activeSchoolTab || targetSchool || "Your UC"}</h3>
+                      {targetMajor && <p className="text-sm text-white/85 mt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{targetMajor}</p>}
                     </div>
                     {aiPlan && !aiPlanLoading && (
                       <button

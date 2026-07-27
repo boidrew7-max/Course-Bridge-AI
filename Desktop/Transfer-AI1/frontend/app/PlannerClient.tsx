@@ -2050,7 +2050,7 @@ export default function PlannerClient() {
             {onboardingDone ? (
               <div className="flex flex-col">
                 {/* Green gradient header */}
-                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isDeAnza ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] to-[#0d9456]"}`}>
+                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isDeAnza ? "h-36 bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] to-[#0d9456]"}`}>
                   {isDeAnza && (
                     <>
                       <img
@@ -2136,7 +2136,7 @@ export default function PlannerClient() {
             {(aiPlanLoading || aiPlan) && (
               <div className="print-plan">
                 {/* Green gradient header */}
-                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isBerkeley ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456]"}`}>
+                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isBerkeley ? "h-36 bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456]"}`}>
                   {isBerkeley && (
                     <>
                       <img

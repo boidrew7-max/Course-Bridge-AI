@@ -2035,10 +2035,8 @@ export default function PlannerClient() {
                     </>
                   )}
                   <div className="relative flex items-center gap-3">
-                    <div className={`w-11 h-11 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden ${isDeAnza ? "rounded-full" : "rounded-2xl bg-white/20"}`}>
-                      {isDeAnza
-                        ? <img src="/deanza-logo.png" alt="De Anza College" className="h-full w-full object-cover" />
-                        : (communityCollege || "?").slice(0,1).toUpperCase()}
+                    <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden">
+                      {(communityCollege || "?").slice(0,1).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-white/70 uppercase tracking-widest drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Your Profile</p>

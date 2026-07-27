@@ -2142,7 +2142,7 @@ export default function PlannerClient() {
                       <img
                         src="/berkeley-campus.webp"
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover object-top"
                       />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
                     </>

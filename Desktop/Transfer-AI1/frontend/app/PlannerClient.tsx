@@ -2022,13 +2022,16 @@ export default function PlannerClient() {
             {onboardingDone ? (
               <div className="flex flex-col">
                 {/* Green gradient header */}
-                <div className="relative overflow-hidden bg-gradient-to-br from-[#0a6e3d] to-[#0d9456] px-6 pt-6 pb-5">
+                <div className={`relative overflow-hidden px-6 pt-6 pb-5 ${isDeAnza ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] to-[#0d9456]"}`}>
                   {isDeAnza && (
-                    <img
-                      src="/deanza-campus.jpg"
-                      alt=""
-                      className="absolute inset-0 h-full w-full object-cover opacity-20 mix-blend-luminosity"
-                    />
+                    <>
+                      <img
+                        src="/deanza-campus.jpg"
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover opacity-60"
+                      />
+                      <div className="absolute inset-0 bg-black/40" />
+                    </>
                   )}
                   <div className="relative flex items-center gap-3">
                     <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden">

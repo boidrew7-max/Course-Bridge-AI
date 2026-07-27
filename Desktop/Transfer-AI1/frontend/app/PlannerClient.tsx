@@ -1148,19 +1148,31 @@ function PlanTimeline({ text, school, major }: { text: string; school: string; m
               <h4 className="text-sm font-bold text-[#1a2e22]">{term.label}</h4>
               <span className="text-xs text-[#7b818b]">{term.units % 1 === 0 ? term.units : term.units.toFixed(1)} units</span>
             </div>
-            <div className="mt-2 space-y-1.5">
-              {term.courses.map((c, ci) => (
-                <div key={ci} className="flex items-center justify-between gap-3 rounded-xl border border-[#e5e0d5] bg-white px-3 py-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className={`h-2 w-2 shrink-0 rounded-sm ${CATEGORY_STYLES[c.category].dot}`} />
-                    <span className="truncate text-xs text-[#303236]">
-                      <span className="font-semibold">{c.code}</span>
-                      <span className="text-[#6E6A5C]"> · {c.title}</span>
-                    </span>
-                  </div>
-                  <span className="shrink-0 text-xs text-[#6E6A5C]">{c.units}</span>
-                </div>
-              ))}
+            <div className="mt-2 overflow-x-auto rounded-xl border border-[#e5e0d5]">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-[#faf9f6]">
+                    <th className="border-b border-[#e5e0d5] px-3 py-2 text-left font-semibold text-[#303236]">Course</th>
+                    <th className="border-b border-[#e5e0d5] px-3 py-2 text-right font-semibold text-[#303236]">Units</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {term.courses.map((c, ci) => (
+                    <tr key={ci} className={ci % 2 === 1 ? "bg-[#faf9f6]/60" : undefined}>
+                      <td className="border-b border-[#eceae4] px-3 py-2 align-top text-[#4d535c] last:border-b-0">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className={`h-2 w-2 shrink-0 rounded-sm ${CATEGORY_STYLES[c.category].dot}`} />
+                          <span className="truncate">
+                            <span className="font-semibold text-[#303236]">{c.code}</span>
+                            <span className="text-[#6E6A5C]"> · {c.title}</span>
+                          </span>
+                        </span>
+                      </td>
+                      <td className="border-b border-[#eceae4] px-3 py-2 text-right align-top text-[#6E6A5C] last:border-b-0">{c.units}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         ))}

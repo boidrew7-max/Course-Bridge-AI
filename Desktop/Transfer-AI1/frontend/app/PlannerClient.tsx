@@ -1129,9 +1129,9 @@ function PlanTimeline({ text, school, major }: { text: string; school: string; m
   const usedCategories = new Set(terms.flatMap((t) => t.courses.map((c) => c.category)));
 
   return (
-    <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-5">
+    <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4">
       <div className="flex items-baseline justify-between">
-        <p className="text-xs font-bold uppercase tracking-widest text-[#0b7f46]">Recommended Plan</p>
+        <h2 className="text-lg font-bold text-[#303236]">Recommended Plan</h2>
         <p className="text-xs font-medium text-[#7b818b]">
           {terms.length} term{terms.length > 1 ? "s" : ""} · {totalUnits % 1 === 0 ? totalUnits : totalUnits.toFixed(1)} units
         </p>

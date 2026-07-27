@@ -1428,6 +1428,7 @@ export default function PlannerClient() {
   // ── Multi-school tabs ─────────────────────────────────────────
   const [planSchools, setPlanSchools] = useState<string[]>([]);
   const [activeSchoolTab, setActiveSchoolTab] = useState("");
+  const isBerkeley = (activeSchoolTab || targetSchool).trim().toLowerCase() === "berkeley";
   const [chatMode, setChatMode] = useState<"onboarding" | "advisor">("onboarding");
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -2108,12 +2109,27 @@ export default function PlannerClient() {
             {(aiPlanLoading || aiPlan) && (
               <div className="print-plan">
                 {/* Green gradient header */}
-                <div className="bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456] px-6 pt-6 pb-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-1">CourseBridge Plan</p>
-                      <h3 className="text-xl font-bold text-white truncate">{activeSchoolTab || targetSchool || "Your UC"}</h3>
-                      {targetMajor && <p className="text-sm text-white/75 mt-0.5">{targetMajor}</p>}
+                <div className={`relative overflow-hidden px-6 pt-6 pb-5 ${isBerkeley ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456]"}`}>
+                  {isBerkeley && (
+                    <>
+                      <img
+                        src="/berkeley-campus.png"
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
+                    </>
+                  )}
+                  <div className="relative flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex items-center gap-3">
+                      {isBerkeley && (
+                        <img src="/berkeley-logo.png" alt="UC Berkeley" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">CourseBridge Plan</p>
+                        <h3 className="text-xl font-bold text-white truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{activeSchoolTab || targetSchool || "Your UC"}</h3>
+                        {targetMajor && <p className="text-sm text-white/85 mt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{targetMajor}</p>}
+                      </div>
                     </div>
                     {aiPlan && !aiPlanLoading && (
                       <button

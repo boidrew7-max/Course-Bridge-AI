@@ -2023,7 +2023,7 @@ export default function PlannerClient() {
             {onboardingDone ? (
               <div className="flex flex-col">
                 {/* Green gradient header */}
-                <div className={`relative overflow-hidden px-6 pt-6 pb-5 ${isDeAnza ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] to-[#0d9456]"}`}>
+                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isDeAnza ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] to-[#0d9456]"}`}>
                   {isDeAnza && (
                     <>
                       <img
@@ -2109,13 +2109,13 @@ export default function PlannerClient() {
             {(aiPlanLoading || aiPlan) && (
               <div className="print-plan">
                 {/* Green gradient header */}
-                <div className={`relative overflow-hidden px-6 pt-6 pb-5 ${isBerkeley ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456]"}`}>
+                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isBerkeley ? "bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456]"}`}>
                   {isBerkeley && (
                     <>
                       <img
                         src="/berkeley-campus.png"
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover object-[center_65%]"
                       />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
                     </>

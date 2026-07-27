@@ -2111,7 +2111,7 @@ export default function PlannerClient() {
                   {isBerkeley && (
                     <>
                       <img
-                        src="/berkeley-campus.png"
+                        src="/berkeley-campus.jpg"
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover object-[center_65%]"
                       />

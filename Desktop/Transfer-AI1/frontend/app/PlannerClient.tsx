@@ -2030,7 +2030,7 @@ export default function PlannerClient() {
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-black/15" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
                     </>
                   )}
                   <div className="relative flex items-center gap-3">
@@ -2040,8 +2040,8 @@ export default function PlannerClient() {
                         : (communityCollege || "?").slice(0,1).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-white/60 uppercase tracking-widest">Your Profile</p>
-                      <p className="text-base font-bold text-white truncate">{communityCollege || "—"}</p>
+                      <p className="text-xs font-semibold text-white/70 uppercase tracking-widest drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Your Profile</p>
+                      <p className="text-base font-bold text-white truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{communityCollege || "—"}</p>
                     </div>
                   </div>
                   <div className="relative mt-3 flex flex-wrap gap-2">

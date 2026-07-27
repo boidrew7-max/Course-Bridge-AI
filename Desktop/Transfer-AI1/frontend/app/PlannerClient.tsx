@@ -2028,15 +2028,15 @@ export default function PlannerClient() {
                       <img
                         src="/deanza-campus.jpg"
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover opacity-60"
+                        className="absolute inset-0 h-full w-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-black/40" />
+                      <div className="absolute inset-0 bg-black/15" />
                     </>
                   )}
                   <div className="relative flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden">
+                    <div className={`w-11 h-11 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden ${isDeAnza ? "rounded-full" : "rounded-2xl bg-white/20"}`}>
                       {isDeAnza
-                        ? <img src="/deanza-logo.png" alt="De Anza College" className="h-full w-full object-contain p-1" />
+                        ? <img src="/deanza-logo.png" alt="De Anza College" className="h-full w-full object-cover" />
                         : (communityCollege || "?").slice(0,1).toUpperCase()}
                     </div>
                     <div className="min-w-0">

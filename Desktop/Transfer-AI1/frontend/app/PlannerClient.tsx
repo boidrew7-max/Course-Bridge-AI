@@ -1567,6 +1567,7 @@ export default function PlannerClient() {
           const schools: string[] = profile.planSchools?.length ? profile.planSchools : [profile.school].filter(Boolean);
           setPlanSchools(schools);
           setActiveSchoolTab(profile.school ?? "");
+          if (profile.planText) setAiPlan(profile.planText);
           if (profile.college && profile.school && profile.major) {
             loadOrGeneratePlan(
               profile.college,
@@ -1603,6 +1604,20 @@ export default function PlannerClient() {
               setWizardHonors(true);
               setWizardMode("competitive");
               setAiPlan(latest.plan_text ?? "");
+              try {
+                localStorage.setItem("cb_profile", JSON.stringify({
+                  firstName: user.username ?? "",
+                  college: latest.college ?? "",
+                  school: latest.uc ?? "",
+                  major: latest.major ?? "",
+                  completedCourses: latest.completed_courses ?? "",
+                  honors: true,
+                  apCredits: "",
+                  mode: "competitive",
+                  planSchools: [latest.uc].filter(Boolean),
+                  planText: latest.plan_text ?? "",
+                }));
+              } catch {}
               return;
             }
           }
@@ -1743,6 +1758,7 @@ export default function PlannerClient() {
       }
       if (accumulated && !accumulated.startsWith("\n\n[Error")) {
         savePlanToAccount(college, school, major, accumulated, courses);
+        cachePlanText(accumulated);
       }
     } catch {
       setAiPlan("Something went wrong generating your plan. Please try again in a moment.");
@@ -1754,6 +1770,16 @@ export default function PlannerClient() {
   // Show an already-saved plan for this exact combo instead of burning a
   // fresh (slow, Groq-quota-consuming) generation every time — e.g.
   // navigating home and back, or re-clicking a school tab you already saw.
+  function cachePlanText(text: string) {
+    try {
+      const raw = localStorage.getItem("cb_profile");
+      if (!raw) return;
+      const profile = JSON.parse(raw);
+      profile.planText = text;
+      localStorage.setItem("cb_profile", JSON.stringify(profile));
+    } catch {}
+  }
+
   async function loadOrGeneratePlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
     try {
       const meRes = await fetch("/api/auth/me");
@@ -1769,6 +1795,7 @@ export default function PlannerClient() {
             );
             if (existing?.plan_text) {
               setAiPlan(existing.plan_text);
+              cachePlanText(existing.plan_text);
               return;
             }
           }

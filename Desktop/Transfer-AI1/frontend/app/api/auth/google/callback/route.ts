@@ -5,6 +5,9 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "";
 const TRANSFER_AI_URL = process.env.TRANSFER_AI_URL || "https://course-bridge-ai-production.up.railway.app";
 const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET || "";
+// req.url can report Railway's internal host:port behind the proxy instead
+// of the public domain, so redirects use this explicit base instead.
+const SITE_URL = process.env.SITE_URL || "https://coursebridge.us";
 
 // Google redirects the user's browser here after they approve sign-in. This
 // route runs on the frontend server, exchanges the code with Google directly,
@@ -15,7 +18,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   if (!code) {
-    return NextResponse.redirect(new URL("/login?error=google_auth_failed", req.url));
+    return NextResponse.redirect(new URL("/login?error=google_auth_failed", SITE_URL));
   }
 
   try {
@@ -51,8 +54,8 @@ export async function GET(req: Request) {
     if (!completeRes.ok) throw new Error("account creation failed");
     const { token } = await completeRes.json();
 
-    return NextResponse.redirect(new URL(`/auth/callback?token=${encodeURIComponent(token)}`, req.url));
+    return NextResponse.redirect(new URL(`/auth/callback?token=${encodeURIComponent(token)}`, SITE_URL));
   } catch {
-    return NextResponse.redirect(new URL("/login?error=google_auth_failed", req.url));
+    return NextResponse.redirect(new URL("/login?error=google_auth_failed", SITE_URL));
   }
 }

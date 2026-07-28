@@ -55,6 +55,7 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "https://coursebridge-frontend.up.railw
 GOOGLE_CLIENT_ID     = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI  = os.getenv("GOOGLE_REDIRECT_URI", "")  # e.g. https://<backend>/auth/google/callback
+INTERNAL_API_SECRET  = os.getenv("INTERNAL_API_SECRET", "")  # shared secret for frontend->backend private calls
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 EMAIL_FROM     = os.getenv("EMAIL_FROM", "CourseBridge <onboarding@resend.dev>")
@@ -594,6 +595,25 @@ def auth_login():
     if not user or not verify_password(user, password):
         return jsonify({"error": "Incorrect email or password."}), 401
 
+    token = create_session_token(user["id"])
+    return jsonify({"token": token, "user": _public(user)})
+
+
+@app.route("/auth/google/complete", methods=["POST"])
+def auth_google_complete():
+    # Called privately by the frontend after IT completes the Google OAuth
+    # exchange (backend has no public URL, so it can't be the OAuth redirect
+    # target itself). Guarded by a shared secret since this network is only
+    # meant to be reachable from inside Railway, not the public internet.
+    if request.headers.get("X-Internal-Secret", "") != INTERNAL_API_SECRET or not INTERNAL_API_SECRET:
+        return jsonify({"error": "unauthorized"}), 401
+    body = request.json or {}
+    google_id = (body.get("google_id") or "").strip()
+    email     = (body.get("email") or "").lower().strip()
+    name      = body.get("name") or ""
+    if not google_id or not email:
+        return jsonify({"error": "google_id and email required"}), 400
+    user  = get_or_create_google_user(google_id, email, name)
     token = create_session_token(user["id"])
     return jsonify({"token": token, "user": _public(user)})
 

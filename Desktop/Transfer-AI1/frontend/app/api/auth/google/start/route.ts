@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 
-const TRANSFER_AI_URL = process.env.TRANSFER_AI_URL || "https://course-bridge-ai-production.up.railway.app";
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "";
 
-// Full-page redirect (not a fetch) so the browser can carry this through the
-// Google consent screen and back — the backend eventually redirects to
-// /auth/callback?token=... on this frontend's own domain.
-export async function GET() {
-  return NextResponse.redirect(`${TRANSFER_AI_URL}/auth/google/start`);
+// Full-page redirect straight to Google (not to the backend — the backend
+// has no public URL, so it can't be an OAuth redirect target). Google
+// eventually redirects back to /api/auth/google/callback on this domain.
+export async function GET(req: Request) {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_REDIRECT_URI) {
+    return NextResponse.redirect(new URL("/login?error=google_auth_failed", req.url));
+  }
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: GOOGLE_REDIRECT_URI,
+    response_type: "code",
+    scope: "openid email profile",
+    prompt: "select_account",
+  });
+  return NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const SITE_URL = "https://coursebridge-frontend.up.railway.app";
+const SITE_URL = "https://coursebridge.us";
 const SITE_TITLE = "CourseBridge";
 const SITE_DESCRIPTION =
   "Plan your UC transfer with a real, personalized semester-by-semester plan built on actual ASSIST articulation data.";

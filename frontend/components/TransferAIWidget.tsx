@@ -10,7 +10,7 @@ type Message = { role: "user" | "assistant"; content: string };
 // dashboard has its own richer, plan-aware version inside PlannerClient —
 // this one just talks to /api/chat directly with no extra context.
 export default function TransferAIWidget() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -28,7 +28,7 @@ export default function TransferAIWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history }),
+        body: JSON.stringify({ history, language }),
       });
       if (!res.ok || !res.body) throw new Error("failed");
       const reader = res.body.getReader();

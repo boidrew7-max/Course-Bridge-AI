@@ -175,6 +175,7 @@ def chat():
     data         = request.json or {}
     user_message = data.get("message", "").strip()
     history      = list(data.get("history", []))
+    language     = data.get("language", "en")
 
     # Support history-only mode: last history item is the user message
     if not user_message and history and history[-1].get("role") == "user":
@@ -212,7 +213,7 @@ def chat():
 
     def generate():
         try:
-            for chunk in ask_advisor_stream(history, user_profile=user_profile):
+            for chunk in ask_advisor_stream(history, user_profile=user_profile, language=language):
                 yield f"data: {json.dumps(chunk)}\n\n"
         except Exception as e:
             err_str = str(e).lower()
@@ -220,7 +221,7 @@ def chat():
             if any(kw in err_str for kw in ["rate_limit", "rate limit", "429", "quota", "tokens per"]):
                 try:
                     app.logger.info("chat_fallback_model_used reason=%.150s", err_str)
-                    for chunk in ask_advisor_stream_fallback(history, user_profile=user_profile):
+                    for chunk in ask_advisor_stream_fallback(history, user_profile=user_profile, language=language):
                         yield f"data: {json.dumps(chunk)}\n\n"
                 except Exception:
                     yield f"data: {json.dumps('Something went wrong. Please try again in a moment.')}\n\n"
@@ -509,8 +510,9 @@ def plan_v2():
 
 @app.route("/onboard", methods=["POST"])
 def onboard():
-    data    = request.json or {}
-    history = list(data.get("history", []))
+    data     = request.json or {}
+    history  = list(data.get("history", []))
+    language = data.get("language", "en")
     if len(history) > 20:
         history = history[-20:]
     # Groq requires conversations to start with a user message.
@@ -520,7 +522,7 @@ def onboard():
 
     def generate():
         try:
-            for chunk in ask_advisor_onboarding_stream(history):
+            for chunk in ask_advisor_onboarding_stream(history, language=language):
                 yield f"data: {json.dumps(chunk)}\n\n"
         except Exception as e:
             app.logger.error("onboard_fail err=%.200s", str(e))

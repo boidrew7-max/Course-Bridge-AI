@@ -16,22 +16,14 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#a3a9b3] dark:text-gray-500">{t("footer.product")}</p>
-              <ul className="mt-3 space-y-2 text-sm text-[#4d535c] dark:text-gray-400">
-                <li><a href="/#students" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.forStudents")}</a></li>
-                <li><a href="/#counselors" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.whatYouGet")}</a></li>
-                <li><a href="/#pricing" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.pricing")}</a></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#a3a9b3] dark:text-gray-500">{t("footer.account")}</p>
-              <ul className="mt-3 space-y-2 text-sm text-[#4d535c] dark:text-gray-400">
-                <li><a href="/login" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("footer.login")}</a></li>
-                <li><a href="/onboarding" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("footer.buildMyPlan")}</a></li>
-              </ul>
-            </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#a3a9b3] dark:text-gray-500">{t("footer.product")}</p>
+            <ul className="mt-3 space-y-2 text-sm text-[#4d535c] dark:text-gray-400">
+              <li><a href="/#students" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.forStudents")}</a></li>
+              <li><a href="/#counselors" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.whatYouGet")}</a></li>
+              <li><a href="/#pricing" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.pricing")}</a></li>
+              <li><a href="/onboarding" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("footer.buildMyPlan")}</a></li>
+            </ul>
           </div>
         </div>
 

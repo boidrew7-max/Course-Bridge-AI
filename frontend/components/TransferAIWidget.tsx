@@ -70,7 +70,7 @@ export default function TransferAIWidget() {
       )}
 
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[#e5e0d5] bg-white shadow-2xl">
+        <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[#e5e0d5] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-2xl">
           <div className="flex items-center justify-between bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4">
             <div>
               <p className="text-base font-bold text-white">{t("widget.title")}</p>
@@ -83,7 +83,7 @@ export default function TransferAIWidget() {
 
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.length === 0 && (
-              <p className="text-sm text-[#7b818b]">
+              <p className="text-sm text-[#7b818b] dark:text-gray-500">
                 {t("widget.emptyState")}
               </p>
             )}
@@ -93,7 +93,7 @@ export default function TransferAIWidget() {
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
                     m.role === "user"
                       ? "bg-[#0b7f46] text-white"
-                      : "border border-[#d8d0c3] bg-[#faf8f3] text-[#303236]"
+                      : "border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100"
                   }`}
                 >
                   {m.content || <span className="animate-pulse">…</span>}
@@ -105,13 +105,13 @@ export default function TransferAIWidget() {
 
           <form
             onSubmit={(e) => { e.preventDefault(); send(); }}
-            className="flex items-center gap-2 border-t border-[#e5e0d5] px-3 py-3"
+            className="flex items-center gap-2 border-t border-[#e5e0d5] dark:border-gray-700 px-3 py-3"
           >
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={t("widget.placeholder")}
-              className="flex-1 rounded-xl border border-[#d8d8dc] px-3 py-2 text-sm outline-none focus:border-[#0b7f46]"
+              className="flex-1 rounded-xl border border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100 px-3 py-2 text-sm outline-none focus:border-[#0b7f46]"
             />
             <button
               type="submit"

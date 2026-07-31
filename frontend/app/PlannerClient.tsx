@@ -1019,14 +1019,14 @@ function splitTableRow(line: string): string[] {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  "MET": "bg-[#e7f3ed] text-[#0b7f46]",
-  "MET (CONDITIONAL)": "bg-[#fff7db] text-[#8a6100]",
-  "PASS": "bg-[#e7f3ed] text-[#0b7f46]",
-  "NOT MET": "bg-[#fff0f0] text-[#9b1c1c]",
-  "NOT COMPLETE": "bg-[#fff0f0] text-[#9b1c1c]",
-  "NOT ARTICULATED": "bg-[#f1f0ee] text-[#6f7680]",
-  "POST-TRANSFER": "bg-[#eef5ff] text-[#2f5fa8]",
-  "RECOMMENDED": "bg-[#f5f0ff] text-[#6b3fa0]",
+  "MET": "bg-[#e7f3ed] dark:bg-[#0b7f46]/15 text-[#0b7f46]",
+  "MET (CONDITIONAL)": "bg-[#fff7db] dark:bg-yellow-950/30 text-[#8a6100] dark:text-yellow-400",
+  "PASS": "bg-[#e7f3ed] dark:bg-[#0b7f46]/15 text-[#0b7f46]",
+  "NOT MET": "bg-[#fff0f0] dark:bg-red-950/30 text-[#9b1c1c] dark:text-red-400",
+  "NOT COMPLETE": "bg-[#fff0f0] dark:bg-red-950/30 text-[#9b1c1c] dark:text-red-400",
+  "NOT ARTICULATED": "bg-[#f1f0ee] text-[#6f7680] dark:text-gray-400",
+  "POST-TRANSFER": "bg-[#eef5ff] dark:bg-blue-950/30 text-[#2f5fa8]",
+  "RECOMMENDED": "bg-[#f5f0ff] text-[#6b3fa0] dark:text-purple-400",
 };
 
 function StatusBadge({ value }: { value: string }) {
@@ -1042,12 +1042,12 @@ function StatusBadge({ value }: { value: string }) {
 function MarkdownTable({ rows }: { rows: string[][] }) {
   const [header, ...body] = rows;
   return (
-    <div className="my-3 overflow-x-auto rounded-xl border border-[#e5e0d5]">
+    <div className="my-3 overflow-x-auto rounded-xl border border-[#e5e0d5] dark:border-gray-800">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="bg-[#faf9f6]">
+          <tr className="bg-[#faf9f6] dark:bg-[#191a20]">
             {header.map((cell, i) => (
-              <th key={i} className="border-b border-[#e5e0d5] px-3 py-2 text-left font-semibold text-[#303236]">
+              <th key={i} className="border-b border-[#e5e0d5] dark:border-gray-800 px-3 py-2 text-left font-semibold text-[#303236] dark:text-gray-100">
                 {renderInline(cell)}
               </th>
             ))}
@@ -1057,7 +1057,7 @@ function MarkdownTable({ rows }: { rows: string[][] }) {
           {body.map((row, ri) => (
             <tr key={ri} className={ri % 2 === 1 ? "bg-[#faf9f6]/60" : undefined}>
               {row.map((cell, ci) => (
-                <td key={ci} className="border-b border-[#eceae4] px-3 py-2 align-top text-[#4d535c] last:border-b-0">
+                <td key={ci} className="border-b border-[#eceae4] dark:border-gray-800 px-3 py-2 align-top text-[#4d535c] dark:text-gray-400 last:border-b-0">
                   {ci === row.length - 1 ? <StatusBadge value={cell} /> : renderInline(cell)}
                 </td>
               ))}
@@ -1129,10 +1129,10 @@ function PlanTimeline({ text, school, major }: { text: string; school: string; m
   const usedCategories = new Set(terms.flatMap((t) => t.courses.map((c) => c.category)));
 
   return (
-    <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4">
+    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-bold text-[#303236]">Recommended Plan</h2>
-        <p className="text-xs font-medium text-[#7b818b]">
+        <h2 className="text-lg font-bold text-[#303236] dark:text-gray-100">Recommended Plan</h2>
+        <p className="text-xs font-medium text-[#7b818b] dark:text-gray-500">
           {terms.length} term{terms.length > 1 ? "s" : ""} · {totalUnits % 1 === 0 ? totalUnits : totalUnits.toFixed(1)} units
         </p>
       </div>
@@ -1145,30 +1145,30 @@ function PlanTimeline({ text, school, major }: { text: string; school: string; m
               <span className="absolute left-[4.5px] top-4 bottom-[-20px] w-px bg-[#d8d0c3]" />
             )}
             <div className="flex items-baseline justify-between">
-              <h4 className="text-sm font-bold text-[#1a2e22]">{term.label}</h4>
-              <span className="text-xs text-[#7b818b]">{term.units % 1 === 0 ? term.units : term.units.toFixed(1)} units</span>
+              <h4 className="text-sm font-bold text-[#1a2e22] dark:text-gray-50">{term.label}</h4>
+              <span className="text-xs text-[#7b818b] dark:text-gray-500">{term.units % 1 === 0 ? term.units : term.units.toFixed(1)} units</span>
             </div>
-            <div className="mt-2 overflow-x-auto rounded-xl border border-[#e5e0d5]">
+            <div className="mt-2 overflow-x-auto rounded-xl border border-[#e5e0d5] dark:border-gray-800">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-[#faf9f6]">
-                    <th className="border-b border-[#e5e0d5] px-3 py-2 text-left font-semibold text-[#303236]">Course</th>
-                    <th className="border-b border-[#e5e0d5] px-3 py-2 text-right font-semibold text-[#303236]">Units</th>
+                  <tr className="bg-[#faf9f6] dark:bg-[#191a20]">
+                    <th className="border-b border-[#e5e0d5] dark:border-gray-800 px-3 py-2 text-left font-semibold text-[#303236] dark:text-gray-100">Course</th>
+                    <th className="border-b border-[#e5e0d5] dark:border-gray-800 px-3 py-2 text-right font-semibold text-[#303236] dark:text-gray-100">Units</th>
                   </tr>
                 </thead>
                 <tbody>
                   {term.courses.map((c, ci) => (
                     <tr key={ci} className={ci % 2 === 1 ? "bg-[#faf9f6]/60" : undefined}>
-                      <td className="border-b border-[#eceae4] px-3 py-2 align-top text-[#4d535c] last:border-b-0">
+                      <td className="border-b border-[#eceae4] dark:border-gray-800 px-3 py-2 align-top text-[#4d535c] dark:text-gray-400 last:border-b-0">
                         <span className="flex min-w-0 items-center gap-2">
                           <span className={`h-2 w-2 shrink-0 rounded-sm ${CATEGORY_STYLES[c.category].dot}`} />
                           <span className="truncate">
-                            <span className="font-semibold text-[#303236]">{c.code}</span>
-                            <span className="text-[#6E6A5C]"> · {c.title}</span>
+                            <span className="font-semibold text-[#303236] dark:text-gray-100">{c.code}</span>
+                            <span className="text-[#6E6A5C] dark:text-gray-400"> · {c.title}</span>
                           </span>
                         </span>
                       </td>
-                      <td className="border-b border-[#eceae4] px-3 py-2 text-right align-top text-[#6E6A5C] last:border-b-0">{c.units}</td>
+                      <td className="border-b border-[#eceae4] dark:border-gray-800 px-3 py-2 text-right align-top text-[#6E6A5C] dark:text-gray-400 last:border-b-0">{c.units}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1181,16 +1181,16 @@ function PlanTimeline({ text, school, major }: { text: string; school: string; m
           <span className="absolute left-0 top-1.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-[#0b7f46] text-[6px] text-white">
             ✓
           </span>
-          <div className="rounded-xl border border-[#bfe0cd] bg-[#e7f3ed] px-3 py-2.5">
+          <div className="rounded-xl border border-[#bfe0cd] bg-[#e7f3ed] dark:bg-[#0b7f46]/15 px-3 py-2.5">
             <p className="text-sm font-bold text-[#0b7f46]">Transfer to {school || "your UC"}</p>
-            {major && <p className="text-xs text-[#4d7a63]">{major}</p>}
+            {major && <p className="text-xs text-[#4d7a63] dark:text-emerald-400">{major}</p>}
           </div>
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#e5e0d5] pt-3">
+      <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#e5e0d5] dark:border-gray-800 pt-3">
         {Array.from(usedCategories).map((cat) => (
-          <span key={cat} className="flex items-center gap-1.5 text-xs text-[#7b818b]">
+          <span key={cat} className="flex items-center gap-1.5 text-xs text-[#7b818b] dark:text-gray-500">
             <span className={`h-2 w-2 rounded-sm ${CATEGORY_STYLES[cat].dot}`} />
             {CATEGORY_STYLES[cat].label}
           </span>
@@ -1227,15 +1227,15 @@ function KeyNotesCard({ items }: { items: string[] }) {
       {stats.length > 0 && (
         <div className="grid gap-2 sm:grid-cols-3">
           {stats.map((s, i) => (
-            <div key={i} className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#7b818b]">{s.label}</p>
-              <p className="mt-1 text-sm font-semibold text-[#1a2e22] leading-snug">{renderInline(s.value)}</p>
+            <div key={i} className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#7b818b] dark:text-gray-500">{s.label}</p>
+              <p className="mt-1 text-sm font-semibold text-[#1a2e22] dark:text-gray-50 leading-snug">{renderInline(s.value)}</p>
             </div>
           ))}
         </div>
       )}
       {notes.map((n, i) => (
-        <div key={i} className="rounded-lg border-l-2 border-[#0b7f46] bg-[#faf8f3] py-2 pl-3 pr-3 text-sm leading-6 text-[#4d535c]">
+        <div key={i} className="rounded-lg border-l-2 border-[#0b7f46] bg-[#faf8f3] dark:bg-[#1c1e24] py-2 pl-3 pr-3 text-sm leading-6 text-[#4d535c] dark:text-gray-400">
           {renderInline(n)}
         </div>
       ))}
@@ -1345,13 +1345,13 @@ function SimpleMarkdown({ text }: { text: string }) {
 
     if (/^###\s/.test(line)) {
       flush();
-      out.push(<h4 key={out.length} className="mt-4 mb-1 font-bold text-[#303236]">{line.slice(4)}</h4>);
+      out.push(<h4 key={out.length} className="mt-4 mb-1 font-bold text-[#303236] dark:text-gray-100">{line.slice(4)}</h4>);
     } else if (/^##\s/.test(line)) {
       flush();
       out.push(<h3 key={out.length} className="mt-5 mb-1 text-base font-bold text-[#0b7f46]">{line.slice(3)}</h3>);
     } else if (/^#\s/.test(line)) {
       flush();
-      out.push(<h2 key={out.length} className="mt-5 mb-2 text-lg font-bold text-[#303236]">{line.slice(2)}</h2>);
+      out.push(<h2 key={out.length} className="mt-5 mb-2 text-lg font-bold text-[#303236] dark:text-gray-100">{line.slice(2)}</h2>);
     } else if (/^[\*\-]\s/.test(line)) {
       listBuf.push(line.slice(2));
     } else if (line.trim() === "") {
@@ -1375,20 +1375,20 @@ function UCStatsPanel({ school }: { school: string }) {
   const color = rateNum < 30 ? "text-red-600" : rateNum < 55 ? "text-yellow-600" : "text-green-600";
   const label = rateNum < 30 ? "Very Selective" : rateNum < 55 ? "Selective" : "Accessible";
   return (
-    <div className="mt-4 rounded-2xl border border-[#d8d0c3] bg-white p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] mb-3">{school} — Admission Stats</p>
+    <div className="mt-4 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500 mb-3">{school} — Admission Stats</p>
       <div className="grid grid-cols-3 gap-3 text-center">
-        <div className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
+        <div className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-3">
           <p className={`text-xl font-bold ${color}`}>{s.rate}</p>
-          <p className="text-xs text-[#7b818b] mt-1">Transfer admit rate</p>
+          <p className="text-xs text-[#7b818b] dark:text-gray-500 mt-1">Transfer admit rate</p>
         </div>
-        <div className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
-          <p className="text-xl font-bold text-[#303236]">{s.gpa}</p>
-          <p className="text-xs text-[#7b818b] mt-1">Avg transfer GPA</p>
+        <div className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-3">
+          <p className="text-xl font-bold text-[#303236] dark:text-gray-100">{s.gpa}</p>
+          <p className="text-xs text-[#7b818b] dark:text-gray-500 mt-1">Avg transfer GPA</p>
         </div>
-        <div className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
+        <div className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-3">
           <p className={`text-xl font-bold ${s.tag ? "text-green-600" : "text-red-500"}`}>{s.tag ? "✓ TAG" : "✗ TAG"}</p>
-          <p className="text-xs text-[#7b818b] mt-1">{s.tag ? `Min GPA ${s.tagGPA}` : "No TAG offered"}</p>
+          <p className="text-xs text-[#7b818b] dark:text-gray-500 mt-1">{s.tag ? `Min GPA ${s.tagGPA}` : "No TAG offered"}</p>
         </div>
       </div>
       <p className={`mt-3 text-xs font-semibold ${color}`}>{label} — Aim for 3.0+ minimum (3.5+ for selective campuses). UC eligibility floor is 2.4 but far from competitive.</p>
@@ -2036,23 +2036,23 @@ export default function PlannerClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#faf9f6] text-[#2f3135]">
+    <main className="min-h-screen bg-[#faf9f6] dark:bg-[#191a20] text-[#2f3135] dark:text-gray-200">
       <Navbar />
 
       <section className="mx-auto max-w-7xl px-5 py-8 md:px-8">
         <div className="mb-2">
-          <h1 className="text-2xl font-bold text-[#1a2e22]">
+          <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">
             {firstName ? `Welcome back, ${firstName}.` : "Your transfer plan"}
           </h1>
-          <p className="mt-1 text-sm text-[#7b818b]">
+          <p className="mt-1 text-sm text-[#7b818b] dark:text-gray-500">
             {communityCollege || "—"} → {targetSchool || "—"} · {targetMajor || "—"}
           </p>
         </div>
 
         {/* ── School tabs ─────────────────────────────────────── */}
         {planSchools.length > 1 && (
-          <div className="mt-16 rounded-2xl border border-[#d8d0c3] bg-white px-5 py-4 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] mb-3">Your target schools</p>
+          <div className="mt-16 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-5 py-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500 mb-3">Your target schools</p>
             <div className="flex flex-wrap gap-2">
               {planSchools.map(school => (
                 <button key={school}
@@ -2062,7 +2062,7 @@ export default function PlannerClient() {
                     setResult(null);
                     loadOrGeneratePlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardMode ?? "competitive");
                   }}
-                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:text-[#0b7f46]"}`}>
+                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#4d535c] dark:text-gray-400 hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:dark:bg-[#0b7f46]/10 hover:text-[#0b7f46]"}`}>
                   {school}
                 </button>
               ))}
@@ -2075,7 +2075,7 @@ export default function PlannerClient() {
           className={`${planSchools.length > 1 ? "mt-4" : "mt-16"} scroll-mt-4 grid gap-6 lg:grid-cols-[0.72fr_1.28fr] items-start`}
         >
           {/* Left panel: summary after wizard, form before */}
-          <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
+          <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
             {onboardingDone ? (
               <div className="flex flex-col">
                 {/* Green gradient header */}
@@ -2113,15 +2113,15 @@ export default function PlannerClient() {
                     {[
                       { label: "Completed Courses", value: completedCourses || "None yet" },
                     ].map(({ label, value }) => (
-                      <div key={label} className="rounded-2xl border border-[#d8d0c3] bg-white px-4 py-3">
-                        <p className="text-xs font-semibold text-[#7b818b] mb-1">{label}</p>
-                        <p className="text-sm text-[#303236] break-words">{value || "—"}</p>
+                      <div key={label} className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3">
+                        <p className="text-xs font-semibold text-[#7b818b] dark:text-gray-500 mb-1">{label}</p>
+                        <p className="text-sm text-[#303236] dark:text-gray-100 break-words">{value || "—"}</p>
                       </div>
                     ))}
                   </div>
                   <button
                     onClick={() => { try { localStorage.removeItem("cb_profile"); } catch {} router.push("/onboarding"); }}
-                    className="w-full rounded-2xl border border-[#d8d0c3] bg-white px-4 py-3 text-sm font-semibold text-[#7b818b] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
+                    className="w-full rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm font-semibold text-[#7b818b] dark:text-gray-500 transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
                   >
                     Edit my info
                   </button>
@@ -2135,8 +2135,8 @@ export default function PlannerClient() {
               </div>
             ) : (
               <div className="p-6">
-                <h2 className="text-3xl font-bold text-[#303236]">Build your plan</h2>
-                <p className="mt-3 text-base leading-7 text-[#7b818b]">Major prep comes first.</p>
+                <h2 className="text-3xl font-bold text-[#303236] dark:text-gray-100">Build your plan</h2>
+                <p className="mt-3 text-base leading-7 text-[#7b818b] dark:text-gray-500">Major prep comes first.</p>
                 <form className="mt-8 space-y-5">
                   <SelectField label="Current college" value={communityCollege} options={collegeOptions}
                     onChange={(value) => { setCommunityCollege(value); setTargetSchool(""); setTargetMajor(""); resetResults(); }} />
@@ -2145,10 +2145,10 @@ export default function PlannerClient() {
                   <SelectField label="Target major" value={targetMajor} options={majorOptions}
                     onChange={(value) => { setTargetMajor(value); resetResults(); }} />
                   <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-[#303236]">Completed courses</span>
+                    <span className="mb-2 block text-sm font-bold text-[#303236] dark:text-gray-100">Completed courses</span>
                     <textarea value={completedCourses}
                       onChange={(e) => { setCompletedCourses(e.target.value); resetResults(); }}
-                      className="min-h-40 w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition placeholder:text-[#a2a7af] focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                      className="min-h-40 w-full rounded-2xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition placeholder:text-[#a2a7af] placeholder:dark:text-gray-500 focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                       placeholder="Example: econ1, math110a, math130, cs111c" />
                   </label>
                   <button type="button" data-generate-plan onClick={checkTransferPlan}
@@ -2160,7 +2160,7 @@ export default function PlannerClient() {
             )}
           </div>
 
-          <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
+          <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
             {/* AI-generated plan from Flask backend */}
             {(aiPlanLoading || aiPlan) && (
               <div className="print-plan">
@@ -2204,7 +2204,7 @@ export default function PlannerClient() {
                   {aiPlan && (
                     <PlanTimeline text={aiPlan} school={activeSchoolTab || targetSchool} major={targetMajor} />
                   )}
-                  <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4 text-sm text-[#303236]">
+                  <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4 text-sm text-[#303236] dark:text-gray-100">
                     {aiPlan
                       ? <SimpleMarkdown text={aiPlan} />
                       : (
@@ -2218,7 +2218,7 @@ export default function PlannerClient() {
                   {aiPlan && activeSchoolTab && <UCStatsPanel school={activeSchoolTab} />}
 
                   {aiPlan && !aiPlanLoading && (
-                    <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4 text-xs text-[#7b818b] print:hidden">
+                    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4 text-xs text-[#7b818b] dark:text-gray-500 print:hidden">
                       <p>
                         This plan is built from real ASSIST.org and Cal-GETC data, but requirements can change
                         and every combination isn&apos;t equally well-documented. Always confirm your final plan
@@ -2240,7 +2240,7 @@ export default function PlannerClient() {
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
                             placeholder="What looked wrong with this plan?"
-                            className="w-full min-h-20 rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+                            className="w-full min-h-20 rounded-xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3 py-2 text-sm text-[#303236] dark:text-gray-100 outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
                           />
                           <div className="flex items-center gap-2">
                             <button
@@ -2254,12 +2254,12 @@ export default function PlannerClient() {
                             <button
                               type="button"
                               onClick={() => { setFeedbackOpen(false); setFeedbackText(""); }}
-                              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#7b818b] hover:text-[#303236]"
+                              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#7b818b] dark:text-gray-500 hover:text-[#303236] hover:dark:text-gray-100"
                             >
                               Cancel
                             </button>
                             {feedbackStatus === "error" && (
-                              <span className="text-xs text-[#9b1c1c]">Couldn&apos;t send — try again.</span>
+                              <span className="text-xs text-[#9b1c1c] dark:text-red-400">Couldn&apos;t send — try again.</span>
                             )}
                           </div>
                         </div>
@@ -2274,29 +2274,29 @@ export default function PlannerClient() {
             )}
 
             {result?.error && (
-              <div className="m-6 rounded-2xl border border-[#ef9a9a] bg-[#fff0f0] p-6">
-                <h3 className="text-xl font-bold text-[#9b1c1c]">
+              <div className="m-6 rounded-2xl border border-[#ef9a9a] dark:border-red-900/50 bg-[#fff0f0] dark:bg-red-950/30 p-6">
+                <h3 className="text-xl font-bold text-[#9b1c1c] dark:text-red-400">
                   {result.error}
                 </h3>
 
-                <p className="mt-2 text-[#7f1d1d]">{result.notes}</p>
+                <p className="mt-2 text-[#7f1d1d] dark:text-red-400">{result.notes}</p>
               </div>
             )}
 
             {result && !result.error && (
               <div className="p-6">
-                <div className="flex flex-col gap-4 border-b border-[#d8d0c3] pb-5 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-col gap-4 border-b border-[#d8d0c3] dark:border-gray-700 pb-5 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-[#7b818b]">
+                    <p className="text-sm font-semibold text-[#7b818b] dark:text-gray-500">
                       Personalized plan
                     </p>
 
-                    <h2 className="mt-1 text-3xl font-bold text-[#303236]">
+                    <h2 className="mt-1 text-3xl font-bold text-[#303236] dark:text-gray-100">
                       {targetSchool} · {targetMajor}
                     </h2>
                   </div>
 
-                  <div className="rounded-2xl border border-[#b8d8c7] bg-[#e7f3ed] px-5 py-4 text-center">
+                  <div className="rounded-2xl border border-[#b8d8c7] dark:border-[#0b7f46]/40 bg-[#e7f3ed] dark:bg-[#0b7f46]/15 px-5 py-4 text-center">
                     <p className="text-sm font-bold text-[#0b7f46]">
                       Readiness
                     </p>
@@ -2307,23 +2307,23 @@ export default function PlannerClient() {
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-[#d8d0c3] bg-white p-4">
-                  <p className="font-bold text-[#303236]">
+                <div className="mt-5 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
+                  <p className="font-bold text-[#303236] dark:text-gray-100">
                     Competitiveness estimate
                   </p>
-                  <p className="mt-2 text-sm leading-6 text-[#6f7680]">
+                  <p className="mt-2 text-sm leading-6 text-[#6f7680] dark:text-gray-400">
                     {result.competitiveness}
                   </p>
                 </div>
 
-                <div className="mt-6 h-3 overflow-hidden rounded-full bg-[#e0d9cf]">
+                <div className="mt-6 h-3 overflow-hidden rounded-full bg-[#e0d9cf] dark:bg-gray-800">
                   <div
                     className="h-full rounded-full bg-[#0b7f46]"
                     style={{ width: `${result.readinessScore}%` }}
                   />
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-sm text-[#7b818b]">
+                <div className="mt-2 flex items-center justify-between text-sm text-[#7b818b] dark:text-gray-500">
                   <span>Status: {readinessLabel}</span>
                   <span>{result.completed.length} completed</span>
                 </div>
@@ -2358,13 +2358,13 @@ export default function PlannerClient() {
                   />
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-[#d8d0c3] bg-white p-5">
-                  <h3 className="font-bold text-[#303236]">
+                <div className="mt-6 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-5">
+                  <h3 className="font-bold text-[#303236] dark:text-gray-100">
                     Possible course sequence
                   </h3>
 
                   {result.sequence.length === 0 ? (
-                    <p className="mt-2 text-sm text-[#7b818b]">
+                    <p className="mt-2 text-sm text-[#7b818b] dark:text-gray-500">
                       No sequence needed yet.
                     </p>
                   ) : (
@@ -2372,9 +2372,9 @@ export default function PlannerClient() {
                       {result.sequence.map((term, index) => (
                         <div
                           key={`term-${index}`}
-                          className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4"
+                          className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4"
                         >
-                          <p className="mb-3 font-bold text-[#303236]">
+                          <p className="mb-3 font-bold text-[#303236] dark:text-gray-100">
                             Term {index + 1}
                           </p>
 
@@ -2382,7 +2382,7 @@ export default function PlannerClient() {
                             {term.map((course) => (
                               <p
                                 key={course.code}
-                                className="text-sm text-[#6f7680]"
+                                className="text-sm text-[#6f7680] dark:text-gray-400"
                               >
                                 {formatCourseDisplay(course)}
                               </p>
@@ -2394,20 +2394,20 @@ export default function PlannerClient() {
                   )}
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-[#ef9a9a] bg-[#fff0f0] p-4">
-                  <p className="font-bold text-[#9b1c1c]">Warning</p>
+                <div className="mt-5 rounded-2xl border border-[#ef9a9a] dark:border-red-900/50 bg-[#fff0f0] dark:bg-red-950/30 p-4">
+                  <p className="font-bold text-[#9b1c1c] dark:text-red-400">Warning</p>
 
-                  <p className="mt-2 text-sm leading-6 text-[#7f1d1d]">
+                  <p className="mt-2 text-sm leading-6 text-[#7f1d1d] dark:text-red-400">
                     {result.warning}
                   </p>
                 </div>
 
-                <div className="mt-5 rounded-2xl border border-[#d8d0c3] bg-white p-4">
-                  <p className="font-bold text-[#303236]">
+                <div className="mt-5 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
+                  <p className="font-bold text-[#303236] dark:text-gray-100">
                     Counselor-ready notes
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-[#6f7680]">
+                  <p className="mt-2 text-sm leading-6 text-[#6f7680] dark:text-gray-400">
                     {result.notes}
                   </p>
                 </div>
@@ -2421,20 +2421,20 @@ export default function PlannerClient() {
           <div className="mt-10 space-y-4 print:hidden">
 
             {/* TAG Eligibility Checker */}
-            <div className="rounded-2xl border border-[#d8d0c3] bg-white overflow-hidden">
+            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
               <button
                 onClick={() => setShowTagChecker(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3]"
+                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
-                  <span className="text-sm font-bold text-[#303236]">TAG Eligibility Checker</span>
-                  <span className="ml-2 text-xs text-[#7b818b]">Transfer Admission Guarantee</span>
+                  <span className="text-sm font-bold text-[#303236] dark:text-gray-100">TAG Eligibility Checker</span>
+                  <span className="ml-2 text-xs text-[#7b818b] dark:text-gray-500">Transfer Admission Guarantee</span>
                 </div>
-                <span className="text-[#7b818b] text-lg">{showTagChecker ? "−" : "+"}</span>
+                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showTagChecker ? "−" : "+"}</span>
               </button>
               {showTagChecker && (
                 <div className="px-5 pb-5 space-y-4">
-                  <p className="text-xs text-[#7b818b] leading-5">
+                  <p className="text-xs text-[#7b818b] dark:text-gray-500 leading-5">
                     TAG guarantees admission if you meet requirements.{" "}
                     <strong>UCLA, UC Berkeley, and UCSD do NOT offer TAG.</strong>
                   </p>
@@ -2442,24 +2442,24 @@ export default function PlannerClient() {
                   {/* Input form */}
                   <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
                     <div>
-                      <label className="text-xs font-semibold text-[#303236] block mb-1">Your GPA</label>
+                      <label className="text-xs font-semibold text-[#303236] dark:text-gray-100 block mb-1">Your GPA</label>
                       <input
                         type="number" min="1.0" max="4.0" step="0.01"
                         placeholder="e.g. 3.6"
                         value={tagGpaInput}
                         onChange={e => setTagGpaInput(e.target.value)}
-                        className="w-full rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] focus:outline-none focus:ring-2 focus:ring-[#0b7f46]/30"
+                        className="w-full rounded-xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3 py-2 text-sm text-[#303236] dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#0b7f46]/30"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-[#303236] block mb-1">Your Major</label>
+                      <label className="text-xs font-semibold text-[#303236] dark:text-gray-100 block mb-1">Your Major</label>
                       <input
                         type="text"
                         placeholder={targetMajor || "e.g. Economics"}
                         value={tagMajorInput}
                         onChange={e => setTagMajorInput(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") checkTagEligibility(); }}
-                        className="w-full rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] focus:outline-none focus:ring-2 focus:ring-[#0b7f46]/30"
+                        className="w-full rounded-xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3 py-2 text-sm text-[#303236] dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#0b7f46]/30"
                       />
                     </div>
                     <div className="flex items-end">
@@ -2485,7 +2485,7 @@ export default function PlannerClient() {
                               ? "border-green-300 bg-green-50"
                               : "border-[#f0c5c5] bg-[#fff5f5]"
                           }`}>
-                            <p className="text-xs font-bold text-[#303236]">{r.campus}</p>
+                            <p className="text-xs font-bold text-[#303236] dark:text-gray-100">{r.campus}</p>
                             <p className={`mt-1 text-xs font-semibold ${r.eligible ? "text-green-700" : "text-red-600"}`}>
                               {r.eligible ? "✓ Eligible" : "✗ Not eligible"}
                             </p>
@@ -2496,7 +2496,7 @@ export default function PlannerClient() {
                               <p className="mt-0.5 text-xs text-red-500">Need {r.requiredGPA} GPA (you have {tagGpaInput})</p>
                             )}
                             {r.eligible && (
-                              <p className="mt-0.5 text-xs text-[#7b818b]">Min GPA: {r.requiredGPA}</p>
+                              <p className="mt-0.5 text-xs text-[#7b818b] dark:text-gray-500">Min GPA: {r.requiredGPA}</p>
                             )}
                           </div>
                         ))}
@@ -2516,9 +2516,9 @@ export default function PlannerClient() {
                       )}
 
                       {/* Shared requirements reminder */}
-                      <div className="rounded-xl bg-[#faf8f3] border border-[#d8d0c3] p-3">
-                        <p className="text-xs font-bold text-[#303236] mb-1">Universal TAG Requirements</p>
-                        <ul className="text-xs text-[#6f7680] space-y-0.5 list-disc pl-4">
+                      <div className="rounded-xl bg-[#faf8f3] dark:bg-[#1c1e24] border border-[#d8d0c3] dark:border-gray-700 p-3">
+                        <p className="text-xs font-bold text-[#303236] dark:text-gray-100 mb-1">Universal TAG Requirements</p>
+                        <ul className="text-xs text-[#6f7680] dark:text-gray-400 space-y-0.5 list-disc pl-4">
                           <li>30+ UC-transferable units completed at time of TAG submission</li>
                           <li>60 semester units by end of spring before transfer</li>
                           <li>At least one UC-E (English) and one UC-M (Math) completed</li>
@@ -2533,24 +2533,24 @@ export default function PlannerClient() {
             </div>
 
             {/* Cal-GETC Checklist */}
-            <div className="rounded-2xl border border-[#d8d0c3] bg-white overflow-hidden">
+            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
               <button
                 onClick={() => setShowCalgetc(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3]"
+                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
-                  <span className="text-sm font-bold text-[#303236]">Cal-GETC Checklist</span>
-                  <span className="ml-2 text-xs text-[#7b818b]">
+                  <span className="text-sm font-bold text-[#303236] dark:text-gray-100">Cal-GETC Checklist</span>
+                  <span className="ml-2 text-xs text-[#7b818b] dark:text-gray-500">
                     {Object.values(calgetcChecked).filter(Boolean).length}/{CALGETC_AREAS.length} areas done
                   </span>
                 </div>
-                <span className="text-[#7b818b] text-lg">{showCalgetc ? "−" : "+"}</span>
+                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showCalgetc ? "−" : "+"}</span>
               </button>
               {showCalgetc && (
                 <div className="px-5 pb-5 space-y-2">
-                  <p className="text-xs text-[#7b818b] mb-3">Check off each Cal-GETC area as you complete it. Progress is saved in your browser.</p>
+                  <p className="text-xs text-[#7b818b] dark:text-gray-500 mb-3">Check off each Cal-GETC area as you complete it. Progress is saved in your browser.</p>
                   {CALGETC_AREAS.map(area => (
-                    <label key={area.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${calgetcChecked[area.id] ? "border-green-300 bg-green-50" : "border-[#d8d0c3] bg-[#faf8f3] hover:border-[#0b7f46]/40"}`}>
+                    <label key={area.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${calgetcChecked[area.id] ? "border-green-300 bg-green-50" : "border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] hover:border-[#0b7f46]/40"}`}>
                       <input
                         type="checkbox"
                         checked={!!calgetcChecked[area.id]}
@@ -2558,12 +2558,12 @@ export default function PlannerClient() {
                         className="mt-0.5 h-4 w-4 rounded accent-[#0b7f46]"
                       />
                       <div>
-                        <p className="text-sm font-semibold text-[#303236]">Area {area.area} — {area.title}</p>
-                        <p className="text-xs text-[#7b818b]">{area.detail}</p>
+                        <p className="text-sm font-semibold text-[#303236] dark:text-gray-100">Area {area.area} — {area.title}</p>
+                        <p className="text-xs text-[#7b818b] dark:text-gray-500">{area.detail}</p>
                       </div>
                     </label>
                   ))}
-                  <div className="mt-3 h-2 rounded-full bg-[#e0d9cf] overflow-hidden">
+                  <div className="mt-3 h-2 rounded-full bg-[#e0d9cf] dark:bg-gray-800 overflow-hidden">
                     <div
                       className="h-full rounded-full bg-[#0b7f46] transition-all duration-300"
                       style={{ width: `${Math.round((Object.values(calgetcChecked).filter(Boolean).length / CALGETC_AREAS.length) * 100)}%` }}
@@ -2574,18 +2574,18 @@ export default function PlannerClient() {
             </div>
 
             {/* Course Progress Tracker */}
-            <div className="rounded-2xl border border-[#d8d0c3] bg-white overflow-hidden">
+            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
               <button
                 onClick={() => setShowTracker(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3]"
+                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
-                  <span className="text-sm font-bold text-[#303236]">Course Progress Tracker</span>
-                  <span className="ml-2 text-xs text-[#7b818b]">
+                  <span className="text-sm font-bold text-[#303236] dark:text-gray-100">Course Progress Tracker</span>
+                  <span className="ml-2 text-xs text-[#7b818b] dark:text-gray-500">
                     {trackerCourses.filter(c => c.status === "done").length} done · {trackerCourses.filter(c => c.status === "in-progress").length} in progress
                   </span>
                 </div>
-                <span className="text-[#7b818b] text-lg">{showTracker ? "−" : "+"}</span>
+                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showTracker ? "−" : "+"}</span>
               </button>
               {showTracker && (
                 <div className="px-5 pb-5 space-y-3">
@@ -2600,7 +2600,7 @@ export default function PlannerClient() {
                         }
                       }}
                       placeholder="Add a course (e.g. MATH 1A)"
-                      className="flex-1 rounded-xl border border-[#d1c7b8] bg-[#faf8f3] px-3 py-2 text-sm outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+                      className="flex-1 rounded-xl border border-[#d1c7b8] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-3 py-2 text-sm outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
                     />
                     <button
                       onClick={() => {
@@ -2613,16 +2613,16 @@ export default function PlannerClient() {
                     >Add</button>
                   </div>
                   {trackerCourses.length === 0 && (
-                    <p className="text-xs text-[#a2a7af] text-center py-3">No courses added yet. Type a course name and press Enter.</p>
+                    <p className="text-xs text-[#a2a7af] dark:text-gray-500 text-center py-3">No courses added yet. Type a course name and press Enter.</p>
                   )}
                   <div className="space-y-2">
                     {trackerCourses.map(c => (
-                      <div key={c.id} className="flex items-center gap-3 rounded-xl border border-[#d8d0c3] bg-[#faf8f3] px-3 py-2">
-                        <p className="flex-1 text-sm text-[#303236]">{c.name}</p>
+                      <div key={c.id} className="flex items-center gap-3 rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-3 py-2">
+                        <p className="flex-1 text-sm text-[#303236] dark:text-gray-100">{c.name}</p>
                         <select
                           value={c.status}
                           onChange={e => setTrackerCourses(prev => prev.map(x => x.id === c.id ? { ...x, status: e.target.value as "planned"|"in-progress"|"done" } : x))}
-                          className={`rounded-lg border px-2 py-1 text-xs font-semibold outline-none ${c.status === "done" ? "border-green-300 bg-green-50 text-green-700" : c.status === "in-progress" ? "border-yellow-300 bg-yellow-50 text-yellow-700" : "border-[#d8d0c3] bg-white text-[#7b818b]"}`}
+                          className={`rounded-lg border px-2 py-1 text-xs font-semibold outline-none ${c.status === "done" ? "border-green-300 bg-green-50 text-green-700" : c.status === "in-progress" ? "border-yellow-300 bg-yellow-50 text-yellow-700" : "border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] text-[#7b818b] dark:text-gray-500"}`}
                         >
                           <option value="planned">Planned</option>
                           <option value="in-progress">In Progress</option>
@@ -2630,7 +2630,7 @@ export default function PlannerClient() {
                         </select>
                         <button
                           onClick={() => setTrackerCourses(prev => prev.filter(x => x.id !== c.id))}
-                          className="text-xs text-[#c4b9aa] transition hover:text-[#9b1c1c]"
+                          className="text-xs text-[#c4b9aa] dark:text-gray-500 transition hover:text-[#9b1c1c] hover:dark:text-red-400"
                         >✕</button>
                       </div>
                     ))}
@@ -2640,33 +2640,33 @@ export default function PlannerClient() {
             </div>
 
             {/* Application Deadline Reminders */}
-            <div className="rounded-2xl border border-[#d8d0c3] bg-white overflow-hidden">
+            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
               <button
                 onClick={() => setShowDeadlines(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3]"
+                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
-                  <span className="text-sm font-bold text-[#303236]">Application Deadline Reminders</span>
-                  <span className="ml-2 text-xs text-[#7b818b]">TAG · UC App · FAFSA · more</span>
+                  <span className="text-sm font-bold text-[#303236] dark:text-gray-100">Application Deadline Reminders</span>
+                  <span className="ml-2 text-xs text-[#7b818b] dark:text-gray-500">TAG · UC App · FAFSA · more</span>
                 </div>
-                <span className="text-[#7b818b] text-lg">{showDeadlines ? "−" : "+"}</span>
+                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showDeadlines ? "−" : "+"}</span>
               </button>
               {showDeadlines && (
                 <div className="px-5 pb-5">
                   <div className="space-y-3">
                     {DEADLINES.map(d => (
-                      <div key={d.label} className="flex items-start gap-4 rounded-xl border border-[#d8d0c3] bg-[#faf8f3] px-4 py-3">
+                      <div key={d.label} className="flex items-start gap-4 rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3">
                         <div className="min-w-[90px]">
                           <p className="text-xs font-bold text-[#0b7f46]">{d.date}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-[#303236]">{d.label}</p>
-                          <p className="text-xs text-[#7b818b]">{d.note}</p>
+                          <p className="text-sm font-semibold text-[#303236] dark:text-gray-100">{d.label}</p>
+                          <p className="text-xs text-[#7b818b] dark:text-gray-500">{d.note}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <p className="mt-3 text-xs text-[#a2a7af]">Dates are typical annual deadlines. Always confirm with the official UC and financial aid websites.</p>
+                  <p className="mt-3 text-xs text-[#a2a7af] dark:text-gray-500">Dates are typical annual deadlines. Always confirm with the official UC and financial aid websites.</p>
                 </div>
               )}
             </div>
@@ -2697,10 +2697,10 @@ export default function PlannerClient() {
             ? "inset-x-0 bottom-0 top-[8vh] sm:inset-auto sm:bottom-6 sm:right-6 sm:top-auto sm:items-end sm:justify-end pointer-events-none"
             : "inset-0 items-center justify-center bg-black/60 p-4"
         }`}>
-          <div className={`pointer-events-auto flex flex-col bg-white shadow-2xl ${
+          <div className={`pointer-events-auto flex flex-col bg-white dark:bg-[#1c1e24] shadow-2xl ${
             onboardingDone
-              ? "w-full rounded-t-3xl border border-[#d8d0c3] sm:rounded-2xl sm:w-[22rem] sm:h-[32rem] h-full"
-              : "w-full max-w-lg rounded-2xl border border-[#d8d0c3] h-[90vh] sm:h-[640px]"
+              ? "w-full rounded-t-3xl border border-[#d8d0c3] dark:border-gray-700 sm:rounded-2xl sm:w-[22rem] sm:h-[32rem] h-full"
+              : "w-full max-w-lg rounded-2xl border border-[#d8d0c3] dark:border-gray-700 h-[90vh] sm:h-[640px]"
           }`}>
             {/* Header */}
             <div className="flex items-center justify-between rounded-t-3xl sm:rounded-t-2xl bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4">
@@ -2726,7 +2726,7 @@ export default function PlannerClient() {
             <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
               {chatMessages.length === 0 && chatLoading && (
                 <div className="flex justify-start">
-                  <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] px-4 py-3 text-sm text-[#7b818b]">
+                  <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#7b818b] dark:text-gray-500">
                     <span className="animate-pulse">CourseBridge AI is thinking…</span>
                   </div>
                 </div>
@@ -2735,7 +2735,7 @@ export default function PlannerClient() {
                 <div className="flex flex-wrap gap-2 pb-1">
                   {["What should I take next semester?", "How competitive is my GPA?", "Tell me about TAG"].map((q) => (
                     <button key={q} onClick={() => sendChatMessage(q)}
-                      className="rounded-full border border-[#d8d0c3] bg-[#faf8f3] px-3 py-1.5 text-xs text-[#4d535c] transition hover:border-[#0b7f46] hover:text-[#0b7f46]">
+                      className="rounded-full border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-3 py-1.5 text-xs text-[#4d535c] dark:text-gray-400 transition hover:border-[#0b7f46] hover:text-[#0b7f46]">
                       {q}
                     </button>
                   ))}
@@ -2746,7 +2746,7 @@ export default function PlannerClient() {
                   <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
                     msg.role === "user"
                       ? "bg-[#0b7f46] text-white"
-                      : "border border-[#d8d0c3] bg-[#faf8f3] text-[#303236]"
+                      : "border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100"
                   }`}>
                     {msg.content || (msg.role === "assistant" && chatLoading ? <span className="animate-pulse">…</span> : "")}
                   </div>
@@ -2756,7 +2756,7 @@ export default function PlannerClient() {
             </div>
 
             {/* Input */}
-            <div className="border-t border-[#d8d0c3] p-4">
+            <div className="border-t border-[#d8d0c3] dark:border-gray-700 p-4">
               <div className="flex gap-3">
                 <input
                   type="text"
@@ -2764,7 +2764,7 @@ export default function PlannerClient() {
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
                   placeholder="Ask about your transfer plan…"
-                  className="flex-1 rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] px-4 py-3 text-base outline-none transition focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+                  className="flex-1 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-base outline-none transition focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
                 />
                 <button
                   onClick={() => sendChatMessage()}
@@ -2797,14 +2797,14 @@ function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-sm font-bold text-[#303236]">
+      <span className="mb-2 block text-sm font-bold text-[#303236] dark:text-gray-100">
         {label}
       </span>
 
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+        className="w-full rounded-2xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
       >
         <option value="" disabled>
           Select {label.toLowerCase()}
@@ -2822,7 +2822,7 @@ function SelectField({
 
 function PainPoint({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4 text-sm font-medium text-[#4d535c] shadow-sm">
+    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4 text-sm font-medium text-[#4d535c] dark:text-gray-400 shadow-sm">
       {text}
     </div>
   );
@@ -2838,26 +2838,26 @@ function Step({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] p-5 shadow-[0_18px_45px_rgba(67,54,36,0.06)]">
+    <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-5 shadow-[0_18px_45px_rgba(67,54,36,0.06)]">
       <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-[#0b7f46] text-sm font-bold text-white">
         {number}
       </div>
 
-      <h3 className="text-xl font-bold text-[#303236]">{title}</h3>
+      <h3 className="text-xl font-bold text-[#303236] dark:text-gray-100">{title}</h3>
 
-      <p className="mt-2 leading-6 text-[#6f7680]">{children}</p>
+      <p className="mt-2 leading-6 text-[#6f7680] dark:text-gray-400">{children}</p>
     </div>
   );
 }
 
 function PreviewCard({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4">
-      <p className="mb-3 text-sm font-bold text-[#303236]">{title}</p>
+    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
+      <p className="mb-3 text-sm font-bold text-[#303236] dark:text-gray-100">{title}</p>
 
       <div className="space-y-2">
         {items.map((item) => (
-          <p key={item} className="text-sm text-[#6f7680]">
+          <p key={item} className="text-sm text-[#6f7680] dark:text-gray-400">
             {item}
           </p>
         ))}
@@ -2868,13 +2868,13 @@ function PreviewCard({ title, items }: { title: string; items: string[] }) {
 
 function EmptyDashboard() {
   return (
-    <div className="flex min-h-[560px] items-center justify-center rounded-3xl border border-dashed border-[#d8d0c3] bg-white/60 p-8 text-center">
+    <div className="flex min-h-[560px] items-center justify-center rounded-3xl border border-dashed border-[#d8d0c3] dark:border-gray-700 bg-white/60 dark:bg-[#1c1e24]/60 p-8 text-center">
       <div>
-        <p className="text-3xl font-bold text-[#303236]">
+        <p className="text-3xl font-bold text-[#303236] dark:text-gray-100">
           Your transfer plan will appear here.
         </p>
 
-        <p className="mt-4 max-w-md text-lg leading-8 text-[#7b818b]">
+        <p className="mt-4 max-w-md text-lg leading-8 text-[#7b818b] dark:text-gray-500">
           Choose a current college, target university, and major. Then enter
           your completed courses and generate a plan.
         </p>
@@ -2895,18 +2895,18 @@ function CoursePanel({
   empty: string;
 }) {
   const styles = {
-    complete: "border-[#b8d8c7] bg-[#e7f3ed]",
-    missing: "border-[#f0c15d] bg-[#fff7db]",
-    recommended: "border-[#b7cce5] bg-[#eef5ff]",
-    blocked: "border-[#ef9a9a] bg-[#fff0f0]",
+    complete: "border-[#b8d8c7] dark:border-[#0b7f46]/40 bg-[#e7f3ed] dark:bg-[#0b7f46]/15",
+    missing: "border-[#f0c15d] bg-[#fff7db] dark:bg-yellow-950/30",
+    recommended: "border-[#b7cce5] bg-[#eef5ff] dark:bg-blue-950/30",
+    blocked: "border-[#ef9a9a] dark:border-red-900/50 bg-[#fff0f0] dark:bg-red-950/30",
   };
 
   return (
     <div className={`rounded-2xl border p-5 ${styles[tone]}`}>
-      <h3 className="font-bold text-[#303236]">{title}</h3>
+      <h3 className="font-bold text-[#303236] dark:text-gray-100">{title}</h3>
 
       {courses.length === 0 ? (
-        <p className="mt-3 text-sm text-[#7b818b]">{empty}</p>
+        <p className="mt-3 text-sm text-[#7b818b] dark:text-gray-500">{empty}</p>
       ) : (
         <div className="mt-4 space-y-3">
           {courses.map((course) => (
@@ -2920,24 +2920,24 @@ function CoursePanel({
 
 function CourseItem({ course }: { course: CourseRequirement }) {
   return (
-    <div className="rounded-xl border border-[#d8d0c3] bg-white p-3">
+    <div className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-bold text-[#303236]">
+          <p className="font-bold text-[#303236] dark:text-gray-100">
             {course.code} — {course.name}
           </p>
 
-          <p className="mt-1 text-xs text-[#7b818b]">{course.category}</p>
+          <p className="mt-1 text-xs text-[#7b818b] dark:text-gray-500">{course.category}</p>
 
           {course.prerequisites && course.prerequisites.length > 0 && (
-            <p className="mt-2 text-xs font-bold text-[#8a6100]">
+            <p className="mt-2 text-xs font-bold text-[#8a6100] dark:text-yellow-400">
               Prereq: {course.prerequisites.join(", ")}
             </p>
           )}
 
           {course.prerequisiteOptions &&
             course.prerequisiteOptions.length > 0 && (
-              <p className="mt-2 text-xs font-bold text-[#8a6100]">
+              <p className="mt-2 text-xs font-bold text-[#8a6100] dark:text-yellow-400">
                 Prereq: {formatRequirementOptions(course.prerequisiteOptions)}
               </p>
             )}
@@ -2949,7 +2949,7 @@ function CourseItem({ course }: { course: CourseRequirement }) {
           )}
         </div>
 
-        <span className="rounded-full border border-[#d8d0c3] bg-[#faf8f3] px-2 py-1 text-xs font-bold text-[#4d535c]">
+        <span className="rounded-full border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-2 py-1 text-xs font-bold text-[#4d535c] dark:text-gray-400">
           {course.priority}
         </span>
       </div>

@@ -74,6 +74,18 @@ function SchoolSelect({
   );
 }
 
+// Backend fields default to "" for users who signed up but never explicitly
+// saved a profile (e.g. completed onboarding, which only writes cb_profile
+// to localStorage). "" is a real value to ?? but not one we want to show
+// over a known-good local value, so every field here prefers whichever
+// source is actually non-empty rather than whichever source merely exists.
+function bestOf(...values: (string | undefined)[]): string {
+  for (const v of values) {
+    if (v && v.trim()) return v;
+  }
+  return "";
+}
+
 export default function ProfileSection({ user, setUser }: SettingsSectionProps) {
   const { t } = useTranslation();
   const authed = !!user;
@@ -81,16 +93,16 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
   const local = readLocalProfile();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [name, setName] = useState(user?.username ?? local.firstName ?? "");
-  const [college, setCollege] = useState(user?.college ?? local.college ?? "");
-  const [targetSchool, setTargetSchool] = useState(user?.target_schools ?? local.school ?? "");
+  const [name, setName] = useState(bestOf(user?.username, local.firstName));
+  const [college, setCollege] = useState(bestOf(user?.college, local.college));
+  const [targetSchool, setTargetSchool] = useState(bestOf(user?.target_schools, local.school));
   const [colleges, setColleges] = useState<string[]>([]);
   const [ucs, setUcs] = useState<string[]>([]);
 
   useEffect(() => {
-    setName(user?.username ?? local.firstName ?? "");
-    setCollege(user?.college ?? local.college ?? "");
-    setTargetSchool(user?.target_schools ?? local.school ?? "");
+    setName(bestOf(user?.username, local.firstName));
+    setCollege(bestOf(user?.college, local.college));
+    setTargetSchool(bestOf(user?.target_schools, local.school));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -114,9 +126,9 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
   }, [editing, college]);
 
   function startEdit() {
-    setName(user?.username ?? local.firstName ?? "");
-    setCollege(user?.college ?? local.college ?? "");
-    setTargetSchool(user?.target_schools ?? local.school ?? "");
+    setName(bestOf(user?.username, local.firstName));
+    setCollege(bestOf(user?.college, local.college));
+    setTargetSchool(bestOf(user?.target_schools, local.school));
     setEditing(true);
   }
 
@@ -157,9 +169,9 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
     window.location.href = "/";
   }
 
-  const displayName = user?.username ?? local.firstName ?? "—";
-  const displayCollege = user?.college ?? local.college ?? "—";
-  const displaySchool = user?.target_schools ?? local.school ?? "—";
+  const displayName = bestOf(user?.username, local.firstName) || "—";
+  const displayCollege = bestOf(user?.college, local.college) || "—";
+  const displaySchool = bestOf(user?.target_schools, local.school) || "—";
 
   return (
     <div className="space-y-6">

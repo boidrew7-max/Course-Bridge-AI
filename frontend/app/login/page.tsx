@@ -44,17 +44,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-[#2f3135]">
+    <div className="flex min-h-screen flex-col bg-white text-[#2f3135] dark:bg-[#14151a] dark:text-gray-200">
       <Navbar />
 
       <main className="flex flex-1 items-center justify-center px-5 py-16 md:px-8">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
             <img src="/coursebridge-logo.png" alt="CourseBridge" className="mx-auto mb-3 h-9 w-auto" />
-            <h1 className="text-2xl font-bold text-[#1a2e22]">
+            <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">
               {mode === "login" ? "Welcome back" : "Create your account"}
             </h1>
-            <p className="mt-2 text-sm text-[#7b818b]">
+            <p className="mt-2 text-sm text-[#7b818b] dark:text-gray-500">
               {mode === "login"
                 ? "Log in to pick up your transfer plan where you left off."
                 : "Save your plan, college, and target school to come back to anytime."}
@@ -62,7 +62,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-[#f3c6c6] bg-[#fff0f0] px-4 py-3 text-sm text-[#9b1c1c]">
+            <div className="mb-4 rounded-xl border border-[#f3c6c6] bg-[#fff0f0] px-4 py-3 text-sm text-[#9b1c1c] dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
               {error}
             </div>
           )}
@@ -70,32 +70,32 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <label className="block">
-                <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Name</span>
+                <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">Name</span>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Jordan"
-                  className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                  className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100"
                 />
               </label>
             )}
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Email</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">Email</span>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100"
               />
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Password</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">Password</span>
               <input
                 type="password"
                 required
@@ -103,7 +103,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100"
               />
             </label>
 
@@ -117,7 +117,7 @@ export default function LoginPage() {
 
             {mode === "login" && (
               <p className="text-center">
-                <Link href="/forgot-password" className="text-sm font-semibold text-[#4d535c] hover:text-[#0b7f46]">
+                <Link href="/forgot-password" className="text-sm font-semibold text-[#4d535c] hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]">
                   Forgot password?
                 </Link>
               </p>
@@ -125,14 +125,14 @@ export default function LoginPage() {
           </form>
 
           <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-[#e5e0d5]" />
-            <span className="text-xs font-medium text-[#a3a9b3]">or</span>
-            <div className="h-px flex-1 bg-[#e5e0d5]" />
+            <div className="h-px flex-1 bg-[#e5e0d5] dark:bg-gray-800" />
+            <span className="text-xs font-medium text-[#a3a9b3] dark:text-gray-500">or</span>
+            <div className="h-px flex-1 bg-[#e5e0d5] dark:bg-gray-800" />
           </div>
 
           <a
             href="/api/auth/google/start"
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm font-semibold text-[#303236] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm font-semibold text-[#303236] transition hover:border-[#0b7f46] hover:text-[#0b7f46] dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100 dark:hover:text-[#3ba76a]"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/>
@@ -143,7 +143,7 @@ export default function LoginPage() {
             Continue with Google
           </a>
 
-          <p className="mt-8 text-center text-sm text-[#7b818b]">
+          <p className="mt-8 text-center text-sm text-[#7b818b] dark:text-gray-500">
             {mode === "login" ? (
               <>
                 New to CourseBridge?{" "}

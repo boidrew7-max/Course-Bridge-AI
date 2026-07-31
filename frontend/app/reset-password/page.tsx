@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { useTranslation } from "../../lib/i18n";
 
 function ResetPasswordForm() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token") || "";
@@ -20,7 +22,7 @@ function ResetPasswordForm() {
     e.preventDefault();
     setError("");
     if (password !== confirm) {
-      setError("Passwords don't match.");
+      setError(t("resetPassword.passwordsDontMatch"));
       return;
     }
     setLoading(true);
@@ -32,13 +34,13 @@ function ResetPasswordForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Something went wrong. Please try again.");
+        setError(data.error || t("common.genericError"));
         return;
       }
       setDone(true);
       setTimeout(() => router.push("/login"), 2000);
     } catch {
-      setError("Could not reach the server. Please try again.");
+      setError(t("common.networkError"));
     } finally {
       setLoading(false);
     }
@@ -48,10 +50,10 @@ function ResetPasswordForm() {
     return (
       <div className="w-full max-w-sm text-center">
         <p className="text-base font-semibold text-[#9b1c1c]">
-          This reset link is missing or invalid.
+          {t("resetPassword.invalidLink")}
         </p>
         <Link href="/forgot-password" className="mt-4 inline-block text-sm font-semibold text-[#0b7f46] hover:underline">
-          Request a new link
+          {t("resetPassword.requestNewLink")}
         </Link>
       </div>
     );
@@ -61,12 +63,12 @@ function ResetPasswordForm() {
     <div className="w-full max-w-sm">
       <div className="mb-8 text-center">
         <img src="/coursebridge-logo.png" alt="CourseBridge" className="mx-auto mb-3 h-9 w-auto" />
-        <h1 className="text-2xl font-bold text-[#1a2e22]">Set a new password</h1>
+        <h1 className="text-2xl font-bold text-[#1a2e22]">{t("resetPassword.title")}</h1>
       </div>
 
       {done ? (
         <div className="rounded-xl border border-[#b8d8c7] bg-[#e7f3ed] px-4 py-3 text-sm text-[#0b7f46]">
-          Password updated. Redirecting you to log in…
+          {t("resetPassword.done")}
         </div>
       ) : (
         <>
@@ -78,7 +80,7 @@ function ResetPasswordForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">New password</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">{t("resetPassword.newPassword")}</span>
               <input
                 type="password"
                 required
@@ -91,7 +93,7 @@ function ResetPasswordForm() {
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">Confirm password</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">{t("resetPassword.confirmPassword")}</span>
               <input
                 type="password"
                 required
@@ -108,7 +110,7 @@ function ResetPasswordForm() {
               disabled={loading}
               className="w-full rounded-xl bg-[#0b7f46] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md disabled:opacity-60"
             >
-              {loading ? "Please wait…" : "Reset password"}
+              {loading ? t("auth.pleaseWait") : t("resetPassword.submit")}
             </button>
           </form>
         </>
@@ -118,11 +120,12 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen flex-col bg-white text-[#2f3135]">
       <Navbar />
       <main className="flex flex-1 items-center justify-center px-5 py-16 md:px-8">
-        <Suspense fallback={<p className="text-base text-[#7b818b]">Loading…</p>}>
+        <Suspense fallback={<p className="text-base text-[#7b818b]">{t("resetPassword.loading")}</p>}>
           <ResetPasswordForm />
         </Suspense>
       </main>

@@ -30,6 +30,189 @@ const en = {
 
   "settings.language.title": "Preferred language",
   "settings.language.description": "Choose the language used across CourseBridge's settings.",
+
+  // Shared
+  "common.back": "← Back",
+  "common.next": "Next →",
+  "common.genericError": "Something went wrong. Please try again.",
+  "common.networkError": "Could not reach the server. Please try again.",
+  "common.settingsAria": "Settings",
+
+  // Navbar
+  "nav.forStudents": "For Students",
+  "nav.whatYouGet": "What You Get",
+  "nav.pricing": "Pricing",
+  "nav.myPlan": "My Plan",
+  "nav.buildMyPlan": "Build my plan",
+
+  // Footer
+  "footer.tagline": "Transfer planning for California community college students, built on real ASSIST articulation data.",
+  "footer.product": "Product",
+  "footer.account": "Account",
+  "footer.login": "Log in",
+  "footer.buildMyPlan": "Build my plan",
+  "footer.disclaimer": "Demo data only. CourseBridge is independent and not affiliated with ASSIST, UC, CSU, or CCSF. Always verify requirements through ASSIST.org, official college catalogs, and a counselor.",
+
+  // Home — hero
+  "home.badge": "Built around real transfer planning problems",
+  "home.heroTitle": "Know exactly what classes you need before you transfer.",
+  "home.heroBody": "CourseBridge plans your UC transfer requirements using real ASSIST articulation data — personalized to your community college, major, and target campus, so nothing falls through the cracks.",
+  "home.buildMyPlan": "Build my plan",
+  "home.alreadyHavePlan": "Already have a plan? Log in",
+  "home.stats.communityColleges": "Community Colleges",
+  "home.stats.coursesIndexed": "Courses indexed",
+  "home.stats.ucCampuses": "UC campuses",
+  "home.stats.articulationAgreements": "Articulation agreements",
+  "home.preview.label": "Product preview",
+  "home.preview.completed": "Completed",
+  "home.preview.missing": "Missing",
+  "home.preview.recommendedNextTerm": "Recommended next term",
+  "home.preview.calc1": "Calculus I",
+  "home.preview.introProgramming": "Intro to Programming",
+  "home.preview.dataStructures": "Data Structures",
+  "home.preview.linearAlgebra": "Linear Algebra",
+
+  // Home — why
+  "home.why.title": "Why CourseBridge",
+  "home.why.body": "Transfer planning shouldn't depend on catching a counselor before appointments fill up. Here's the problem CourseBridge solves.",
+  "home.painPoints.0": "ASSIST.org can be hard to read.",
+  "home.painPoints.1": "Requirements change by school and major.",
+  "home.painPoints.2": "One missing prerequisite can delay transfer.",
+  "home.painPoints.3": "Counselors help, but appointments fill up fast.",
+
+  // Home — how it works
+  "home.how.title": "How it works",
+  "home.how.body": "Three steps, and you'll have a term-by-term plan built on real articulation data.",
+  "home.how.step1.title": "Add your courses",
+  "home.how.step1.body": "Enter your completed courses in plain text — no need to look up exact codes.",
+  "home.how.step2.title": "Pick a UC and major",
+  "home.how.step2.body": "Choose the UC campus and major you want to transfer into.",
+  "home.how.step3.title": "Get a clear plan",
+  "home.how.step3.body": "See major requirements, blocked classes, and lighter GE filler options.",
+
+  // Home — what you get
+  "home.get.title": "What students get",
+  "home.get.body": "Everything you need to plan your transfer with confidence, in one place.",
+  "home.get.feature1.title": "Major prep tracking",
+  "home.get.feature1.body": "See exactly which lower-division major requirements you've completed and which are still missing.",
+  "home.get.feature2.title": "Prerequisite sequencing",
+  "home.get.feature2.body": "Courses are ordered by prerequisite chains so you never plan a class before you're ready for it.",
+  "home.get.feature3.title": "General education coverage",
+  "home.get.feature3.body": "Track Cal-GETC areas alongside your major prep in one place.",
+  "home.get.feature4.title": "A generated semester plan",
+  "home.get.feature4.body": "A term-by-term schedule built from real ASSIST articulation data for your college, major, and target campus.",
+  "home.get.feature5.title": "TAG eligibility checker",
+  "home.get.feature5.body": "Check your GPA and major against Transfer Admission Guarantee requirements for participating UCs.",
+  "home.get.feature6.title": "Application deadline reminders",
+  "home.get.feature6.body": "Keep TAG, UC application, and financial aid deadlines in view as your plan comes together.",
+
+  // Home — pricing
+  "home.pricing.title": "Free while in beta",
+  "home.pricing.body": "CourseBridge is currently free to use for all California community college students while we build it out.",
+
+  // Home — final CTA
+  "home.cta.title": "Ready to see your plan?",
+  "home.cta.body": "Answer a few questions about your college, major, and target campus — CourseBridge does the rest.",
+
+  // Auth (login/signup)
+  "auth.welcomeBack": "Welcome back",
+  "auth.createAccount": "Create your account",
+  "auth.loginSubtitle": "Log in to pick up your transfer plan where you left off.",
+  "auth.signupSubtitle": "Save your plan, college, and target school to come back to anytime.",
+  "auth.name": "Name",
+  "auth.emailLabel": "Email",
+  "auth.password": "Password",
+  "auth.pleaseWait": "Please wait…",
+  "auth.logIn": "Log in",
+  "auth.createAccountBtn": "Create account",
+  "auth.forgotPassword": "Forgot password?",
+  "auth.or": "or",
+  "auth.continueWithGoogle": "Continue with Google",
+  "auth.newToCourseBridge": "New to CourseBridge?",
+  "auth.createAnAccount": "Create an account",
+  "auth.alreadyHaveAccount": "Already have an account?",
+
+  // Forgot / reset password
+  "forgotPassword.title": "Reset your password",
+  "forgotPassword.subtitle": "Enter your email and we'll send you a link to reset your password.",
+  "forgotPassword.sentNotice": "If an account exists for that email, a reset link has been sent. Check your inbox.",
+  "forgotPassword.sendResetLink": "Send reset link",
+  "forgotPassword.sending": "Sending…",
+  "forgotPassword.backToLogin": "Back to login",
+
+  "resetPassword.title": "Set a new password",
+  "resetPassword.newPassword": "New password",
+  "resetPassword.confirmPassword": "Confirm password",
+  "resetPassword.submit": "Reset password",
+  "resetPassword.done": "Password updated. Redirecting you to log in…",
+  "resetPassword.invalidLink": "This reset link is missing or invalid.",
+  "resetPassword.requestNewLink": "Request a new link",
+  "resetPassword.passwordsDontMatch": "Passwords don't match.",
+  "resetPassword.loading": "Loading…",
+
+  // Auth callback (Google sign-in)
+  "authCallback.signingIn": "Signing you in…",
+  "authCallback.googleFailed": "Google sign-in failed. Please try again or use email/password.",
+  "authCallback.missingToken": "Missing sign-in token.",
+  "authCallback.genericError": "Something went wrong finishing sign-in. Please try again.",
+  "authCallback.backToLogin": "Back to login",
+
+  // Onboarding
+  "onboarding.steps.name": "Name",
+  "onboarding.steps.college": "College",
+  "onboarding.steps.targetUcs": "Target UCs",
+  "onboarding.steps.major": "Major",
+  "onboarding.steps.courses": "Courses",
+  "onboarding.checkingAccount": "Checking your account…",
+
+  "onboarding.step1.title": "What's your name?",
+  "onboarding.step1.subtitle": "We'll use this to personalize your plan.",
+  "onboarding.step1.placeholder": "e.g. Jordan",
+
+  "onboarding.step2.title": "Where do you go to school?",
+  "onboarding.step2.subtitle": "Enter your California community college.",
+  "onboarding.step2.placeholder": "e.g. De Anza College",
+  "onboarding.step2.districtWarning": "\"Rancho Santiago College\" is the district name, not a specific campus — which college do you actually attend?",
+
+  "onboarding.step3.title": "Which UCs are you targeting?",
+  "onboarding.step3.subtitle": "Select all that apply — we'll build a plan for each.",
+  "onboarding.step3.selectedOne": "1 school selected",
+  "onboarding.step3.selectedMany": "{n} schools selected",
+
+  "onboarding.step4.title": "What do you want to study?",
+  "onboarding.step4.subtitle": "Enter your intended major.",
+  "onboarding.step4.placeholder": "e.g. Computer Science",
+  "onboarding.step4.noMatch": "No major matches \"{q}\" — you can still type it exactly and continue.",
+  "onboarding.step4.loadingMajors": "Loading the full major list for {college} → {uc}…",
+
+  "onboarding.step5.title": "What courses have you completed?",
+  "onboarding.step5.subtitle": "Upload your transcript or list your courses in plain text.",
+  "onboarding.step5.uploadTranscript": "Upload transcript (PDF)",
+  "onboarding.step5.readingTranscript": "Reading your transcript…",
+  "onboarding.step5.autoExtract": "We'll pull your completed courses out automatically",
+  "onboarding.step5.noCoursesFound": "No courses found in that PDF.",
+  "onboarding.step5.addedCourseOne": "Added 1 course from your transcript — review the list below.",
+  "onboarding.step5.addedCourseMany": "Added {n} courses from your transcript — review the list below.",
+  "onboarding.step5.transcriptError": "Something went wrong reading that file. Try again or enter your courses manually.",
+  "onboarding.step5.noCoursesYet": "I haven't completed any college courses yet",
+  "onboarding.step5.coursesPlaceholder": "e.g. Calc 1, English 1A, Intro to CS, Econ 1",
+  "onboarding.step5.hsMathLabel": "Highest math completed in high school?",
+  "onboarding.step5.optional": "(optional)",
+  "onboarding.step5.hsMathPlaceholder": "e.g. Pre-Calculus, Algebra II, Calculus AB",
+  "onboarding.step5.apQuestion": "Do you have any AP exam credit?",
+  "onboarding.step5.yes": "Yes",
+  "onboarding.step5.no": "No",
+  "onboarding.step5.apPlaceholder": "e.g. AP Calculus AB (score 4), AP English Language (score 5)",
+  "onboarding.step5.buildMyPlan": "Build My Plan →",
+
+  // Floating AI widget (chrome only — replies come from the backend and stay in the language it responds in)
+  "widget.askButton": "Ask CourseBridge AI",
+  "widget.title": "CourseBridge AI",
+  "widget.subtitle": "Ask me anything about UC transfer",
+  "widget.closeAria": "Close chat",
+  "widget.emptyState": "Ask about transfer requirements, GE, TAG, or how CourseBridge works.",
+  "widget.placeholder": "Type a message…",
+  "widget.send": "Send",
 };
 
 export default en;

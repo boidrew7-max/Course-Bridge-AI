@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import { useTranslation } from "../../lib/i18n";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -29,7 +31,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Something went wrong. Please try again.");
+        setError(data.error || t("common.genericError"));
         return;
       }
       // /dashboard checks for an existing saved plan (or sends to the
@@ -37,7 +39,7 @@ export default function LoginPage() {
       // would restart returning users who already have a plan.
       router.push("/dashboard");
     } catch {
-      setError("Could not reach the server. Please try again.");
+      setError(t("common.networkError"));
     } finally {
       setLoading(false);
     }
@@ -52,12 +54,10 @@ export default function LoginPage() {
           <div className="mb-8 text-center">
             <img src="/coursebridge-logo.png" alt="CourseBridge" className="mx-auto mb-3 h-9 w-auto" />
             <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">
-              {mode === "login" ? "Welcome back" : "Create your account"}
+              {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
             </h1>
             <p className="mt-2 text-sm text-[#7b818b] dark:text-gray-500">
-              {mode === "login"
-                ? "Log in to pick up your transfer plan where you left off."
-                : "Save your plan, college, and target school to come back to anytime."}
+              {mode === "login" ? t("auth.loginSubtitle") : t("auth.signupSubtitle")}
             </p>
           </div>
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <label className="block">
-                <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">Name</span>
+                <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">{t("auth.name")}</span>
                 <input
                   type="text"
                   required
@@ -83,7 +83,7 @@ export default function LoginPage() {
             )}
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">Email</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">{t("auth.emailLabel")}</span>
               <input
                 type="email"
                 required
@@ -95,7 +95,7 @@ export default function LoginPage() {
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">Password</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">{t("auth.password")}</span>
               <input
                 type="password"
                 required
@@ -112,13 +112,13 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-xl bg-[#0b7f46] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md disabled:opacity-60"
             >
-              {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
+              {loading ? t("auth.pleaseWait") : mode === "login" ? t("auth.logIn") : t("auth.createAccountBtn")}
             </button>
 
             {mode === "login" && (
               <p className="text-center">
                 <Link href="/forgot-password" className="text-sm font-semibold text-[#4d535c] hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]">
-                  Forgot password?
+                  {t("auth.forgotPassword")}
                 </Link>
               </p>
             )}
@@ -126,7 +126,7 @@ export default function LoginPage() {
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-[#e5e0d5] dark:bg-gray-800" />
-            <span className="text-xs font-medium text-[#a3a9b3] dark:text-gray-500">or</span>
+            <span className="text-xs font-medium text-[#a3a9b3] dark:text-gray-500">{t("auth.or")}</span>
             <div className="h-px flex-1 bg-[#e5e0d5] dark:bg-gray-800" />
           </div>
 
@@ -140,30 +140,30 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.17.29-1.7V4.97H.9A9 9 0 0 0 0 9c0 1.45.35 2.83.9 4.03l3.05-2.33z"/>
               <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .9 4.97l3.05 2.33C4.66 5.17 6.65 3.58 9 3.58z"/>
             </svg>
-            Continue with Google
+            {t("auth.continueWithGoogle")}
           </a>
 
           <p className="mt-8 text-center text-sm text-[#7b818b] dark:text-gray-500">
             {mode === "login" ? (
               <>
-                New to CourseBridge?{" "}
+                {t("auth.newToCourseBridge")}{" "}
                 <button
                   type="button"
                   onClick={() => { setMode("signup"); setError(""); }}
                   className="font-semibold text-[#0b7f46] hover:underline"
                 >
-                  Create an account
+                  {t("auth.createAnAccount")}
                 </button>
               </>
             ) : (
               <>
-                Already have an account?{" "}
+                {t("auth.alreadyHaveAccount")}{" "}
                 <button
                   type="button"
                   onClick={() => { setMode("login"); setError(""); }}
                   className="font-semibold text-[#0b7f46] hover:underline"
                 >
-                  Log in
+                  {t("auth.logIn")}
                 </button>
               </>
             )}

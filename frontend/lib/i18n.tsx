@@ -6,7 +6,7 @@ import { LOCALES, DEFAULT_LANGUAGE, LANGUAGE_OPTIONS, type Dictionary } from "./
 type LanguageContextValue = {
   language: string;
   setLanguage: (code: string) => void;
-  t: (key: keyof Dictionary) => string;
+  t: (key: keyof Dictionary, params?: Record<string, string | number>) => string;
   options: typeof LANGUAGE_OPTIONS;
 };
 
@@ -30,9 +30,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } catch {}
   }
 
-  function t(key: keyof Dictionary): string {
+  function t(key: keyof Dictionary, params?: Record<string, string | number>): string {
     const dict = LOCALES[language] ?? LOCALES[DEFAULT_LANGUAGE];
-    return dict[key] ?? LOCALES[DEFAULT_LANGUAGE][key] ?? String(key);
+    let value = dict[key] ?? LOCALES[DEFAULT_LANGUAGE][key] ?? String(key);
+    if (params) {
+      for (const [name, val] of Object.entries(params)) {
+        value = value.replaceAll(`{${name}}`, String(val));
+      }
+    }
+    return value;
   }
 
   return (

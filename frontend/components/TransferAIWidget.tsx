@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslation } from "../lib/i18n";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -9,6 +10,7 @@ type Message = { role: "user" | "assistant"; content: string };
 // dashboard has its own richer, plan-aware version inside PlannerClient —
 // this one just talks to /api/chat directly with no extra context.
 export default function TransferAIWidget() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -47,7 +49,7 @@ export default function TransferAIWidget() {
       }
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     } catch {
-      setMessages([...history, { role: "assistant", content: "Something went wrong. Please try again." }]);
+      setMessages([...history, { role: "assistant", content: t("common.genericError") }]);
     } finally {
       setLoading(false);
     }
@@ -63,7 +65,7 @@ export default function TransferAIWidget() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          Ask CourseBridge AI
+          {t("widget.askButton")}
         </button>
       )}
 
@@ -71,10 +73,10 @@ export default function TransferAIWidget() {
         <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[#e5e0d5] bg-white shadow-2xl">
           <div className="flex items-center justify-between bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4">
             <div>
-              <p className="text-base font-bold text-white">CourseBridge AI</p>
-              <p className="text-xs text-white/80">Ask me anything about UC transfer</p>
+              <p className="text-base font-bold text-white">{t("widget.title")}</p>
+              <p className="text-xs text-white/80">{t("widget.subtitle")}</p>
             </div>
-            <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white" aria-label="Close chat">
+            <button onClick={() => setOpen(false)} className="text-white/80 hover:text-white" aria-label={t("widget.closeAria")}>
               ✕
             </button>
           </div>
@@ -82,7 +84,7 @@ export default function TransferAIWidget() {
           <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.length === 0 && (
               <p className="text-sm text-[#7b818b]">
-                Ask about transfer requirements, GE, TAG, or how CourseBridge works.
+                {t("widget.emptyState")}
               </p>
             )}
             {messages.map((m, i) => (
@@ -108,7 +110,7 @@ export default function TransferAIWidget() {
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a message…"
+              placeholder={t("widget.placeholder")}
               className="flex-1 rounded-xl border border-[#d8d8dc] px-3 py-2 text-sm outline-none focus:border-[#0b7f46]"
             />
             <button
@@ -116,7 +118,7 @@ export default function TransferAIWidget() {
               disabled={loading}
               className="rounded-xl bg-[#0b7f46] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
             >
-              Send
+              {t("widget.send")}
             </button>
           </form>
         </div>

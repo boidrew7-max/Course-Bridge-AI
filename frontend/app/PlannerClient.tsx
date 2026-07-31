@@ -1418,9 +1418,6 @@ export default function PlannerClient() {
   const [completedCourses, setCompletedCourses] = useState("");
   const [result, setResult] = useState<TransferResult | null>(null);
 
-  // ── Transfer AI chat ──────────────────────────────────────────
-  const [chatOpen, setChatOpen] = useState(false);
-
   // ── Profile preferences (hydrated from /onboarding via localStorage) ──
   const [wizardHonors, setWizardHonors] = useState<boolean | null>(null);
   const [wizardApCredits, setWizardApCredits] = useState("");
@@ -1554,8 +1551,8 @@ export default function PlannerClient() {
   }
 
   useEffect(() => {
-    if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, chatOpen]);
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
   // Hydrate from the profile /onboarding saved to localStorage, then kick
   // off plan generation for it — this replaces the old in-page wizard's
@@ -2088,7 +2085,8 @@ export default function PlannerClient() {
           id="planner"
           className={`${planSchools.length > 1 ? "mt-4" : "mt-16"} scroll-mt-4 grid gap-6 lg:grid-cols-[0.72fr_1.28fr] items-start`}
         >
-          {/* Left panel: summary after wizard, form before */}
+          {/* Left column: profile summary + embedded AI chat, stacked */}
+          <div className="flex flex-col gap-6">
           <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
             {onboardingDone ? (
               <div className="flex flex-col">
@@ -2172,6 +2170,81 @@ export default function PlannerClient() {
                 </form>
               </div>
             )}
+          </div>
+
+          {/* CourseBridge AI — embedded inline here instead of a floating popup */}
+          {onboardingDone && (
+            <div className="flex flex-col rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-hidden min-h-[420px]">
+              <div className="flex items-center justify-between rounded-t-3xl bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4 shrink-0">
+                <div>
+                  <p className="text-base font-bold text-white">CourseBridge AI</p>
+                  {communityCollege && targetSchool
+                    ? <p className="text-xs text-white/80 mt-0.5">{communityCollege} → {targetSchool}{targetMajor ? ` · ${targetMajor}` : ""}</p>
+                    : <p className="text-xs text-white/80 mt-0.5">Ask me anything about your transfer</p>
+                  }
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4 max-h-[520px]">
+                {chatMessages.length === 0 && chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#7b818b] dark:text-gray-500">
+                      <span className="animate-pulse">CourseBridge AI is thinking…</span>
+                    </div>
+                  </div>
+                )}
+                {chatMessages.length === 0 && !chatLoading && (
+                  <p className="text-sm text-[#7b818b] dark:text-gray-500">
+                    Ask about your transfer plan, GE, TAG, or what to take next semester.
+                  </p>
+                )}
+                {chatMessages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pb-1">
+                    {["What should I take next semester?", "How competitive is my GPA?", "Tell me about TAG"].map((q) => (
+                      <button key={q} onClick={() => sendChatMessage(q)}
+                        className="rounded-full border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-3 py-1.5 text-xs text-[#4d535c] dark:text-gray-400 transition hover:border-[#0b7f46] hover:text-[#0b7f46]">
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                      msg.role === "user"
+                        ? "bg-[#0b7f46] text-white"
+                        : "border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100"
+                    }`}>
+                      {msg.content || (msg.role === "assistant" && chatLoading ? <span className="animate-pulse">…</span> : "")}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="border-t border-[#d8d0c3] dark:border-gray-700 p-4 shrink-0">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
+                    placeholder="Ask about your transfer plan…"
+                    className="flex-1 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-base outline-none transition focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+                  />
+                  <button
+                    onClick={() => sendChatMessage()}
+                    disabled={!chatInput.trim() || chatLoading}
+                    className="rounded-2xl bg-[#0b7f46] px-4 py-3 text-white transition hover:bg-[#08683a] disabled:opacity-40"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           </div>
 
           <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
@@ -2691,109 +2764,6 @@ export default function PlannerClient() {
       </section>
 
       <Footer />
-
-      {/* ── Transfer AI floating chat ─────────────────────────── */}
-      {!chatOpen && (
-        <button
-          onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[#0b7f46] px-5 py-4 text-base font-semibold text-white shadow-xl transition hover:bg-[#08683a] active:scale-95 sm:py-3 sm:text-sm"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          {onboardingDone ? "Ask CourseBridge AI" : "Build My Plan with AI"}
-        </button>
-      )}
-
-      {chatOpen && (
-        <div className={`fixed z-50 flex ${
-          onboardingDone
-            ? "inset-x-0 bottom-0 top-[8vh] sm:inset-auto sm:bottom-6 sm:right-6 sm:top-auto sm:items-end sm:justify-end pointer-events-none"
-            : "inset-0 items-center justify-center bg-black/60 p-4"
-        }`}>
-          <div className={`pointer-events-auto flex flex-col bg-white dark:bg-[#1c1e24] shadow-2xl ${
-            onboardingDone
-              ? "w-full rounded-t-3xl border border-[#d8d0c3] dark:border-gray-700 sm:rounded-2xl sm:w-[22rem] sm:h-[32rem] h-full"
-              : "w-full max-w-lg rounded-2xl border border-[#d8d0c3] dark:border-gray-700 h-[90vh] sm:h-[640px]"
-          }`}>
-            {/* Header */}
-            <div className="flex items-center justify-between rounded-t-3xl sm:rounded-t-2xl bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4">
-              <div>
-                <p className="text-base font-bold text-white">CourseBridge AI</p>
-                {communityCollege && targetSchool
-                  ? <p className="text-xs text-white/80 mt-0.5">{communityCollege} → {targetSchool}{targetMajor ? ` · ${targetMajor}` : ""}</p>
-                  : <p className="text-xs text-white/80 mt-0.5">{onboardingDone ? "Ask me anything about your transfer" : "Setting up your plan…"}</p>
-                }
-              </div>
-              {onboardingDone ? (
-                <button onClick={() => setChatOpen(false)} className="rounded-full p-2 text-white/80 transition hover:bg-white/20 hover:text-white">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              ) : (
-                <button onClick={() => { setOnboardingDone(true); setChatOpen(false); }} className="rounded-full px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/20 hover:text-white">
-                  Skip
-                </button>
-              )}
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
-              {chatMessages.length === 0 && chatLoading && (
-                <div className="flex justify-start">
-                  <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#7b818b] dark:text-gray-500">
-                    <span className="animate-pulse">CourseBridge AI is thinking…</span>
-                  </div>
-                </div>
-              )}
-              {onboardingDone && chatMessages.length > 0 && (
-                <div className="flex flex-wrap gap-2 pb-1">
-                  {["What should I take next semester?", "How competitive is my GPA?", "Tell me about TAG"].map((q) => (
-                    <button key={q} onClick={() => sendChatMessage(q)}
-                      className="rounded-full border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-3 py-1.5 text-xs text-[#4d535c] dark:text-gray-400 transition hover:border-[#0b7f46] hover:text-[#0b7f46]">
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                    msg.role === "user"
-                      ? "bg-[#0b7f46] text-white"
-                      : "border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100"
-                  }`}>
-                    {msg.content || (msg.role === "assistant" && chatLoading ? <span className="animate-pulse">…</span> : "")}
-                  </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="border-t border-[#d8d0c3] dark:border-gray-700 p-4">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
-                  placeholder="Ask about your transfer plan…"
-                  className="flex-1 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-base outline-none transition focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
-                />
-                <button
-                  onClick={() => sendChatMessage()}
-                  disabled={!chatInput.trim() || chatLoading}
-                  className="rounded-2xl bg-[#0b7f46] px-4 py-3 text-white transition hover:bg-[#08683a] disabled:opacity-40"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

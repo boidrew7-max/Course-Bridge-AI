@@ -39,22 +39,22 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-[#2f3135]">
+    <div className="min-h-screen bg-white text-[#2f3135] dark:bg-[#14151a] dark:text-gray-200">
       <Navbar />
 
       {/* Hero */}
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-14 md:px-8 md:pt-20">
         <div className="grid gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-center">
           <div>
-            <p className="mb-5 inline-flex rounded-full border border-[#b8d8c7] bg-[#e7f3ed] px-4 py-1.5 text-sm font-semibold text-[#0b7f46]">
+            <p className="mb-5 inline-flex rounded-full border border-[#b8d8c7] bg-[#e7f3ed] px-4 py-1.5 text-sm font-semibold text-[#0b7f46] dark:border-[#0b7f46]/40 dark:bg-[#0b7f46]/15 dark:text-[#3ba76a]">
               {t("home.badge")}
             </p>
 
-            <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-[#1a2e22] sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-[#1a2e22] sm:text-5xl lg:text-6xl dark:text-gray-50">
               {t("home.heroTitle")}
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-[#5b6169]">
+            <p className="mt-6 max-w-xl text-lg leading-8 text-[#5b6169] dark:text-gray-400">
               {t("home.heroBody")}
             </p>
 
@@ -67,44 +67,44 @@ export default function HomePage() {
               </Link>
               <Link
                 href="/login"
-                className="text-sm font-semibold text-[#4d535c] transition hover:text-[#0b7f46]"
+                className="text-sm font-semibold text-[#4d535c] transition hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]"
               >
                 {t("home.alreadyHavePlan")}
               </Link>
             </div>
 
-            <div className="mt-12 flex flex-wrap gap-x-10 gap-y-6 border-t border-[#eceae4] pt-8">
+            <div className="mt-12 flex flex-wrap gap-x-10 gap-y-6 border-t border-[#eceae4] pt-8 dark:border-gray-800">
               {STATS.map((s) => (
                 <div key={s.label}>
-                  <p className="text-2xl font-bold text-[#0b7f46]">{s.n}</p>
-                  <p className="mt-0.5 text-xs text-[#7b818b]">{s.label}</p>
+                  <p className="text-2xl font-bold text-[#0b7f46] dark:text-[#3ba76a]">{s.n}</p>
+                  <p className="mt-0.5 text-xs text-[#7b818b] dark:text-gray-500">{s.label}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-[#e5e0d5] bg-[#faf9f6] p-6 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
-            <p className="text-sm font-semibold text-[#7b818b]">{t("home.preview.label")}</p>
-            <h2 className="mt-1 text-xl font-bold text-[#1a2e22]">UC Berkeley · Computer Science</h2>
+          <div className="rounded-3xl border border-[#e5e0d5] bg-[#faf9f6] p-6 shadow-[0_20px_50px_rgba(20,30,25,0.06)] dark:border-gray-800 dark:bg-[#191a20]">
+            <p className="text-sm font-semibold text-[#7b818b] dark:text-gray-500">{t("home.preview.label")}</p>
+            <h2 className="mt-1 text-xl font-bold text-[#1a2e22] dark:text-gray-50">UC Berkeley · Computer Science</h2>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4">
-                <p className="text-sm font-bold text-[#1a2e22]">{t("home.preview.completed")}</p>
-                <p className="mt-2 text-sm text-[#6f7680]">{t("home.preview.calc1")}</p>
-                <p className="text-sm text-[#6f7680]">{t("home.preview.introProgramming")}</p>
+              <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4 dark:border-gray-800 dark:bg-[#1c1e24]">
+                <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-100">{t("home.preview.completed")}</p>
+                <p className="mt-2 text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.calc1")}</p>
+                <p className="text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.introProgramming")}</p>
               </div>
-              <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4">
-                <p className="text-sm font-bold text-[#1a2e22]">{t("home.preview.missing")}</p>
-                <p className="mt-2 text-sm text-[#6f7680]">{t("home.preview.dataStructures")}</p>
-                <p className="text-sm text-[#6f7680]">{t("home.preview.linearAlgebra")}</p>
+              <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4 dark:border-gray-800 dark:bg-[#1c1e24]">
+                <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-100">{t("home.preview.missing")}</p>
+                <p className="mt-2 text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.dataStructures")}</p>
+                <p className="text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.linearAlgebra")}</p>
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-[#e5e0d5] bg-white p-4">
-              <p className="mb-2 text-sm font-bold text-[#1a2e22]">{t("home.preview.recommendedNextTerm")}</p>
+            <div className="mt-4 rounded-2xl border border-[#e5e0d5] bg-white p-4 dark:border-gray-800 dark:bg-[#1c1e24]">
+              <p className="mb-2 text-sm font-bold text-[#1a2e22] dark:text-gray-100">{t("home.preview.recommendedNextTerm")}</p>
               <div className="flex flex-wrap gap-2">
-                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46]">{t("home.preview.dataStructures")}</span>
-                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46]">{t("home.preview.linearAlgebra")}</span>
+                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46] dark:bg-[#0b7f46]/15 dark:text-[#3ba76a]">{t("home.preview.dataStructures")}</span>
+                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46] dark:bg-[#0b7f46]/15 dark:text-[#3ba76a]">{t("home.preview.linearAlgebra")}</span>
               </div>
             </div>
           </div>
@@ -112,16 +112,16 @@ export default function HomePage() {
       </section>
 
       {/* Why CourseBridge */}
-      <section id="students" className="border-t border-[#eceae4] bg-[#faf9f6]">
+      <section id="students" className="border-t border-[#eceae4] bg-[#faf9f6] dark:border-gray-800 dark:bg-[#191a20]">
         <div className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-          <h2 className="text-3xl font-bold text-[#1a2e22]">{t("home.why.title")}</h2>
-          <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169]">
+          <h2 className="text-3xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.why.title")}</h2>
+          <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169] dark:text-gray-400">
             {t("home.why.body")}
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
             {PAIN_POINTS.map((text) => (
-              <div key={text} className="rounded-2xl border border-[#e5e0d5] bg-white p-5 text-[15px] font-medium text-[#4d535c] shadow-sm">
+              <div key={text} className="rounded-2xl border border-[#e5e0d5] bg-white p-5 text-[15px] font-medium text-[#4d535c] shadow-sm dark:border-gray-800 dark:bg-[#1c1e24] dark:text-gray-300">
                 {text}
               </div>
             ))}
@@ -131,37 +131,37 @@ export default function HomePage() {
 
       {/* How it works */}
       <section className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-        <h2 className="text-3xl font-bold text-[#1a2e22]">{t("home.how.title")}</h2>
-        <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169]">
+        <h2 className="text-3xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.how.title")}</h2>
+        <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169] dark:text-gray-400">
           {t("home.how.body")}
         </p>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           {HOW_IT_WORKS.map((step) => (
-            <div key={step.number} className="rounded-3xl border border-[#e5e0d5] bg-white p-6 shadow-sm">
+            <div key={step.number} className="rounded-3xl border border-[#e5e0d5] bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-[#1c1e24]">
               <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-[#0b7f46] text-sm font-bold text-white">
                 {step.number}
               </div>
-              <h3 className="text-xl font-bold text-[#1a2e22]">{step.title}</h3>
-              <p className="mt-2 leading-6 text-[#6f7680]">{step.body}</p>
+              <h3 className="text-xl font-bold text-[#1a2e22] dark:text-gray-50">{step.title}</h3>
+              <p className="mt-2 leading-6 text-[#6f7680] dark:text-gray-400">{step.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* What students get */}
-      <section id="counselors" className="border-t border-[#eceae4] bg-[#faf9f6]">
+      <section id="counselors" className="border-t border-[#eceae4] bg-[#faf9f6] dark:border-gray-800 dark:bg-[#191a20]">
         <div className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-          <h2 className="text-3xl font-bold text-[#1a2e22]">{t("home.get.title")}</h2>
-          <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169]">
+          <h2 className="text-3xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.get.title")}</h2>
+          <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169] dark:text-gray-400">
             {t("home.get.body")}
           </p>
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {WHAT_YOU_GET.map((f) => (
-              <div key={f.title} className="rounded-2xl border border-[#e5e0d5] bg-white p-5 shadow-sm">
-                <h3 className="font-bold text-[#1a2e22]">{f.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[#6f7680]">{f.body}</p>
+              <div key={f.title} className="rounded-2xl border border-[#e5e0d5] bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#1c1e24]">
+                <h3 className="font-bold text-[#1a2e22] dark:text-gray-50">{f.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#6f7680] dark:text-gray-400">{f.body}</p>
               </div>
             ))}
           </div>
@@ -170,9 +170,9 @@ export default function HomePage() {
 
       {/* Pricing (simple, honest placeholder — this is a free demo tool) */}
       <section id="pricing" className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-        <div className="rounded-3xl border border-[#e5e0d5] bg-white p-8 text-center shadow-sm">
-          <h2 className="text-2xl font-bold text-[#1a2e22]">{t("home.pricing.title")}</h2>
-          <p className="mx-auto mt-3 max-w-xl leading-7 text-[#5b6169]">
+        <div className="rounded-3xl border border-[#e5e0d5] bg-white p-8 text-center shadow-sm dark:border-gray-800 dark:bg-[#1c1e24]">
+          <h2 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.pricing.title")}</h2>
+          <p className="mx-auto mt-3 max-w-xl leading-7 text-[#5b6169] dark:text-gray-400">
             {t("home.pricing.body")}
           </p>
         </div>

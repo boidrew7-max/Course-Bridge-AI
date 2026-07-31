@@ -28,7 +28,7 @@ export default function Navbar() {
 
   return (
     <>
-    <header className="sticky top-0 z-40 border-b border-[#e5e0d5] bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-[#e5e0d5] bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-[#14151a]/90">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <img
@@ -39,13 +39,13 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <Link href="/#students" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
+          <Link href="/#students" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]">
             {t("nav.forStudents")}
           </Link>
-          <Link href="/#counselors" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
+          <Link href="/#counselors" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]">
             {t("nav.whatYouGet")}
           </Link>
-          <Link href="/#pricing" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
+          <Link href="/#pricing" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]">
             {t("nav.pricing")}
           </Link>
         </div>
@@ -62,7 +62,7 @@ export default function Navbar() {
             onClick={() => setSettingsOpen(true)}
             aria-label={t("common.settingsAria")}
             title={t("common.settingsAria")}
-            className="rounded-xl border border-[#e5e0d5] p-2.5 text-[#4d535c] transition hover:border-[#0b7f46]/50 hover:text-[#0b7f46]"
+            className="rounded-xl border border-[#e5e0d5] p-2.5 text-[#4d535c] transition hover:border-[#0b7f46]/50 hover:text-[#0b7f46] dark:border-gray-700 dark:text-gray-400 dark:hover:text-[#3ba76a]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />

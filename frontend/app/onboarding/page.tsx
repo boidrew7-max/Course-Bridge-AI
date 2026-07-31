@@ -169,17 +169,17 @@ export default function OnboardingPage() {
 
   if (!authChecked) {
     return (
-      <div className="min-h-screen bg-[#faf9f6]">
+      <div className="min-h-screen bg-[#faf9f6] dark:bg-[#191a20]">
         <Navbar />
         <main className="mx-auto max-w-2xl px-5 py-10 md:px-8">
-          <p className="text-sm text-[#7b818b]">{t("onboarding.checkingAccount")}</p>
+          <p className="text-sm text-[#7b818b] dark:text-gray-500">{t("onboarding.checkingAccount")}</p>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f6]">
+    <div className="min-h-screen bg-[#faf9f6] dark:bg-[#191a20]">
       <Navbar />
 
       <main className="mx-auto max-w-2xl px-5 py-10 md:px-8">
@@ -193,39 +193,39 @@ export default function OnboardingPage() {
                     ? "bg-[#0b7f46] text-white"
                     : i === step - 1
                     ? "bg-[#0b7f46] text-white ring-4 ring-[#0b7f46]/20"
-                    : "bg-[#e5e0d5] text-[#a3a9b3]"
+                    : "bg-[#e5e0d5] dark:bg-gray-800 text-[#a3a9b3] dark:text-gray-500"
                 }`}
               >
                 {i < step - 1 ? "✓" : i + 1}
               </div>
               <span
                 className={`hidden text-xs font-semibold sm:block ${
-                  i === step - 1 ? "text-[#1a2e22]" : "text-[#a3a9b3]"
+                  i === step - 1 ? "text-[#1a2e22] dark:text-gray-50" : "text-[#a3a9b3] dark:text-gray-500"
                 }`}
               >
                 {label}
               </span>
               {i < STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 rounded-full ${i < step - 1 ? "bg-[#0b7f46]" : "bg-[#e5e0d5]"}`} />
+                <div className={`h-0.5 flex-1 rounded-full ${i < step - 1 ? "bg-[#0b7f46]" : "bg-[#e5e0d5] dark:bg-gray-800"}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="rounded-3xl border border-[#e5e0d5] bg-white p-8 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
+        <div className="rounded-3xl border border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] p-8 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
           {/* Step 1 — Name */}
           {step === 1 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step1.title")}</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step1.subtitle")}</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">{t("onboarding.step1.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b] dark:text-gray-500">{t("onboarding.step1.subtitle")}</p>
               </div>
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && firstName.trim()) setStep(2); }}
                 placeholder={t("onboarding.step1.placeholder")}
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                className="w-full rounded-xl border border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                 autoFocus
               />
               <div className="flex justify-end pt-2">
@@ -244,8 +244,8 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step2.title")}</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step2.subtitle")}</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">{t("onboarding.step2.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b] dark:text-gray-500">{t("onboarding.step2.subtitle")}</p>
               </div>
               <input
                 list="cc-list"
@@ -253,7 +253,7 @@ export default function OnboardingPage() {
                 onChange={(e) => setCollege(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && college.trim()) setStep(3); }}
                 placeholder={t("onboarding.step2.placeholder")}
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                className="w-full rounded-xl border border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                 autoFocus
               />
               <datalist id="cc-list">
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
                   <button
                     key={cc}
                     onClick={() => { setCollege(cc); setStep(3); }}
-                    className="rounded-full border border-[#e5e0d5] bg-white px-3 py-1 text-xs text-[#4d535c] transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
+                    className="rounded-full border border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] px-3 py-1 text-xs text-[#4d535c] dark:text-gray-400 transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
                   >
                     {cc}
                   </button>
@@ -273,19 +273,19 @@ export default function OnboardingPage() {
 
               {college.trim().toLowerCase() === "rancho santiago college" && (
                 <div className="rounded-xl border border-[#f0d99b] bg-[#fffaf0] p-4">
-                  <p className="text-sm font-semibold text-[#7a5a12]">
+                  <p className="text-sm font-semibold text-[#7a5a12] dark:text-yellow-400">
                     {t("onboarding.step2.districtWarning")}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       onClick={() => setCollege("Santa Ana College")}
-                      className="rounded-full border border-[#0b7f46] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b7f46] transition hover:bg-[#0b7f46] hover:text-white"
+                      className="rounded-full border border-[#0b7f46] bg-white dark:bg-[#1c1e24] px-3 py-1.5 text-xs font-semibold text-[#0b7f46] transition hover:bg-[#0b7f46] hover:text-white"
                     >
                       Santa Ana College
                     </button>
                     <button
                       onClick={() => setCollege("Santiago Canyon College")}
-                      className="rounded-full border border-[#0b7f46] bg-white px-3 py-1.5 text-xs font-semibold text-[#0b7f46] transition hover:bg-[#0b7f46] hover:text-white"
+                      className="rounded-full border border-[#0b7f46] bg-white dark:bg-[#1c1e24] px-3 py-1.5 text-xs font-semibold text-[#0b7f46] transition hover:bg-[#0b7f46] hover:text-white"
                     >
                       Santiago Canyon College
                     </button>
@@ -294,7 +294,7 @@ export default function OnboardingPage() {
               )}
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(1)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
+                <button onClick={() => setStep(1)} className="text-sm font-medium text-[#7b818b] dark:text-gray-500 transition hover:text-[#303236] hover:dark:text-gray-100">{t("common.back")}</button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={!college.trim() || college.trim().toLowerCase() === "rancho santiago college"}
@@ -310,8 +310,8 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step3.title")}</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step3.subtitle")}</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">{t("onboarding.step3.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b] dark:text-gray-500">{t("onboarding.step3.subtitle")}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {UC_OPTIONS.map((uc) => (
@@ -320,8 +320,8 @@ export default function OnboardingPage() {
                     onClick={() => toggleUc(uc.value)}
                     className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${
                       ucs.includes(uc.value)
-                        ? "border-[#0b7f46] bg-[#e7f3ed] text-[#0b7f46]"
-                        : "border-[#e5e0d5] bg-white text-[#303236] hover:border-[#0b7f46] hover:text-[#0b7f46]"
+                        ? "border-[#0b7f46] bg-[#e7f3ed] dark:bg-[#0b7f46]/15 text-[#0b7f46]"
+                        : "border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100 hover:border-[#0b7f46] hover:text-[#0b7f46]"
                     }`}
                   >
                     {ucs.includes(uc.value) ? "✓ " : ""}
@@ -335,7 +335,7 @@ export default function OnboardingPage() {
                 </p>
               )}
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(2)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
+                <button onClick={() => setStep(2)} className="text-sm font-medium text-[#7b818b] dark:text-gray-500 transition hover:text-[#303236] hover:dark:text-gray-100">{t("common.back")}</button>
                 <button
                   onClick={() => setStep(4)}
                   disabled={ucs.length === 0}
@@ -351,8 +351,8 @@ export default function OnboardingPage() {
           {step === 4 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step4.title")}</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step4.subtitle")}</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">{t("onboarding.step4.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b] dark:text-gray-500">{t("onboarding.step4.subtitle")}</p>
               </div>
               <div className="relative">
                 <input
@@ -362,18 +362,18 @@ export default function OnboardingPage() {
                   onBlur={() => setTimeout(() => setMajorFocused(false), 150)}
                   onKeyDown={(e) => { if (e.key === "Enter" && major.trim()) setStep(5); }}
                   placeholder={t("onboarding.step4.placeholder")}
-                  className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                  className="w-full rounded-xl border border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                   autoFocus
                   autoComplete="off"
                 />
                 {majorFocused && majorMatches.length > 0 && (
-                  <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-[#e5e0d5] bg-white shadow-lg">
+                  <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] shadow-lg">
                     {majorMatches.map((m) => (
                       <button
                         key={m}
                         type="button"
                         onMouseDown={() => { setMajor(m); setMajorFocused(false); setStep(5); }}
-                        className="block w-full px-4 py-2.5 text-left text-sm text-[#303236] transition hover:bg-[#f0faf5] hover:text-[#0b7f46]"
+                        className="block w-full px-4 py-2.5 text-left text-sm text-[#303236] dark:text-gray-100 transition hover:bg-[#f0faf5] hover:dark:bg-[#0b7f46]/10 hover:text-[#0b7f46]"
                       >
                         {m}
                       </button>
@@ -381,16 +381,16 @@ export default function OnboardingPage() {
                   </div>
                 )}
                 {majorFocused && majorQuery && majorMatches.length === 0 && !majorOptionsLoading && (
-                  <div className="absolute z-10 mt-1 w-full rounded-xl border border-[#e5e0d5] bg-white px-4 py-3 text-sm text-[#7b818b] shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full rounded-xl border border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#7b818b] dark:text-gray-500 shadow-lg">
                     {t("onboarding.step4.noMatch", { q: major })}
                   </div>
                 )}
               </div>
               {majorOptionsLoading && (
-                <p className="text-xs text-[#7b818b]">{t("onboarding.step4.loadingMajors", { college, uc: ucs[0] })}</p>
+                <p className="text-xs text-[#7b818b] dark:text-gray-500">{t("onboarding.step4.loadingMajors", { college, uc: ucs[0] })}</p>
               )}
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(3)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
+                <button onClick={() => setStep(3)} className="text-sm font-medium text-[#7b818b] dark:text-gray-500 transition hover:text-[#303236] hover:dark:text-gray-100">{t("common.back")}</button>
                 <button
                   onClick={() => setStep(5)}
                   disabled={!major.trim()}
@@ -406,13 +406,13 @@ export default function OnboardingPage() {
           {step === 5 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step5.title")}</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step5.subtitle")}</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">{t("onboarding.step5.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b] dark:text-gray-500">{t("onboarding.step5.subtitle")}</p>
               </div>
 
               <label
                 htmlFor="transcript-upload"
-                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d8d8dc] bg-[#faf9f6] px-4 py-6 text-center transition hover:border-[#0b7f46]"
+                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d8d8dc] dark:border-gray-700 bg-[#faf9f6] dark:bg-[#191a20] px-4 py-6 text-center transition hover:border-[#0b7f46]"
               >
                 <input
                   id="transcript-upload"
@@ -425,13 +425,13 @@ export default function OnboardingPage() {
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <path d="M14 2v6h6" />
                 </svg>
-                <span className="text-sm font-semibold text-[#303236]">
+                <span className="text-sm font-semibold text-[#303236] dark:text-gray-100">
                   {transcriptParsing ? t("onboarding.step5.readingTranscript") : t("onboarding.step5.uploadTranscript")}
                 </span>
-                <span className="text-xs text-[#7b818b]">{t("onboarding.step5.autoExtract")}</span>
+                <span className="text-xs text-[#7b818b] dark:text-gray-500">{t("onboarding.step5.autoExtract")}</span>
               </label>
               {transcriptMessage && (
-                <p className="text-xs text-[#7b818b]">{transcriptMessage}</p>
+                <p className="text-xs text-[#7b818b] dark:text-gray-500">{transcriptMessage}</p>
               )}
 
               <label className="flex cursor-pointer items-center gap-3 select-none">
@@ -441,7 +441,7 @@ export default function OnboardingPage() {
                   onChange={(e) => { setNoCourses(e.target.checked); if (e.target.checked) setCourses(""); }}
                   className="h-4 w-4 rounded accent-[#0b7f46]"
                 />
-                <span className="text-sm text-[#303236]">{t("onboarding.step5.noCoursesYet")}</span>
+                <span className="text-sm text-[#303236] dark:text-gray-100">{t("onboarding.step5.noCoursesYet")}</span>
               </label>
 
               {!noCourses && (
@@ -450,35 +450,35 @@ export default function OnboardingPage() {
                   onChange={(e) => setCourses(e.target.value)}
                   placeholder={t("onboarding.step5.coursesPlaceholder")}
                   rows={4}
-                  className="w-full resize-none rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                  className="w-full resize-none rounded-xl border border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                 />
               )}
               {noCourses && (
-                <div className="rounded-xl border border-[#e5e0d5] bg-[#faf9f6] px-4 py-3">
-                  <p className="mb-2 text-sm font-medium text-[#303236]">
-                    {t("onboarding.step5.hsMathLabel")} <span className="font-normal text-[#7b818b]">{t("onboarding.step5.optional")}</span>
+                <div className="rounded-xl border border-[#e5e0d5] dark:border-gray-800 bg-[#faf9f6] dark:bg-[#191a20] px-4 py-3">
+                  <p className="mb-2 text-sm font-medium text-[#303236] dark:text-gray-100">
+                    {t("onboarding.step5.hsMathLabel")} <span className="font-normal text-[#7b818b] dark:text-gray-500">{t("onboarding.step5.optional")}</span>
                   </p>
                   <input
                     value={hsMath}
                     onChange={(e) => setHsMath(e.target.value)}
                     placeholder={t("onboarding.step5.hsMathPlaceholder")}
-                    className="w-full rounded-lg border border-[#d8d8dc] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                    className="w-full rounded-lg border border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3 py-2 text-sm text-[#303236] dark:text-gray-100 outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                   />
                 </div>
               )}
 
-              <div className="rounded-xl border border-[#e5e0d5] bg-[#faf9f6] p-4">
-                <p className="mb-3 text-sm font-semibold text-[#303236]">{t("onboarding.step5.apQuestion")}</p>
+              <div className="rounded-xl border border-[#e5e0d5] dark:border-gray-800 bg-[#faf9f6] dark:bg-[#191a20] p-4">
+                <p className="mb-3 text-sm font-semibold text-[#303236] dark:text-gray-100">{t("onboarding.step5.apQuestion")}</p>
                 <div className="mb-3 flex gap-3">
                   <button
                     onClick={() => setHasAp(true)}
-                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${hasAp === true ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
+                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${hasAp === true ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100 hover:border-[#0b7f46]"}`}
                   >
                     {t("onboarding.step5.yes")}
                   </button>
                   <button
                     onClick={() => { setHasAp(false); setApCredits(""); }}
-                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${hasAp === false ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
+                    className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${hasAp === false ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100 hover:border-[#0b7f46]"}`}
                   >
                     {t("onboarding.step5.no")}
                   </button>
@@ -489,13 +489,13 @@ export default function OnboardingPage() {
                     onChange={(e) => setApCredits(e.target.value)}
                     placeholder={t("onboarding.step5.apPlaceholder")}
                     rows={2}
-                    className="w-full resize-none rounded-xl border border-[#d8d8dc] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                    className="w-full resize-none rounded-xl border border-[#d8d8dc] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3 py-2 text-sm text-[#303236] dark:text-gray-100 outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                   />
                 )}
               </div>
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(4)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
+                <button onClick={() => setStep(4)} className="text-sm font-medium text-[#7b818b] dark:text-gray-500 transition hover:text-[#303236] hover:dark:text-gray-100">{t("common.back")}</button>
                 <button
                   onClick={finish}
                   disabled={

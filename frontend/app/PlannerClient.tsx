@@ -1634,6 +1634,35 @@ export default function PlannerClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Settings (Navbar gear icon) can change the target school/college/name
+  // while this page is already mounted — re-hydrate from cb_profile and
+  // reload the plan for the new school, same as the mount-time hydration
+  // above.
+  useEffect(() => {
+    function onProfileUpdated() {
+      let raw: string | null = null;
+      try { raw = localStorage.getItem("cb_profile"); } catch {}
+      if (!raw) return;
+      try {
+        const profile = JSON.parse(raw);
+        const newCollege = profile.college ?? "";
+        const newSchool = profile.school ?? "";
+        setFirstName(profile.firstName ?? "");
+        setCommunityCollege(newCollege);
+        setTargetSchool(newSchool);
+        const schools: string[] = profile.planSchools?.length ? profile.planSchools : [newSchool].filter(Boolean);
+        setPlanSchools(schools);
+        setActiveSchoolTab(newSchool);
+        if (newCollege && newSchool && targetMajor) {
+          loadOrGeneratePlan(newCollege, newSchool, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardMode ?? "competitive");
+        }
+      } catch {}
+    }
+    window.addEventListener("cb:profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("cb:profile-updated", onProfileUpdated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetMajor, completedCourses, wizardHonors, wizardApCredits, wizardMode]);
+
   // Persist Cal-GETC and tracker to localStorage
   useEffect(() => {
     try { localStorage.setItem("calgetc", JSON.stringify(calgetcChecked)); } catch {}

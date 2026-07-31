@@ -558,6 +558,8 @@ def _public(user):
         "target_schools": user.get("target_schools", ""),
         "onboarded":      bool(user.get("onboarded", 0)),
         "hasGoogle":      bool(user.get("google_id")),
+        "theme":          user.get("theme", "system"),
+        "language":       user.get("language", "en"),
     }
 
 
@@ -741,7 +743,7 @@ def api_profile_put():
         return jsonify({"error": "Not authenticated"}), 401
     data = request.json or {}
     fields = {}
-    for k in ("username", "college", "major", "target_schools", "onboarded"):
+    for k in ("username", "college", "major", "target_schools", "onboarded", "theme", "language"):
         if k in data:
             fields[k] = data[k]
     if "username" in fields and not str(fields["username"]).strip():

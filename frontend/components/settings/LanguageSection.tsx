@@ -21,31 +21,19 @@ export default function LanguageSection({ user, setUser }: SettingsSectionProps)
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#8a8f98] dark:text-gray-500">
-        {t("settings.language.title")}
-      </p>
-      <div className="space-y-2">
+    <div className="flex flex-col gap-2 border-b border-[#e5e0d5] py-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <span className="text-sm font-medium text-[#4d535c] dark:text-gray-400">{t("settings.language.title")}</span>
+      <select
+        value={language}
+        onChange={(e) => choose(e.target.value)}
+        className="rounded-lg border border-transparent bg-[#faf8f3] px-3 py-2 text-right text-sm text-[#303236] outline-none transition hover:border-[#d1c7b8] focus:border-[#0b7f46] focus:bg-white focus:ring-4 focus:ring-[#0b7f46]/10 dark:bg-white/5 dark:text-gray-100 dark:hover:border-gray-600 dark:focus:bg-[#1c1e24] sm:max-w-[280px] sm:flex-1"
+      >
         {options.map((opt) => (
-          <button
-            key={opt.code}
-            type="button"
-            onClick={() => choose(opt.code)}
-            className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-              language === opt.code
-                ? "border-[#0b7f46] bg-[#0b7f46]/10 text-[#0b7f46]"
-                : "border-[#e5e0d5] text-[#4d535c] hover:border-[#0b7f46]/50 dark:border-gray-700 dark:text-gray-300"
-            }`}
-          >
+          <option key={opt.code} value={opt.code}>
             {opt.label}
-            {language === opt.code && (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            )}
-          </button>
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   );
 }

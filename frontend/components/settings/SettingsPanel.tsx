@@ -76,10 +76,11 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
         </nav>
 
         <div className="flex-1 overflow-y-auto p-6 sm:p-10">
-          <div className="mb-6 flex items-center justify-between sm:hidden">
+          <div className="mb-6 sm:hidden">
             <p className="text-lg font-bold text-[#303236] dark:text-gray-100">{t("settings.title")}</p>
           </div>
           <div className="mx-auto max-w-xl">
+            <h2 className="mb-6 text-2xl font-bold text-[#303236] dark:text-gray-100">{t(Active.labelKey)}</h2>
             <Active.Component user={user} setUser={setUser} onClose={onClose} />
           </div>
         </div>

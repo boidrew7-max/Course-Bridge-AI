@@ -1472,6 +1472,20 @@ export default function PlannerClient() {
         body: JSON.stringify({ college, uc, major, planText, completedCourses: completed }),
       });
     } catch {}
+    // Keep the account's profile fields in sync automatically. Onboarding
+    // only ever writes college/school/name to localStorage (cb_profile), so
+    // without this, Settings has nothing to show for a signed-in user on a
+    // fresh device/browser until they manually edit and save it there.
+    // Silently no-ops on 401 for guests, same as the call above.
+    try {
+      const profileUpdate: Record<string, string> = { college, target_schools: uc };
+      if (firstName.trim()) profileUpdate.username = firstName.trim();
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileUpdate),
+      });
+    } catch {}
   }
 
   // ── Cal-GETC + tracker + panels ──────────────────────────────────

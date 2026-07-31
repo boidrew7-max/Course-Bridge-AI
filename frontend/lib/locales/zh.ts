@@ -20,13 +20,18 @@ const zh: Dictionary = {
   "settings.profile.guestNotice": "登录后可在各设备间同步你的个人资料。",
   "settings.profile.logIn": "登录",
   "settings.profile.namePlaceholder": "你的姓名",
+  "settings.profile.changePhoto": "更换照片",
+  "settings.profile.removePhoto": "移除",
+  "settings.profile.dropPhoto": "拖放图片，或点击上传",
+  "settings.profile.photoError": "请选择小于 5MB 的图片。",
 
   "settings.appearance.title": "主题",
+  "settings.appearance.description": "选择 CourseBridge 在此设备上的外观。",
   "settings.appearance.light": "浅色",
   "settings.appearance.dark": "深色",
-  "settings.appearance.system": "跟随系统",
 
   "settings.language.title": "首选语言",
+  "settings.language.description": "选择 CourseBridge 设置中使用的语言。",
 
   // Shared
   "common.back": "← 返回",

@@ -36,6 +36,18 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Lock background scroll while open — otherwise a wheel/trackpad scroll
+  // over the modal can chain through to the page behind it once the modal's
+  // own content hits its top/bottom.
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [open]);
+
   if (!mounted) return null;
 
   const Active = SETTINGS_SECTIONS.find((s) => s.id === activeId) ?? SETTINGS_SECTIONS[0];
@@ -50,11 +62,11 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
         role="dialog"
         aria-modal="true"
         aria-label={t("settings.title")}
-        className={`relative flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl transition-all duration-200 dark:bg-[#16171c] sm:h-auto sm:max-h-[min(780px,88vh)] sm:w-auto sm:max-w-5xl sm:min-w-[900px] sm:flex-row sm:rounded-3xl sm:border sm:border-[#e5e0d5] sm:dark:border-gray-700 ${
+        className={`relative flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl transition-all duration-200 dark:bg-[#16171c] sm:h-[min(680px,88vh)] sm:w-auto sm:max-w-5xl sm:min-w-[900px] sm:flex-row sm:rounded-3xl sm:border sm:border-[#e5e0d5] sm:dark:border-gray-700 ${
           visible ? "translate-y-0 opacity-100 scale-100" : "translate-y-2 opacity-0 scale-95"
         }`}
       >
-        <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-[#e5e0d5] p-4 dark:border-gray-700 sm:w-60 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-5">
+        <nav className="flex shrink-0 gap-1 overflow-x-auto overscroll-contain border-b border-[#e5e0d5] p-4 dark:border-gray-700 sm:w-60 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-5">
           <p className="hidden px-3 pb-4 text-xl font-bold text-[#303236] dark:text-gray-100 sm:block">
             {t("settings.title")}
           </p>
@@ -75,7 +87,7 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
           ))}
         </nav>
 
-        <div className="flex-1 overflow-y-auto p-6 sm:p-10">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 sm:p-10">
           <div className="mb-6 sm:hidden">
             <p className="text-lg font-bold text-[#303236] dark:text-gray-100">{t("settings.title")}</p>
           </div>

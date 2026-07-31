@@ -1,40 +1,12 @@
 "use client";
 
-import type { ReactElement } from "react";
 import { useTheme, type ThemeChoice } from "../../lib/theme";
 import { useTranslation } from "../../lib/i18n";
 import type { SettingsSectionProps } from "./types";
 
-function SystemIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="3" width="20" height="14" rx="2" />
-      <path d="M8 21h8M12 17v4" />
-    </svg>
-  );
-}
-
-function SunIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
-
-const OPTIONS: { value: ThemeChoice; icon: () => ReactElement; labelKey: "settings.appearance.system" | "settings.appearance.light" | "settings.appearance.dark" }[] = [
-  { value: "system", icon: SystemIcon, labelKey: "settings.appearance.system" },
-  { value: "light", icon: SunIcon, labelKey: "settings.appearance.light" },
-  { value: "dark", icon: MoonIcon, labelKey: "settings.appearance.dark" },
+const OPTIONS: { value: ThemeChoice; labelKey: "settings.appearance.light" | "settings.appearance.dark" }[] = [
+  { value: "light", labelKey: "settings.appearance.light" },
+  { value: "dark", labelKey: "settings.appearance.dark" },
 ];
 
 export default function AppearanceSection({ user, setUser }: SettingsSectionProps) {
@@ -56,27 +28,34 @@ export default function AppearanceSection({ user, setUser }: SettingsSectionProp
   }
 
   return (
-    <div>
-      <div className="flex flex-col gap-3 border-b border-[#e5e0d5] py-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-sm font-medium text-[#4d535c] dark:text-gray-400">{t("settings.appearance.title")}</span>
-        <div className="inline-flex shrink-0 gap-0.5 rounded-lg bg-[#faf8f3] p-1 dark:bg-white/5">
-          {OPTIONS.map(({ value, icon: Icon, labelKey }) => (
-            <button
-              key={value}
-              type="button"
-              title={t(labelKey)}
-              aria-label={t(labelKey)}
-              onClick={() => choose(value)}
-              className={`flex items-center justify-center rounded-md p-2 transition ${
-                theme === value
-                  ? "bg-white text-[#0b7f46] shadow-sm dark:bg-[#1c1e24] dark:text-[#3ba76a]"
-                  : "text-[#8a8f98] hover:text-[#4d535c] dark:text-gray-500 dark:hover:text-gray-300"
-              }`}
-            >
-              <Icon />
-            </button>
-          ))}
-        </div>
+    <div className="space-y-6">
+      <div className="border-b border-[#e5e0d5] pb-4 dark:border-gray-800">
+        <p className="text-sm font-medium text-[#303236] dark:text-gray-200">{t("settings.appearance.title")}</p>
+        <p className="mt-0.5 text-xs text-[#8a8f98] dark:text-gray-500">{t("settings.appearance.description")}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {OPTIONS.map(({ value, labelKey }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => choose(value)}
+            className={`overflow-hidden rounded-2xl border text-left transition ${
+              theme === value
+                ? "border-[#0b7f46] ring-2 ring-[#0b7f46]/20"
+                : "border-[#e5e0d5] hover:border-[#0b7f46]/50 dark:border-gray-700"
+            }`}
+          >
+            <div className={`flex h-24 items-center justify-center gap-2 ${value === "dark" ? "bg-[#14151a]" : "bg-[#faf8f3]"}`}>
+              <span className={`h-10 w-10 rounded-full ${value === "dark" ? "bg-[#1c1e24]" : "bg-white"} border ${value === "dark" ? "border-gray-700" : "border-[#e5e0d5]"}`} />
+              <span className="flex flex-col gap-1.5">
+                <span className={`h-2 w-16 rounded-full ${value === "dark" ? "bg-gray-700" : "bg-[#e5e0d5]"}`} />
+                <span className={`h-2 w-10 rounded-full ${value === "dark" ? "bg-gray-800" : "bg-[#efe9dd]"}`} />
+              </span>
+            </div>
+            <p className="px-4 py-3 text-sm font-semibold text-[#303236] dark:bg-[#1c1e24] dark:text-gray-100">{t(labelKey)}</p>
+          </button>
+        ))}
       </div>
     </div>
   );

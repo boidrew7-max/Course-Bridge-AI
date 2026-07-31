@@ -9,6 +9,7 @@ export type SettingsUser = {
   hasGoogle: boolean;
   theme: string;
   language: string;
+  avatar: string;
 } | null;
 
 export type SettingsSectionProps = {

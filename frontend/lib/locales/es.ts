@@ -20,13 +20,18 @@ const es: Dictionary = {
   "settings.profile.guestNotice": "Inicia sesión para sincronizar tu perfil entre dispositivos.",
   "settings.profile.logIn": "Iniciar sesión",
   "settings.profile.namePlaceholder": "Tu nombre",
+  "settings.profile.changePhoto": "Cambiar foto",
+  "settings.profile.removePhoto": "Quitar",
+  "settings.profile.dropPhoto": "Suelta una imagen o haz clic para subir",
+  "settings.profile.photoError": "Elige una imagen de menos de 5MB.",
 
   "settings.appearance.title": "Tema",
+  "settings.appearance.description": "Elige cómo se ve CourseBridge en este dispositivo.",
   "settings.appearance.light": "Claro",
   "settings.appearance.dark": "Oscuro",
-  "settings.appearance.system": "Sistema",
 
   "settings.language.title": "Idioma preferido",
+  "settings.language.description": "Elige el idioma usado en la configuración de CourseBridge.",
 };
 
 export default es;

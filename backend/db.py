@@ -91,6 +91,7 @@ def init_db():
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT UNIQUE")
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'system'")
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT NOT NULL DEFAULT 'en'")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT NOT NULL DEFAULT ''")
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS session_tokens (
                     id         SERIAL PRIMARY KEY,
@@ -181,6 +182,7 @@ def init_db():
                 ("google_id",      "TEXT"),
                 ("theme",          "TEXT NOT NULL DEFAULT 'system'"),
                 ("language",       "TEXT NOT NULL DEFAULT 'en'"),
+                ("avatar",         "TEXT NOT NULL DEFAULT ''"),
             ]:
                 try:
                     cur.execute(f"ALTER TABLE users ADD COLUMN {col} {typedef}")
@@ -270,7 +272,7 @@ def get_user_by_email(email):
     with _connect() as conn:
         cur = conn.cursor()
         cur.execute(
-            f"SELECT id,email,password_hash,username,college,major,target_schools,onboarded,google_id,theme,language FROM users WHERE email={_p()}",
+            f"SELECT id,email,password_hash,username,college,major,target_schools,onboarded,google_id,theme,language,avatar FROM users WHERE email={_p()}",
             (email.lower().strip(),),
         )
         return _row(cur.fetchone())
@@ -280,7 +282,7 @@ def get_user_by_id(uid):
     with _connect() as conn:
         cur = conn.cursor()
         cur.execute(
-            f"SELECT id,email,username,college,major,target_schools,onboarded,google_id,theme,language FROM users WHERE id={_p()}",
+            f"SELECT id,email,username,college,major,target_schools,onboarded,google_id,theme,language,avatar FROM users WHERE id={_p()}",
             (uid,),
         )
         return _row(cur.fetchone())
@@ -298,7 +300,7 @@ def get_user_by_google_id(google_id):
     with _connect() as conn:
         cur = conn.cursor()
         cur.execute(
-            f"SELECT id,email,username,college,major,target_schools,onboarded,google_id,theme,language FROM users WHERE google_id={_p()}",
+            f"SELECT id,email,username,college,major,target_schools,onboarded,google_id,theme,language,avatar FROM users WHERE google_id={_p()}",
             (google_id,),
         )
         return _row(cur.fetchone())
@@ -338,7 +340,7 @@ def email_exists(email):
 
 
 def update_profile(uid, **fields):
-    allowed = {"username", "college", "major", "target_schools", "onboarded", "theme", "language"}
+    allowed = {"username", "college", "major", "target_schools", "onboarded", "theme", "language", "avatar"}
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
         return

@@ -1551,7 +1551,9 @@ export default function PlannerClient() {
   }
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatMessages.length > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }, [chatMessages]);
 
   // Hydrate from the profile /onboarding saved to localStorage, then kick

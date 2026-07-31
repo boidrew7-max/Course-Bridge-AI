@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslation } from "../lib/i18n";
+import { useHasPlan } from "../lib/useHasPlan";
 
 export default function Footer() {
   const { t } = useTranslation();
+  const { hasPlan } = useHasPlan();
 
   return (
     <footer className="border-t border-[#e5e0d5] bg-white dark:border-gray-800 dark:bg-[#14151a]">
@@ -29,7 +31,7 @@ export default function Footer() {
               <p className="text-xs font-bold uppercase tracking-wide text-[#a3a9b3] dark:text-gray-500">{t("footer.account")}</p>
               <ul className="mt-3 space-y-2 text-sm text-[#4d535c] dark:text-gray-400">
                 <li><a href="/login" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("footer.login")}</a></li>
-                <li><a href="/onboarding" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("footer.buildMyPlan")}</a></li>
+                <li><a href={hasPlan ? "/dashboard" : "/onboarding"} className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{hasPlan ? t("nav.myPlan") : t("footer.buildMyPlan")}</a></li>
               </ul>
             </div>
           </div>

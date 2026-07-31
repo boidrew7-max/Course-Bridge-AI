@@ -22,11 +22,6 @@ export const metadata: Metadata = {
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   metadataBase: new URL(SITE_URL),
-  icons: {
-    icon: "/coursebridge-logo.png",
-    shortcut: "/coursebridge-logo.png",
-    apple: "/coursebridge-logo.png",
-  },
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,

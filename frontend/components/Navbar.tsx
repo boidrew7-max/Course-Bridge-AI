@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import SettingsPanel from "./settings/SettingsPanel";
+import { useTranslation } from "../lib/i18n";
 
 export default function Navbar() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState<string | null>(null);
   const [hasLocalPlan, setHasLocalPlan] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -38,13 +40,13 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-8 md:flex">
           <Link href="/#students" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
-            For Students
+            {t("nav.forStudents")}
           </Link>
           <Link href="/#counselors" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
-            What You Get
+            {t("nav.whatYouGet")}
           </Link>
           <Link href="/#pricing" className="text-sm font-medium text-[#4d535c] transition hover:text-[#0b7f46]">
-            Pricing
+            {t("nav.pricing")}
           </Link>
         </div>
 
@@ -53,13 +55,13 @@ export default function Navbar() {
             href={email || hasLocalPlan ? "/dashboard" : "/onboarding"}
             className="rounded-xl bg-[#0b7f46] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
           >
-            {email || hasLocalPlan ? "My Plan" : "Build my plan"}
+            {email || hasLocalPlan ? t("nav.myPlan") : t("nav.buildMyPlan")}
           </Link>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            aria-label="Settings"
-            title="Settings"
+            aria-label={t("common.settingsAria")}
+            title={t("common.settingsAria")}
             className="rounded-xl border border-[#e5e0d5] p-2.5 text-[#4d535c] transition hover:border-[#0b7f46]/50 hover:text-[#0b7f46]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

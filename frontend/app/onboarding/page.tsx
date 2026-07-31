@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import TransferAIWidget from "../../components/TransferAIWidget";
+import { useTranslation } from "../../lib/i18n";
 
 const UC_OPTIONS: { label: string; value: string }[] = [
   { label: "UCLA",             value: "Los Angeles" },
@@ -31,9 +32,15 @@ const MAJOR_SUGGESTIONS = [
   "Kinesiology", "Communications", "Accounting", "Architecture", "Film & Media Studies",
 ];
 
-const STEPS = ["Name", "College", "Target UCs", "Major", "Courses"];
-
 export default function OnboardingPage() {
+  const { t } = useTranslation();
+  const STEPS = [
+    t("onboarding.steps.name"),
+    t("onboarding.steps.college"),
+    t("onboarding.steps.targetUcs"),
+    t("onboarding.steps.major"),
+    t("onboarding.steps.courses"),
+  ];
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
@@ -106,7 +113,7 @@ export default function OnboardingPage() {
       if (data.error) {
         setTranscriptMessage(data.error);
       } else if (!data.courses?.length) {
-        setTranscriptMessage(data.warning ?? "No courses found in that PDF.");
+        setTranscriptMessage(data.warning ?? t("onboarding.step5.noCoursesFound"));
       } else {
         setNoCourses(false);
         setCourses((prev) => {
@@ -117,10 +124,14 @@ export default function OnboardingPage() {
           }
           return merged.join(", ");
         });
-        setTranscriptMessage(`Added ${data.courses.length} course${data.courses.length === 1 ? "" : "s"} from your transcript — review the list below.`);
+        setTranscriptMessage(
+          data.courses.length === 1
+            ? t("onboarding.step5.addedCourseOne")
+            : t("onboarding.step5.addedCourseMany", { n: data.courses.length })
+        );
       }
     } catch {
-      setTranscriptMessage("Something went wrong reading that file. Try again or enter your courses manually.");
+      setTranscriptMessage(t("onboarding.step5.transcriptError"));
     } finally {
       setTranscriptParsing(false);
     }
@@ -161,7 +172,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-[#faf9f6]">
         <Navbar />
         <main className="mx-auto max-w-2xl px-5 py-10 md:px-8">
-          <p className="text-sm text-[#7b818b]">Checking your account…</p>
+          <p className="text-sm text-[#7b818b]">{t("onboarding.checkingAccount")}</p>
         </main>
       </div>
     );
@@ -206,14 +217,14 @@ export default function OnboardingPage() {
           {step === 1 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">What&apos;s your name?</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">We&apos;ll use this to personalize your plan.</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step1.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step1.subtitle")}</p>
               </div>
               <input
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && firstName.trim()) setStep(2); }}
-                placeholder="e.g. Jordan"
+                placeholder={t("onboarding.step1.placeholder")}
                 className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                 autoFocus
               />
@@ -223,7 +234,7 @@ export default function OnboardingPage() {
                   disabled={!firstName.trim()}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
-                  Next →
+                  {t("common.next")}
                 </button>
               </div>
             </div>
@@ -233,15 +244,15 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">Where do you go to school?</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">Enter your California community college.</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step2.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step2.subtitle")}</p>
               </div>
               <input
                 list="cc-list"
                 value={college}
                 onChange={(e) => setCollege(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && college.trim()) setStep(3); }}
-                placeholder="e.g. De Anza College"
+                placeholder={t("onboarding.step2.placeholder")}
                 className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                 autoFocus
               />
@@ -263,8 +274,7 @@ export default function OnboardingPage() {
               {college.trim().toLowerCase() === "rancho santiago college" && (
                 <div className="rounded-xl border border-[#f0d99b] bg-[#fffaf0] p-4">
                   <p className="text-sm font-semibold text-[#7a5a12]">
-                    &quot;Rancho Santiago College&quot; is the district name, not a specific campus —
-                    which college do you actually attend?
+                    {t("onboarding.step2.districtWarning")}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
@@ -284,13 +294,13 @@ export default function OnboardingPage() {
               )}
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(1)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
+                <button onClick={() => setStep(1)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={!college.trim() || college.trim().toLowerCase() === "rancho santiago college"}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
-                  Next →
+                  {t("common.next")}
                 </button>
               </div>
             </div>
@@ -300,8 +310,8 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">Which UCs are you targeting?</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">Select all that apply — we&apos;ll build a plan for each.</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step3.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step3.subtitle")}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {UC_OPTIONS.map((uc) => (
@@ -321,17 +331,17 @@ export default function OnboardingPage() {
               </div>
               {ucs.length > 0 && (
                 <p className="text-xs font-medium text-[#0b7f46]">
-                  {ucs.length} school{ucs.length > 1 ? "s" : ""} selected
+                  {ucs.length === 1 ? t("onboarding.step3.selectedOne") : t("onboarding.step3.selectedMany", { n: ucs.length })}
                 </p>
               )}
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(2)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
+                <button onClick={() => setStep(2)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
                 <button
                   onClick={() => setStep(4)}
                   disabled={ucs.length === 0}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
-                  Next →
+                  {t("common.next")}
                 </button>
               </div>
             </div>
@@ -341,8 +351,8 @@ export default function OnboardingPage() {
           {step === 4 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">What do you want to study?</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">Enter your intended major.</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step4.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step4.subtitle")}</p>
               </div>
               <div className="relative">
                 <input
@@ -351,7 +361,7 @@ export default function OnboardingPage() {
                   onFocus={() => setMajorFocused(true)}
                   onBlur={() => setTimeout(() => setMajorFocused(false), 150)}
                   onKeyDown={(e) => { if (e.key === "Enter" && major.trim()) setStep(5); }}
-                  placeholder="e.g. Computer Science"
+                  placeholder={t("onboarding.step4.placeholder")}
                   className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                   autoFocus
                   autoComplete="off"
@@ -372,21 +382,21 @@ export default function OnboardingPage() {
                 )}
                 {majorFocused && majorQuery && majorMatches.length === 0 && !majorOptionsLoading && (
                   <div className="absolute z-10 mt-1 w-full rounded-xl border border-[#e5e0d5] bg-white px-4 py-3 text-sm text-[#7b818b] shadow-lg">
-                    No major matches &quot;{major}&quot; — you can still type it exactly and continue.
+                    {t("onboarding.step4.noMatch", { q: major })}
                   </div>
                 )}
               </div>
               {majorOptionsLoading && (
-                <p className="text-xs text-[#7b818b]">Loading the full major list for {college} → {ucs[0]}…</p>
+                <p className="text-xs text-[#7b818b]">{t("onboarding.step4.loadingMajors", { college, uc: ucs[0] })}</p>
               )}
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(3)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
+                <button onClick={() => setStep(3)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
                 <button
                   onClick={() => setStep(5)}
                   disabled={!major.trim()}
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
-                  Next →
+                  {t("common.next")}
                 </button>
               </div>
             </div>
@@ -396,8 +406,8 @@ export default function OnboardingPage() {
           {step === 5 && (
             <div className="flex flex-col gap-5">
               <div>
-                <h1 className="text-2xl font-bold text-[#1a2e22]">What courses have you completed?</h1>
-                <p className="mt-1.5 text-sm text-[#7b818b]">Upload your transcript or list your courses in plain text.</p>
+                <h1 className="text-2xl font-bold text-[#1a2e22]">{t("onboarding.step5.title")}</h1>
+                <p className="mt-1.5 text-sm text-[#7b818b]">{t("onboarding.step5.subtitle")}</p>
               </div>
 
               <label
@@ -416,9 +426,9 @@ export default function OnboardingPage() {
                   <path d="M14 2v6h6" />
                 </svg>
                 <span className="text-sm font-semibold text-[#303236]">
-                  {transcriptParsing ? "Reading your transcript…" : "Upload transcript (PDF)"}
+                  {transcriptParsing ? t("onboarding.step5.readingTranscript") : t("onboarding.step5.uploadTranscript")}
                 </span>
-                <span className="text-xs text-[#7b818b]">We&apos;ll pull your completed courses out automatically</span>
+                <span className="text-xs text-[#7b818b]">{t("onboarding.step5.autoExtract")}</span>
               </label>
               {transcriptMessage && (
                 <p className="text-xs text-[#7b818b]">{transcriptMessage}</p>
@@ -431,14 +441,14 @@ export default function OnboardingPage() {
                   onChange={(e) => { setNoCourses(e.target.checked); if (e.target.checked) setCourses(""); }}
                   className="h-4 w-4 rounded accent-[#0b7f46]"
                 />
-                <span className="text-sm text-[#303236]">I haven&apos;t completed any college courses yet</span>
+                <span className="text-sm text-[#303236]">{t("onboarding.step5.noCoursesYet")}</span>
               </label>
 
               {!noCourses && (
                 <textarea
                   value={courses}
                   onChange={(e) => setCourses(e.target.value)}
-                  placeholder="e.g. Calc 1, English 1A, Intro to CS, Econ 1"
+                  placeholder={t("onboarding.step5.coursesPlaceholder")}
                   rows={4}
                   className="w-full resize-none rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                 />
@@ -446,38 +456,38 @@ export default function OnboardingPage() {
               {noCourses && (
                 <div className="rounded-xl border border-[#e5e0d5] bg-[#faf9f6] px-4 py-3">
                   <p className="mb-2 text-sm font-medium text-[#303236]">
-                    Highest math completed in high school? <span className="font-normal text-[#7b818b]">(optional)</span>
+                    {t("onboarding.step5.hsMathLabel")} <span className="font-normal text-[#7b818b]">{t("onboarding.step5.optional")}</span>
                   </p>
                   <input
                     value={hsMath}
                     onChange={(e) => setHsMath(e.target.value)}
-                    placeholder="e.g. Pre-Calculus, Algebra II, Calculus AB"
+                    placeholder={t("onboarding.step5.hsMathPlaceholder")}
                     className="w-full rounded-lg border border-[#d8d8dc] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                   />
                 </div>
               )}
 
               <div className="rounded-xl border border-[#e5e0d5] bg-[#faf9f6] p-4">
-                <p className="mb-3 text-sm font-semibold text-[#303236]">Do you have any AP exam credit?</p>
+                <p className="mb-3 text-sm font-semibold text-[#303236]">{t("onboarding.step5.apQuestion")}</p>
                 <div className="mb-3 flex gap-3">
                   <button
                     onClick={() => setHasAp(true)}
                     className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${hasAp === true ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
                   >
-                    Yes
+                    {t("onboarding.step5.yes")}
                   </button>
                   <button
                     onClick={() => { setHasAp(false); setApCredits(""); }}
                     className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition ${hasAp === false ? "border-[#0b7f46] bg-[#0b7f46] text-white" : "border-[#d8d8dc] bg-white text-[#303236] hover:border-[#0b7f46]"}`}
                   >
-                    No
+                    {t("onboarding.step5.no")}
                   </button>
                 </div>
                 {hasAp === true && (
                   <textarea
                     value={apCredits}
                     onChange={(e) => setApCredits(e.target.value)}
-                    placeholder="e.g. AP Calculus AB (score 4), AP English Language (score 5)"
+                    placeholder={t("onboarding.step5.apPlaceholder")}
                     rows={2}
                     className="w-full resize-none rounded-xl border border-[#d8d8dc] bg-white px-3 py-2 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
                   />
@@ -485,7 +495,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="flex justify-between pt-2">
-                <button onClick={() => setStep(4)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">← Back</button>
+                <button onClick={() => setStep(4)} className="text-sm font-medium text-[#7b818b] transition hover:text-[#303236]">{t("common.back")}</button>
                 <button
                   onClick={finish}
                   disabled={
@@ -495,7 +505,7 @@ export default function OnboardingPage() {
                   }
                   className="rounded-xl bg-[#0b7f46] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#08683a] disabled:opacity-40"
                 >
-                  Build My Plan →
+                  {t("onboarding.step5.buildMyPlan")}
                 </button>
               </div>
             </div>

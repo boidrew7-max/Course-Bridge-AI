@@ -1,50 +1,43 @@
+"use client";
+
 import Link from "next/link";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import TransferAIWidget from "./TransferAIWidget";
-
-const PAIN_POINTS = [
-  "ASSIST.org can be hard to read.",
-  "Requirements change by school and major.",
-  "One missing prerequisite can delay transfer.",
-  "Counselors help, but appointments fill up fast.",
-];
-
-const STATS = [
-  { n: "116", label: "Community Colleges" },
-  { n: "57K+", label: "Courses indexed" },
-  { n: "9", label: "UC campuses" },
-  { n: "121K+", label: "Articulation agreements" },
-];
-
-const HOW_IT_WORKS = [
-  {
-    number: "1",
-    title: "Add your courses",
-    body: "Enter your completed courses in plain text — no need to look up exact codes.",
-  },
-  {
-    number: "2",
-    title: "Pick a UC and major",
-    body: "Choose the UC campus and major you want to transfer into.",
-  },
-  {
-    number: "3",
-    title: "Get a clear plan",
-    body: "See major requirements, blocked classes, and lighter GE filler options.",
-  },
-];
-
-const WHAT_YOU_GET = [
-  { title: "Major prep tracking", body: "See exactly which lower-division major requirements you've completed and which are still missing." },
-  { title: "Prerequisite sequencing", body: "Courses are ordered by prerequisite chains so you never plan a class before you're ready for it." },
-  { title: "General education coverage", body: "Track Cal-GETC areas alongside your major prep in one place." },
-  { title: "A generated semester plan", body: "A term-by-term schedule built from real ASSIST articulation data for your college, major, and target campus." },
-  { title: "TAG eligibility checker", body: "Check your GPA and major against Transfer Admission Guarantee requirements for participating UCs." },
-  { title: "Application deadline reminders", body: "Keep TAG, UC application, and financial aid deadlines in view as your plan comes together." },
-];
+import { useTranslation } from "../lib/i18n";
 
 export default function HomePage() {
+  const { t } = useTranslation();
+
+  const STATS = [
+    { n: "116", label: t("home.stats.communityColleges") },
+    { n: "57K+", label: t("home.stats.coursesIndexed") },
+    { n: "9", label: t("home.stats.ucCampuses") },
+    { n: "121K+", label: t("home.stats.articulationAgreements") },
+  ];
+
+  const PAIN_POINTS = [
+    t("home.painPoints.0"),
+    t("home.painPoints.1"),
+    t("home.painPoints.2"),
+    t("home.painPoints.3"),
+  ];
+
+  const HOW_IT_WORKS = [
+    { number: "1", title: t("home.how.step1.title"), body: t("home.how.step1.body") },
+    { number: "2", title: t("home.how.step2.title"), body: t("home.how.step2.body") },
+    { number: "3", title: t("home.how.step3.title"), body: t("home.how.step3.body") },
+  ];
+
+  const WHAT_YOU_GET = [
+    { title: t("home.get.feature1.title"), body: t("home.get.feature1.body") },
+    { title: t("home.get.feature2.title"), body: t("home.get.feature2.body") },
+    { title: t("home.get.feature3.title"), body: t("home.get.feature3.body") },
+    { title: t("home.get.feature4.title"), body: t("home.get.feature4.body") },
+    { title: t("home.get.feature5.title"), body: t("home.get.feature5.body") },
+    { title: t("home.get.feature6.title"), body: t("home.get.feature6.body") },
+  ];
+
   return (
     <div className="min-h-screen bg-white text-[#2f3135]">
       <Navbar />
@@ -54,17 +47,15 @@ export default function HomePage() {
         <div className="grid gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-center">
           <div>
             <p className="mb-5 inline-flex rounded-full border border-[#b8d8c7] bg-[#e7f3ed] px-4 py-1.5 text-sm font-semibold text-[#0b7f46]">
-              Built around real transfer planning problems
+              {t("home.badge")}
             </p>
 
             <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-[#1a2e22] sm:text-5xl lg:text-6xl">
-              Know exactly what classes you need before you transfer.
+              {t("home.heroTitle")}
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#5b6169]">
-              CourseBridge plans your UC transfer requirements using real ASSIST
-              articulation data — personalized to your community college, major, and
-              target campus, so nothing falls through the cracks.
+              {t("home.heroBody")}
             </p>
 
             <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
@@ -72,13 +63,13 @@ export default function HomePage() {
                 href="/onboarding"
                 className="rounded-xl bg-[#0b7f46] px-6 py-3.5 text-center font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
               >
-                Build my plan
+                {t("home.buildMyPlan")}
               </Link>
               <Link
                 href="/login"
                 className="text-sm font-semibold text-[#4d535c] transition hover:text-[#0b7f46]"
               >
-                Already have a plan? Log in
+                {t("home.alreadyHavePlan")}
               </Link>
             </div>
 
@@ -93,27 +84,27 @@ export default function HomePage() {
           </div>
 
           <div className="rounded-3xl border border-[#e5e0d5] bg-[#faf9f6] p-6 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
-            <p className="text-sm font-semibold text-[#7b818b]">Product preview</p>
+            <p className="text-sm font-semibold text-[#7b818b]">{t("home.preview.label")}</p>
             <h2 className="mt-1 text-xl font-bold text-[#1a2e22]">UC Berkeley · Computer Science</h2>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4">
-                <p className="text-sm font-bold text-[#1a2e22]">Completed</p>
-                <p className="mt-2 text-sm text-[#6f7680]">Calculus I</p>
-                <p className="text-sm text-[#6f7680]">Intro to Programming</p>
+                <p className="text-sm font-bold text-[#1a2e22]">{t("home.preview.completed")}</p>
+                <p className="mt-2 text-sm text-[#6f7680]">{t("home.preview.calc1")}</p>
+                <p className="text-sm text-[#6f7680]">{t("home.preview.introProgramming")}</p>
               </div>
               <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4">
-                <p className="text-sm font-bold text-[#1a2e22]">Missing</p>
-                <p className="mt-2 text-sm text-[#6f7680]">Data Structures</p>
-                <p className="text-sm text-[#6f7680]">Linear Algebra</p>
+                <p className="text-sm font-bold text-[#1a2e22]">{t("home.preview.missing")}</p>
+                <p className="mt-2 text-sm text-[#6f7680]">{t("home.preview.dataStructures")}</p>
+                <p className="text-sm text-[#6f7680]">{t("home.preview.linearAlgebra")}</p>
               </div>
             </div>
 
             <div className="mt-4 rounded-2xl border border-[#e5e0d5] bg-white p-4">
-              <p className="mb-2 text-sm font-bold text-[#1a2e22]">Recommended next term</p>
+              <p className="mb-2 text-sm font-bold text-[#1a2e22]">{t("home.preview.recommendedNextTerm")}</p>
               <div className="flex flex-wrap gap-2">
-                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46]">Data Structures</span>
-                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46]">Linear Algebra</span>
+                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46]">{t("home.preview.dataStructures")}</span>
+                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46]">{t("home.preview.linearAlgebra")}</span>
               </div>
             </div>
           </div>
@@ -123,10 +114,9 @@ export default function HomePage() {
       {/* Why CourseBridge */}
       <section id="students" className="border-t border-[#eceae4] bg-[#faf9f6]">
         <div className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-          <h2 className="text-3xl font-bold text-[#1a2e22]">Why CourseBridge</h2>
+          <h2 className="text-3xl font-bold text-[#1a2e22]">{t("home.why.title")}</h2>
           <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169]">
-            Transfer planning shouldn&apos;t depend on catching a counselor before
-            appointments fill up. Here&apos;s the problem CourseBridge solves.
+            {t("home.why.body")}
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -141,10 +131,9 @@ export default function HomePage() {
 
       {/* How it works */}
       <section className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-        <h2 className="text-3xl font-bold text-[#1a2e22]">How it works</h2>
+        <h2 className="text-3xl font-bold text-[#1a2e22]">{t("home.how.title")}</h2>
         <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169]">
-          Three steps, and you&apos;ll have a term-by-term plan built on real
-          articulation data.
+          {t("home.how.body")}
         </p>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -163,9 +152,9 @@ export default function HomePage() {
       {/* What students get */}
       <section id="counselors" className="border-t border-[#eceae4] bg-[#faf9f6]">
         <div className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-          <h2 className="text-3xl font-bold text-[#1a2e22]">What students get</h2>
+          <h2 className="text-3xl font-bold text-[#1a2e22]">{t("home.get.title")}</h2>
           <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169]">
-            Everything you need to plan your transfer with confidence, in one place.
+            {t("home.get.body")}
           </p>
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -182,10 +171,9 @@ export default function HomePage() {
       {/* Pricing (simple, honest placeholder — this is a free demo tool) */}
       <section id="pricing" className="mx-auto max-w-7xl px-5 py-16 md:px-8">
         <div className="rounded-3xl border border-[#e5e0d5] bg-white p-8 text-center shadow-sm">
-          <h2 className="text-2xl font-bold text-[#1a2e22]">Free while in beta</h2>
+          <h2 className="text-2xl font-bold text-[#1a2e22]">{t("home.pricing.title")}</h2>
           <p className="mx-auto mt-3 max-w-xl leading-7 text-[#5b6169]">
-            CourseBridge is currently free to use for all California community
-            college students while we build it out.
+            {t("home.pricing.body")}
           </p>
         </div>
       </section>
@@ -193,16 +181,15 @@ export default function HomePage() {
       {/* Final CTA */}
       <section className="border-t border-[#eceae4] bg-[#0b7f46]">
         <div className="mx-auto max-w-7xl px-5 py-16 text-center md:px-8">
-          <h2 className="text-3xl font-bold text-white">Ready to see your plan?</h2>
+          <h2 className="text-3xl font-bold text-white">{t("home.cta.title")}</h2>
           <p className="mx-auto mt-3 max-w-xl leading-7 text-white/85">
-            Answer a few questions about your college, major, and target campus —
-            CourseBridge does the rest.
+            {t("home.cta.body")}
           </p>
           <Link
             href="/onboarding"
             className="mt-8 inline-block rounded-xl bg-white px-7 py-3.5 font-semibold text-[#0b7f46] shadow-sm transition hover:bg-[#f0faf5]"
           >
-            Build my plan
+            {t("home.buildMyPlan")}
           </Link>
         </div>
       </section>

@@ -560,6 +560,7 @@ def _public(user):
         "hasGoogle":      bool(user.get("google_id")),
         "theme":          user.get("theme", "system"),
         "language":       user.get("language", "en"),
+        "avatar":         user.get("avatar", ""),
     }
 
 
@@ -743,11 +744,13 @@ def api_profile_put():
         return jsonify({"error": "Not authenticated"}), 401
     data = request.json or {}
     fields = {}
-    for k in ("username", "college", "major", "target_schools", "onboarded", "theme", "language"):
+    for k in ("username", "college", "major", "target_schools", "onboarded", "theme", "language", "avatar"):
         if k in data:
             fields[k] = data[k]
     if "username" in fields and not str(fields["username"]).strip():
         return jsonify({"error": "Username cannot be blank."}), 400
+    if "avatar" in fields and len(str(fields["avatar"])) > 500_000:
+        return jsonify({"error": "Image is too large."}), 400
     update_profile(uid, **fields)
     return jsonify(_public(get_user_by_id(uid)))
 

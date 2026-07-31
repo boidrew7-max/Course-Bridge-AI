@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "../../lib/i18n";
 import type { SettingsSectionProps } from "./types";
@@ -13,6 +13,7 @@ type LocalProfile = {
   completedCourses?: string;
   planSchools?: string[];
   planText?: string;
+  avatar?: string;
   [key: string]: unknown;
 };
 
@@ -56,6 +57,42 @@ function bestOf(...values: (string | undefined)[]): string {
     if (v && v.trim()) return v;
   }
   return "";
+}
+
+// Downscales/crops an image file to a square JPEG data URL so avatars stay
+// small regardless of the source photo's resolution (a phone photo can be
+// 10+ MB — this keeps what we actually store/send in the few-hundred-KB
+// range, well under the backend's 500KB cap on the avatar field).
+//
+// Reads via FileReader (data: URL) rather than URL.createObjectURL (blob:
+// URL) — the app's CSP img-src allows 'self' data: https: but not blob:,
+// and data: URLs work here just as well for a one-shot local decode.
+function fileToSquareDataUrl(file: File, size = 256, quality = 0.85): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("could not read file"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("canvas unavailable"));
+          return;
+        }
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => reject(new Error("invalid image"));
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function FieldRow({
@@ -124,19 +161,25 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
   const initialName = bestOf(user?.username, local.firstName);
   const initialCollege = bestOf(user?.college, local.college);
   const initialSchool = bestOf(user?.target_schools, local.school);
+  const initialAvatar = bestOf(user?.avatar, local.avatar);
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState(initialName);
   const [college, setCollege] = useState(initialCollege);
   const [targetSchool, setTargetSchool] = useState(initialSchool);
+  const [avatar, setAvatar] = useState(initialAvatar);
+  const [avatarError, setAvatarError] = useState("");
+  const [dragOver, setDragOver] = useState(false);
   const [colleges, setColleges] = useState<string[]>([]);
   const [ucs, setUcs] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setName(bestOf(user?.username, local.firstName));
     setCollege(bestOf(user?.college, local.college));
     setTargetSchool(bestOf(user?.target_schools, local.school));
+    setAvatar(bestOf(user?.avatar, local.avatar));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -158,9 +201,29 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
       .catch(() => setUcs([]));
   }, [college]);
 
-  const dirty = name !== initialName || college !== initialCollege || targetSchool !== initialSchool;
+  const dirty =
+    name !== initialName || college !== initialCollege || targetSchool !== initialSchool || avatar !== initialAvatar;
 
   const avatarInitials = useMemo(() => initialsFor(name || "?"), [name]);
+
+  async function handleFile(file: File | undefined | null) {
+    if (!file) return;
+    setAvatarError("");
+    if (!file.type.startsWith("image/")) {
+      setAvatarError(t("settings.profile.photoError"));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError(t("settings.profile.photoError"));
+      return;
+    }
+    try {
+      const dataUrl = await fileToSquareDataUrl(file);
+      setAvatar(dataUrl);
+    } catch {
+      setAvatarError(t("settings.profile.photoError"));
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -169,7 +232,7 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
         const res = await fetch("/api/profile", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: name, college, target_schools: targetSchool }),
+          body: JSON.stringify({ username: name, college, target_schools: targetSchool, avatar }),
         });
         if (res.ok) {
           const updated = await res.json();
@@ -180,6 +243,7 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
         firstName: name,
         college,
         school: targetSchool,
+        avatar,
         planSchools: targetSchool ? [targetSchool] : [],
       });
       notifyProfileUpdated();
@@ -194,6 +258,8 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
     setName(initialName);
     setCollege(initialCollege);
     setTargetSchool(initialSchool);
+    setAvatar(initialAvatar);
+    setAvatarError("");
   }
 
   async function logout() {
@@ -209,14 +275,70 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0b7f46] text-lg font-bold text-white">
-          {avatarInitials}
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => fileInputRef.current?.click()}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileInputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            handleFile(e.dataTransfer.files?.[0]);
+          }}
+          title={t("settings.profile.dropPhoto")}
+          className={`group relative flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#0b7f46] text-lg font-bold text-white outline-none transition ${
+            dragOver ? "ring-4 ring-[#0b7f46]/30" : ""
+          }`}
+        >
+          {avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatar} alt="" className="h-full w-full object-cover" />
+          ) : (
+            avatarInitials
+          )}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition group-hover:opacity-100">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </div>
         </div>
-        <div>
-          <p className="text-base font-semibold text-[#303236] dark:text-gray-100">{name || "—"}</p>
-          {user?.email && <p className="text-sm text-[#7b818b] dark:text-gray-500">{user.email}</p>}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => handleFile(e.target.files?.[0])}
+        />
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold text-[#303236] dark:text-gray-100">{name || "—"}</p>
+          {user?.email && <p className="truncate text-sm text-[#7b818b] dark:text-gray-500">{user.email}</p>}
+          <div className="mt-1 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs font-semibold text-[#0b7f46] transition hover:underline dark:text-[#3ba76a]"
+            >
+              {t("settings.profile.changePhoto")}
+            </button>
+            {avatar && (
+              <button
+                type="button"
+                onClick={() => setAvatar("")}
+                className="text-xs font-semibold text-[#8a8f98] transition hover:text-[#b5432e] dark:text-gray-500"
+              >
+                {t("settings.profile.removePhoto")}
+              </button>
+            )}
+          </div>
         </div>
       </div>
+      {avatarError && <p className="text-xs text-[#b5432e]">{avatarError}</p>}
 
       <div>
         <FieldRow label={t("settings.profile.name")}>

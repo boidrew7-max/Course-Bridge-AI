@@ -120,7 +120,12 @@ export default function OnboardingPage() {
           const existing = new Set(prev.split(/[,;\n]/).map((c: string) => c.trim().toUpperCase()).filter(Boolean));
           const merged = [...prev.split(/[,;\n]/).map((c) => c.trim()).filter(Boolean)];
           for (const code of data.courses as string[]) {
-            if (!existing.has(code.toUpperCase())) merged.push(code);
+            const normalizedCode = code.trim();
+            if (!normalizedCode) continue;
+            if (!existing.has(normalizedCode.toUpperCase())) {
+              merged.push(normalizedCode);
+              existing.add(normalizedCode.toUpperCase());
+            }
           }
           return merged.join(", ");
         });

@@ -29,3 +29,12 @@ html.dark body {
   .print-plan, .print-plan * { visibility: visible; }
   .print-plan { position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
 }
+/* Sweeps across the transcript dropzone while a PDF is being parsed. */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin,
+  [class*="animate-[shimmer"] { animation: none; }
+}

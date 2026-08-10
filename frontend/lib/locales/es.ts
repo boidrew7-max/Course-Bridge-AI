@@ -190,6 +190,7 @@ const es: Dictionary = {
   "onboarding.step5.title": "¿Qué cursos has completado?",
   "onboarding.step5.subtitle": "Sube tu historial académico o enumera tus cursos en texto simple.",
   "onboarding.step5.uploadTranscript": "Subir historial académico (PDF)",
+  "onboarding.step5.dropHere": "Suelta tu historial académico para leerlo",
   "onboarding.step5.readingTranscript": "Leyendo tu historial académico…",
   "onboarding.step5.autoExtract": "Extraeremos tus cursos completados automáticamente",
   "onboarding.step5.noCoursesFound": "No se encontraron cursos en ese PDF.",

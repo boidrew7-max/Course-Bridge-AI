@@ -58,6 +58,12 @@ export default function OnboardingPage() {
   const [apCredits, setApCredits] = useState("");
   const [transcriptParsing, setTranscriptParsing] = useState(false);
   const [transcriptMessage, setTranscriptMessage] = useState("");
+  // Feedback here spans three very different outcomes — courses added, nothing
+  // found, upload failed — so the message carries its tone rather than all
+  // three rendering as the same grey line.
+  const [transcriptTone, setTranscriptTone] = useState<"success" | "warning" | "error">("success");
+  const [transcriptFileName, setTranscriptFileName] = useState("");
+  const [dragActive, setDragActive] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
   // An account is required before building a plan — check auth first and
@@ -98,23 +104,36 @@ export default function OnboardingPage() {
     setUcs((prev) => (prev.includes(value) ? prev.filter((u) => u !== value) : [...prev, value]));
   }
 
-  async function handleTranscriptUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleTranscriptUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-uploading the same file later
-    if (!file) return;
+    if (file) processTranscript(file);
+  }
 
+  function handleTranscriptDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processTranscript(file);
+  }
+
+  async function processTranscript(file: File) {
     setTranscriptParsing(true);
     setTranscriptMessage("");
+    setTranscriptFileName(file.name);
     try {
       const formData = new FormData();
       formData.append("file", file);
       const res = await fetch("/api/parse-transcript", { method: "POST", body: formData });
       const data = await res.json();
       if (data.error) {
+        setTranscriptTone("error");
         setTranscriptMessage(data.error);
       } else if (!data.courses?.length) {
+        setTranscriptTone("warning");
         setTranscriptMessage(data.warning ?? t("onboarding.step5.noCoursesFound"));
       } else {
+        setTranscriptTone("success");
         setNoCourses(false);
         setCourses((prev) => {
           const existing = new Set(prev.split(/[,;\n]/).map((c: string) => c.trim().toUpperCase()).filter(Boolean));
@@ -136,6 +155,7 @@ export default function OnboardingPage() {
         );
       }
     } catch {
+      setTranscriptTone("error");
       setTranscriptMessage(t("onboarding.step5.transcriptError"));
     } finally {
       setTranscriptParsing(false);
@@ -417,26 +437,85 @@ export default function OnboardingPage() {
 
               <label
                 htmlFor="transcript-upload"
-                className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#d8d8dc] dark:border-gray-700 bg-[#faf9f6] dark:bg-[#191a20] px-4 py-6 text-center transition hover:border-[#0b7f46]"
+                onDragOver={(e) => { e.preventDefault(); if (!transcriptParsing) setDragActive(true); }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={handleTranscriptDrop}
+                className={`group relative flex cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border-2 border-dashed px-4 py-8 text-center transition-all duration-200 ${
+                  dragActive
+                    ? "scale-[1.01] border-[#0b7f46] bg-[#f0faf5] dark:bg-[#0b7f46]/10"
+                    : transcriptParsing
+                      ? "border-[#0b7f46]/40 bg-[#faf9f6] dark:bg-[#191a20]"
+                      : "border-[#d8d8dc] dark:border-gray-700 bg-[#faf9f6] dark:bg-[#191a20] hover:border-[#0b7f46] hover:bg-[#f0faf5] dark:hover:bg-[#0b7f46]/5"
+                }`}
               >
                 <input
                   id="transcript-upload"
                   type="file"
                   accept="application/pdf"
                   className="hidden"
+                  disabled={transcriptParsing}
                   onChange={handleTranscriptUpload}
                 />
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0b7f46" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <path d="M14 2v6h6" />
-                </svg>
-                <span className="text-sm font-semibold text-[#303236] dark:text-gray-100">
-                  {transcriptParsing ? t("onboarding.step5.readingTranscript") : t("onboarding.step5.uploadTranscript")}
+
+                {/* Sweeps across the dropzone while the PDF is being read, so a
+                    slow parse reads as progress rather than a frozen page. */}
+                {transcriptParsing && (
+                  <span className="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_1.4s_infinite] bg-gradient-to-r from-transparent via-[#0b7f46]/10 to-transparent" />
+                )}
+
+                <span
+                  className={`flex h-11 w-11 items-center justify-center rounded-full transition-transform duration-200 ${
+                    dragActive ? "scale-110 bg-[#0b7f46]/15" : "bg-[#0b7f46]/10 group-hover:scale-105"
+                  }`}
+                >
+                  {transcriptParsing ? (
+                    <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b7f46" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M21 12a9 9 0 1 1-6.2-8.6" />
+                    </svg>
+                  ) : (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0b7f46" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <path d="M14 2v6h6" />
+                    </svg>
+                  )}
                 </span>
-                <span className="text-xs text-[#7b818b] dark:text-gray-500">{t("onboarding.step5.autoExtract")}</span>
+
+                <span className="text-sm font-semibold text-[#303236] dark:text-gray-100">
+                  {transcriptParsing
+                    ? t("onboarding.step5.readingTranscript")
+                    : dragActive
+                      ? t("onboarding.step5.dropHere")
+                      : t("onboarding.step5.uploadTranscript")}
+                </span>
+                <span className="text-xs text-[#7b818b] dark:text-gray-500">
+                  {transcriptParsing && transcriptFileName
+                    ? transcriptFileName
+                    : t("onboarding.step5.autoExtract")}
+                </span>
               </label>
+
               {transcriptMessage && (
-                <p className="text-xs text-[#7b818b] dark:text-gray-500">{transcriptMessage}</p>
+                <div
+                  className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs ${
+                    transcriptTone === "success"
+                      ? "border-[#0b7f46]/25 bg-[#f0faf5] text-[#0b6b3c] dark:bg-[#0b7f46]/10 dark:text-[#4ade80]"
+                      : transcriptTone === "warning"
+                        ? "border-amber-500/25 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                        : "border-red-500/25 bg-red-50 text-red-800 dark:bg-red-500/10 dark:text-red-300"
+                  }`}
+                >
+                  <svg className="mt-px shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    {transcriptTone === "success" ? (
+                      <path d="M20 6 9 17l-5-5" />
+                    ) : (
+                      <>
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 8v5M12 16h.01" />
+                      </>
+                    )}
+                  </svg>
+                  <span>{transcriptMessage}</span>
+                </div>
               )}
 
               <label className="flex cursor-pointer items-center gap-3 select-none">

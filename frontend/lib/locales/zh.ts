@@ -190,6 +190,7 @@ const zh: Dictionary = {
   "onboarding.step5.title": "你已完成哪些课程？",
   "onboarding.step5.subtitle": "上传你的成绩单，或用简单文字列出你的课程。",
   "onboarding.step5.uploadTranscript": "上传成绩单（PDF）",
+  "onboarding.step5.dropHere": "松开以读取你的成绩单",
   "onboarding.step5.readingTranscript": "正在读取你的成绩单…",
   "onboarding.step5.autoExtract": "我们会自动提取你已完成的课程",
   "onboarding.step5.noCoursesFound": "未在该 PDF 中找到任何课程。",

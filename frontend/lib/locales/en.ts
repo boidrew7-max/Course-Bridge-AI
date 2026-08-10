@@ -188,6 +188,7 @@ const en = {
   "onboarding.step5.title": "What courses have you completed?",
   "onboarding.step5.subtitle": "Upload your transcript or list your courses in plain text.",
   "onboarding.step5.uploadTranscript": "Upload transcript (PDF)",
+  "onboarding.step5.dropHere": "Drop your transcript to read it",
   "onboarding.step5.readingTranscript": "Reading your transcript…",
   "onboarding.step5.autoExtract": "We'll pull your completed courses out automatically",
   "onboarding.step5.noCoursesFound": "No courses found in that PDF.",

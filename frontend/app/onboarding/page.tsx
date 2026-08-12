@@ -58,15 +58,15 @@ export default function OnboardingPage() {
   const [apCredits, setApCredits] = useState("");
   const [transcriptParsing, setTranscriptParsing] = useState(false);
   const [transcriptMessage, setTranscriptMessage] = useState("");
-  // Feedback here spans three very different outcomes — courses added, nothing
-  // found, upload failed — so the message carries its tone rather than all
+  // Feedback here spans three very different outcomes: courses added, nothing
+  // found, upload failed: so the message carries its tone rather than all
   // three rendering as the same grey line.
   const [transcriptTone, setTranscriptTone] = useState<"success" | "warning" | "error">("success");
   const [transcriptFileName, setTranscriptFileName] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // An account is required before building a plan — check auth first and
+  // An account is required before building a plan: check auth first and
   // bounce to /login if there isn't one, rather than letting anyone into
   // the wizard anonymously. Prefill the name from the account (e.g. email
   // signup already has one), but Google accounts sometimes don't carry a
@@ -181,7 +181,7 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   }
 
-  // Once college + UC are picked, always use the real ASSIST major list —
+  // Once college + UC are picked, always use the real ASSIST major list :
   // never the plain hardcoded suggestions. Falling back to them while the
   // real list is still loading meant the exact same search (e.g. "Economics")
   // could match a plain name one moment and "Economics, B.A." the next,
@@ -238,7 +238,7 @@ export default function OnboardingPage() {
         </div>
 
         <div className="rounded-3xl border border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] p-8 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
-          {/* Step 1 — Name */}
+          {/* Step 1: Name */}
           {step === 1 && (
             <div className="flex flex-col gap-5">
               <div>
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 2 — College */}
+          {/* Step 2: College */}
           {step === 2 && (
             <div className="flex flex-col gap-5">
               <div>
@@ -331,7 +331,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3 — Target UCs */}
+          {/* Step 3: Target UCs */}
           {step === 3 && (
             <div className="flex flex-col gap-5">
               <div>
@@ -372,7 +372,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 4 — Major */}
+          {/* Step 4: Major */}
           {step === 4 && (
             <div className="flex flex-col gap-5">
               <div>
@@ -427,7 +427,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 5 — Courses */}
+          {/* Step 5: Courses */}
           {step === 5 && (
             <div className="flex flex-col gap-5">
               <div>

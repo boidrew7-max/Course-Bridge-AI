@@ -1,7 +1,7 @@
 // Extracts course codes from raw transcript text (PDF text-layer output).
 //
 // PDF extraction rarely preserves the neat "MATH 110A" spacing you see on
-// screen — columns come through as runs of spaces, tabs, or newlines, and some
+// screen: columns come through as runs of spaces, tabs, or newlines, and some
 // schools print codes in title case ("Math 110A") or hyphenated ("MATH-110A").
 // The separator and case handling below covers those shapes.
 //
@@ -30,11 +30,11 @@ const PREFIX_STOPWORDS = new Set([
   "DESCRIPTION", "SUBJ", "SUBJECT", "ATTEMPTED", "EARNED", "REPEAT",
   "INSTITUTION", "SUBTOTAL", "STANDING", "GOOD", "COMMENTS", "END",
   "OFFICIAL", "UNOFFICIAL", "CONTINUED", "BEGIN", "ADDRESS",
-  // Roman numerals ("Calculus II", "Chemistry III") — not course prefixes.
+  // Roman numerals ("Calculus II", "Chemistry III"): not course prefixes.
   "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
 ]);
 
-// "Fall 2024", "Class of 2019" — a bare four-digit year is never a course number.
+// "Fall 2024", "Class of 2019": a bare four-digit year is never a course number.
 const YEAR_LIKE_RE = /^(19|20)\d{2}$/;
 
 // The units/GPA column trails every course row, so the last word of a course

@@ -32,7 +32,7 @@ check('years rejected', 'Class of 2019 Awarded 2024', []);
 // Course titles must not conjure codes the transcript never listed.
 check('no phantom codes', 'PSYC 1 Introduction to Statistics for Psychology 4.0', ['PSYC 1']);
 
-// UC campuses spell subjects out in full — these are the transfer targets, so
+// UC campuses spell subjects out in full. These are the transfer targets, so
 // a short prefix cap silently dropped every destination-school course.
 check('long UC prefixes', 'COMPSCI 61A Structure of Programs 4.0', ['COMPSCI 61A']);
 check('MCELLBI', 'MCELLBI 32 Intro Human Physiology 3.0', ['MCELLBI 32']);

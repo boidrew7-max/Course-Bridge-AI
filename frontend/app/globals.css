@@ -2,33 +2,357 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ==========================================================================
+   Design tokens
+   Every color, font size, space, radius and duration on the marketing site
+   resolves to one of these. Components must not introduce one off hex codes.
+   ========================================================================== */
+
+:root {
+  /* Palette: one dark neutral, one near white, two grays, one accent, one border. */
+  --cb-dark: #14151a;
+  --cb-dark-raised: #1c1e24;
+  --cb-light: #ffffff;
+  --cb-light-raised: #faf9f6;
+
+  --cb-accent: #0b7f46;
+  --cb-accent-hover: #08683a;
+  --cb-accent-soft: #e7f3ed;
+  /* Text and icons that sit on top of the accent, in either theme. */
+  --cb-on-accent: #ffffff;
+  /* Lightened accent for use on dark neutrals, where #0b7f46 fails AA. */
+  --cb-accent-on-dark: #4cbd82;
+
+  /* Surfaces and text, remapped wholesale by the dark theme below. */
+  --cb-surface: var(--cb-light);
+  --cb-surface-alt: var(--cb-light-raised);
+  --cb-card: var(--cb-light);
+  --cb-text: #1a2e22;
+  --cb-body: #4d535c;
+  --cb-muted: #5a616b;
+  --cb-border: #e5e0d5;
+  --cb-link: var(--cb-accent);
+  --cb-link-hover: var(--cb-accent-hover);
+  --cb-shadow: 0 1px 2px rgba(20, 30, 25, 0.04), 0 8px 24px rgba(20, 30, 25, 0.05);
+
+  /* Type */
+  --cb-font-heading: var(--font-heading), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cb-font-body: var(--font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --cb-fs-hero: clamp(2rem, 5.2vw, 4rem);        /* 32px mobile, 64px desktop */
+  --cb-fs-h2: clamp(1.625rem, 3.4vw, 2.5rem);    /* 26px mobile, 40px desktop */
+  --cb-fs-h3: clamp(1.125rem, 1.6vw, 1.375rem);  /* 18px to 22px */
+  --cb-fs-lead: clamp(1.0625rem, 1.4vw, 1.1875rem);
+  --cb-fs-body: 1.0625rem;                        /* 17px, never below 16 */
+  --cb-fs-body-sm: 1rem;                          /* 16px floor */
+  --cb-fs-stat: clamp(1.75rem, 3vw, 2.25rem);
+
+  --cb-lh-heading: 1.1;
+  --cb-lh-body: 1.6;
+  --cb-ls-heading: -0.02em;
+  --cb-measure: 65ch;
+
+  /* Spacing, 8px scale */
+  --cb-space-1: 0.5rem;
+  --cb-space-2: 1rem;
+  --cb-space-3: 1.5rem;
+  --cb-space-4: 2rem;
+  --cb-space-5: 3rem;
+  --cb-space-6: 4rem;
+  --cb-section-y: clamp(3.5rem, 8vw, 8rem);       /* 56px mobile, 128px desktop */
+  --cb-gutter: clamp(1.25rem, 4vw, 2rem);
+  --cb-maxw: 78rem;
+
+  /* Shape */
+  --cb-radius-card: 14px;
+  --cb-radius-btn: 12px;
+  --cb-radius-pill: 999px;
+
+  /* Motion */
+  --cb-motion: 300ms;
+  --cb-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html.dark {
+  --cb-surface: var(--cb-dark);
+  --cb-surface-alt: #191a20;
+  --cb-card: var(--cb-dark-raised);
+  --cb-text: #f3f4f6;
+  --cb-body: #cbd2da;
+  --cb-muted: #9aa2ad;
+  --cb-border: #2c2f37;
+  --cb-link: var(--cb-accent-on-dark);
+  --cb-link-hover: #6fd3a0;
+  --cb-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+  background: var(--cb-dark);
+}
+
+/* Sections that are dark in both themes (hero, final CTA). Remapping the same
+   token names means every child component keeps working unchanged. */
+.cb-on-dark {
+  --cb-surface: var(--cb-dark);
+  --cb-surface-alt: #191a20;
+  --cb-card: #1f2128;
+  --cb-text: #f5f7f6;
+  --cb-body: #c9d1d6;
+  --cb-muted: #a2abb3;
+  --cb-border: #31343c;
+  --cb-link: var(--cb-accent-on-dark);
+  --cb-link-hover: #6fd3a0;
+  --cb-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: var(--cb-dark);
+  color: var(--cb-body);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
 * {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
+  /* Sticky nav must not cover anchored sections. */
+  scroll-padding-top: 5.5rem;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
+  background: var(--cb-surface);
+  color: var(--cb-body);
+  font-family: var(--cb-font-body);
+  font-size: var(--cb-fs-body);
+  line-height: var(--cb-lh-body);
+  overflow-x: hidden;
 }
 
-html.dark {
-  background: #14151a;
-  color-scheme: dark;
+h1, h2, h3, h4 {
+  font-family: var(--cb-font-heading);
+  color: var(--cb-text);
+  line-height: var(--cb-lh-heading);
+  letter-spacing: var(--cb-ls-heading);
+  margin: 0;
+  text-wrap: balance;
 }
 
-html.dark body {
-  background: #14151a;
-  color: #e5e7eb;
+:focus-visible {
+  outline: 3px solid var(--cb-link);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
+
+/* ==========================================================================
+   Layout primitives
+   ========================================================================== */
+
+.cb-section {
+  padding-block: var(--cb-section-y);
+  background: var(--cb-surface);
+}
+
+.cb-section-alt {
+  background: var(--cb-surface-alt);
+}
+
+.cb-container {
+  width: 100%;
+  max-width: var(--cb-maxw);
+  margin-inline: auto;
+  padding-inline: var(--cb-gutter);
+}
+
+.cb-lead {
+  margin: var(--cb-space-2) 0 0;
+  max-width: var(--cb-measure);
+  font-size: var(--cb-fs-lead);
+  line-height: var(--cb-lh-body);
+  color: var(--cb-muted);
+}
+
+.cb-h1 {
+  font-size: var(--cb-fs-hero);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.cb-h2 {
+  font-size: var(--cb-fs-h2);
+  font-weight: 700;
+}
+
+.cb-h3 {
+  font-size: var(--cb-fs-h3);
+  font-weight: 700;
+}
+
+.cb-card {
+  background: var(--cb-card);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius-card);
+  padding: var(--cb-space-3);
+}
+
+/* ==========================================================================
+   Buttons and links
+   ========================================================================== */
+
+.cb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cb-space-1);
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--cb-radius-btn);
+  border: 1px solid transparent;
+  font-family: var(--cb-font-heading);
+  font-size: var(--cb-fs-body-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--cb-motion) var(--cb-ease),
+              border-color var(--cb-motion) var(--cb-ease),
+              color var(--cb-motion) var(--cb-ease);
+}
+
+.cb-btn-primary {
+  background: var(--cb-accent);
+  color: var(--cb-on-accent);
+}
+
+.cb-btn-primary:hover {
+  background: var(--cb-accent-hover);
+}
+
+.cb-btn-invert {
+  background: var(--cb-light);
+  color: var(--cb-accent);
+}
+
+.cb-btn-invert:hover {
+  background: var(--cb-accent-soft);
+}
+
+.cb-btn-quiet {
+  background: transparent;
+  border-color: var(--cb-border);
+  color: var(--cb-body);
+}
+
+.cb-btn-quiet:hover {
+  border-color: var(--cb-link);
+  color: var(--cb-link);
+}
+
+.cb-link {
+  color: var(--cb-body);
+  text-decoration: none;
+  transition: color var(--cb-motion) var(--cb-ease);
+}
+
+.cb-link:hover {
+  color: var(--cb-link-hover);
+}
+
+/* ==========================================================================
+   Motion: fade and rise once per element on scroll
+   ========================================================================== */
+
+.cb-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity var(--cb-motion) var(--cb-ease),
+              transform var(--cb-motion) var(--cb-ease);
+}
+
+.cb-reveal.cb-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .cb-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Navigation sizing: the 375px row has to fit logo, primary action and the
+   menu trigger without wrapping or overflowing. */
+.cb-nav-logo {
+  height: 28px;
+  width: auto;
+  max-width: 128px;
+}
+
+.cb-nav-cta {
+  padding-inline: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .cb-nav-logo {
+    height: 36px;
+    max-width: none;
+  }
+  .cb-nav-cta {
+    padding-inline: 1.125rem;
+  }
+}
+
+/* The logo asset is dark navy and teal on transparent, so it sinks into the
+   dark theme. Inverting lightness while rotating the hue back keeps the mark
+   recognisable until a proper light-on-dark asset exists. */
+html.dark .cb-logo {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* ==========================================================================
+   Responsive visibility
+   Declared after .cb-btn so they win the cascade against its display rule.
+   ========================================================================== */
+
+.cb-only-desktop {
+  display: none;
+}
+
+.cb-only-mobile {
+  display: inline-flex;
+}
+
+@media (min-width: 1024px) {
+  .cb-only-desktop {
+    display: inline-flex;
+  }
+  .cb-only-mobile {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   App level leftovers
+   ========================================================================== */
 
 @media print {
   body * { visibility: hidden; }
   .print-plan, .print-plan * { visibility: visible; }
   .print-plan { position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
 }
+
 /* Sweeps across the transcript dropzone while a PDF is being parsed. */
 @keyframes shimmer {
   100% { transform: translateX(100%); }

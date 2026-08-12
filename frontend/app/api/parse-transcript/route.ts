@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     if (courses.length === 0) {
       return NextResponse.json({
         courses: [],
-        warning: "Couldn't find any course codes in that PDF. It may be a scanned image rather than text — try entering your courses manually instead.",
+        warning: "Couldn't find any course codes in that PDF. It may be a scanned image rather than text. Try entering your courses manually instead.",
       });
     }
 

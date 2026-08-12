@@ -44,6 +44,11 @@ const es: Dictionary = {
   "nav.forStudents": "Para estudiantes",
   "nav.whatYouGet": "Qué obtienes",
   "nav.pricing": "Precios",
+  "nav.faq": "Preguntas frecuentes",
+  "nav.logIn": "Iniciar sesión",
+  "nav.openMenu": "Abrir menú",
+  "nav.closeMenu": "Cerrar menú",
+  "nav.primaryAria": "Principal",
   "nav.myPlan": "Mi plan",
   "nav.buildMyPlan": "Crear mi plan",
 
@@ -54,13 +59,12 @@ const es: Dictionary = {
   "footer.login": "Iniciar sesión",
   "footer.buildMyPlan": "Crear mi plan",
   "footer.disclaimer": "Datos de demostración únicamente. CourseBridge es independiente y no está afiliado con ASSIST, UC, CSU ni CCSF. Verifica siempre los requisitos en ASSIST.org, los catálogos oficiales de la universidad y con un consejero.",
+  "footer.copyright": "© {year} CourseBridge. Todos los derechos reservados.",
 
-  // Home — hero
-  "home.badge": "Creado en torno a problemas reales de planificación de transferencia",
+  // Home: hero
   "home.heroTitle": "Sabe exactamente qué clases necesitas antes de transferirte.",
   "home.heroBody": "CourseBridge planifica tus requisitos de transferencia a la UC usando datos reales de articulación de ASSIST, personalizados según tu community college, especialidad y campus de destino, para que nada se te escape.",
   "home.buildMyPlan": "Crear mi plan",
-  "home.alreadyHavePlan": "¿Ya tienes un plan? Inicia sesión",
   "home.stats.communityColleges": "Community colleges",
   "home.stats.coursesIndexed": "Cursos indexados",
   "home.stats.ucCampuses": "Campus de la UC",
@@ -74,15 +78,22 @@ const es: Dictionary = {
   "home.preview.dataStructures": "Estructuras de datos",
   "home.preview.linearAlgebra": "Álgebra lineal",
 
-  // Home — why
-  "home.why.title": "Por qué CourseBridge",
+  // Home: why
+  "home.why.title": "Planificar la transferencia, con y sin CourseBridge",
   "home.why.body": "La planificación de transferencia no debería depender de conseguir cita con un consejero antes de que se llenen los horarios. Este es el problema que resuelve CourseBridge.",
+  "home.without.title": "Planificarlo por tu cuenta",
+  "home.with.title": "Planificarlo con CourseBridge",
   "home.painPoints.0": "ASSIST.org puede ser difícil de leer.",
   "home.painPoints.1": "Los requisitos cambian según la escuela y la especialidad.",
   "home.painPoints.2": "Un solo prerrequisito faltante puede retrasar tu transferencia.",
   "home.painPoints.3": "Los consejeros ayudan, pero las citas se llenan rápido.",
 
-  // Home — how it works
+  "home.gainPoints.0": "Tus requisitos se presentan en lenguaje claro.",
+  "home.gainPoints.1": "El plan es específico para tu universidad, especialidad y campus de destino.",
+  "home.gainPoints.2": "Las cadenas de prerrequisitos se ordenan por ti, para que no se te escape nada.",
+  "home.gainPoints.3": "Puedes consultar tu plan cuando quieras, sin esperar una cita.",
+
+  // Home: how it works
   "home.how.title": "Cómo funciona",
   "home.how.body": "Tres pasos, y tendrás un plan semestre a semestre basado en datos reales de articulación.",
   "home.how.step1.title": "Agrega tus cursos",
@@ -92,7 +103,7 @@ const es: Dictionary = {
   "home.how.step3.title": "Obtén un plan claro",
   "home.how.step3.body": "Consulta los requisitos de especialidad, las clases bloqueadas y opciones de educación general más ligeras.",
 
-  // Home — what you get
+  // Home: what you get
   "home.get.title": "Qué obtienen los estudiantes",
   "home.get.body": "Todo lo que necesitas para planificar tu transferencia con confianza, en un solo lugar.",
   "home.get.feature1.title": "Seguimiento de preparación de especialidad",
@@ -108,13 +119,26 @@ const es: Dictionary = {
   "home.get.feature6.title": "Recordatorios de fechas límite de solicitud",
   "home.get.feature6.body": "Mantén a la vista las fechas límite de TAG, solicitud a la UC y ayuda financiera mientras tu plan toma forma.",
 
-  // Home — pricing
+  // Home: pricing
   "home.pricing.title": "Gratis durante la beta",
   "home.pricing.body": "CourseBridge es actualmente gratuito para todos los estudiantes de community college de California mientras seguimos desarrollándolo.",
 
-  // Home — final CTA
-  "home.cta.title": "¿Listo para ver tu plan?",
-  "home.cta.body": "Responde algunas preguntas sobre tu universidad, especialidad y campus de destino — CourseBridge hace el resto.",
+  // Home: FAQ
+  "home.faq.title": "Preguntas frecuentes",
+  "home.faq.body": "Qué hace CourseBridge, de dónde salen los datos y qué no puede hacer por ti.",
+  "home.faq.q1": "¿De dónde vienen los datos de los cursos?",
+  "home.faq.a1": "Los planes se construyen con los acuerdos de articulación de ASSIST entre los community colleges de California y los campus de UC. CourseBridge es independiente y no está afiliado a ASSIST.",
+  "home.faq.q2": "¿Esto reemplaza a mi consejero?",
+  "home.faq.a2": "No. Te da un plan para llevar a tu consejero, de modo que la cita empiece más avanzada. Confirma siempre tus requisitos con tu universidad y con ASSIST.org.",
+  "home.faq.q3": "¿Necesito una cuenta?",
+  "home.faq.a3": "Puedes crear un plan sin cuenta. Crear una guarda tu universidad, tu especialidad y tus cursos completados para que tu plan te espere la próxima vez.",
+  "home.faq.q4": "¿Cuánto cuesta?",
+  "home.faq.a4": "Nada. CourseBridge es gratuito para todos los estudiantes de community colleges de California mientras está en beta.",
+  "home.faq.q5": "¿Puedo subir mi historial académico en vez de escribir los cursos?",
+  "home.faq.a5": "Sí. Sube un historial académico en PDF durante el registro y CourseBridge extrae tus cursos completados para que los revises.",
+
+  // Home: final CTA
+  "home.cta.title": "Descubre qué clases te faltan",
 
   // Auth (login/signup)
   "auth.welcomeBack": "Bienvenido de nuevo",
@@ -177,14 +201,14 @@ const es: Dictionary = {
   "onboarding.step2.districtWarning": "\"Rancho Santiago College\" es el nombre del distrito, no un campus específico. ¿A qué universidad asistes realmente?",
 
   "onboarding.step3.title": "¿A qué UCs quieres transferirte?",
-  "onboarding.step3.subtitle": "Selecciona todas las que apliquen — crearemos un plan para cada una.",
+  "onboarding.step3.subtitle": "Selecciona todas las que apliquen. Crearemos un plan para cada una.",
   "onboarding.step3.selectedOne": "1 escuela seleccionada",
   "onboarding.step3.selectedMany": "{n} escuelas seleccionadas",
 
   "onboarding.step4.title": "¿Qué quieres estudiar?",
   "onboarding.step4.subtitle": "Ingresa la especialidad que planeas estudiar.",
   "onboarding.step4.placeholder": "ej. Ciencias de la Computación",
-  "onboarding.step4.noMatch": "Ninguna especialidad coincide con \"{q}\" — aún puedes escribirla exactamente y continuar.",
+  "onboarding.step4.noMatch": "Ninguna especialidad coincide con \"{q}\". Aún puedes escribirla exactamente y continuar.",
   "onboarding.step4.loadingMajors": "Cargando la lista completa de especialidades para {college} → {uc}…",
 
   "onboarding.step5.title": "¿Qué cursos has completado?",
@@ -194,8 +218,8 @@ const es: Dictionary = {
   "onboarding.step5.readingTranscript": "Leyendo tu historial académico…",
   "onboarding.step5.autoExtract": "Extraeremos tus cursos completados automáticamente",
   "onboarding.step5.noCoursesFound": "No se encontraron cursos en ese PDF.",
-  "onboarding.step5.addedCourseOne": "Se agregó 1 curso desde tu historial académico — revisa la lista a continuación.",
-  "onboarding.step5.addedCourseMany": "Se agregaron {n} cursos desde tu historial académico — revisa la lista a continuación.",
+  "onboarding.step5.addedCourseOne": "Se agregó 1 curso desde tu historial académico. Revisa la lista a continuación.",
+  "onboarding.step5.addedCourseMany": "Se agregaron {n} cursos desde tu historial académico. Revisa la lista a continuación.",
   "onboarding.step5.transcriptError": "Algo salió mal al leer ese archivo. Inténtalo de nuevo o ingresa tus cursos manualmente.",
   "onboarding.step5.noCoursesYet": "Todavía no he completado ningún curso universitario",
   "onboarding.step5.coursesPlaceholder": "ej. Cálculo 1, Inglés 1A, Introducción a la programación, Economía 1",
@@ -208,7 +232,7 @@ const es: Dictionary = {
   "onboarding.step5.apPlaceholder": "ej. AP Cálculo AB (puntaje 4), AP Inglés (puntaje 5)",
   "onboarding.step5.buildMyPlan": "Crear mi plan →",
 
-  // Floating AI widget (chrome only — replies come from the backend and stay in the language it responds in)
+  // Floating AI widget (chrome only: replies come from the backend and stay in the language it responds in)
   "widget.askButton": "Pregúntale a CourseBridge AI",
   "widget.title": "CourseBridge AI",
   "widget.subtitle": "Pregúntame lo que quieras sobre la transferencia a la UC",

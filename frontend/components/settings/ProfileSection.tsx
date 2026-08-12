@@ -61,11 +61,11 @@ function bestOf(...values: (string | undefined)[]): string {
 
 // Downscales/crops an image file to a square JPEG data URL so avatars stay
 // small regardless of the source photo's resolution (a phone photo can be
-// 10+ MB — this keeps what we actually store/send in the few-hundred-KB
+// 10+ MB: this keeps what we actually store/send in the few-hundred-KB
 // range, well under the backend's 500KB cap on the avatar field).
 //
 // Reads via FileReader (data: URL) rather than URL.createObjectURL (blob:
-// URL) — the app's CSP img-src allows 'self' data: https: but not blob:,
+// URL): the app's CSP img-src allows 'self' data: https: but not blob:,
 // and data: URLs work here just as well for a one-shot local decode.
 function fileToSquareDataUrl(file: File, size = 256, quality = 0.85): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -316,7 +316,7 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-[#303236] dark:text-gray-100">{name || "—"}</p>
+          <p className="truncate text-base font-semibold text-[#303236] dark:text-gray-100">{name || "Not set"}</p>
           {user?.email && <p className="truncate text-sm text-[#7b818b] dark:text-gray-500">{user.email}</p>}
           <div className="mt-1 flex items-center gap-3">
             <button

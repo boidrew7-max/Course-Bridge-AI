@@ -88,20 +88,19 @@ html.dark {
   background: var(--cb-dark);
 }
 
-/* Sections that are dark in both themes (hero, final CTA). Remapping the same
-   token names means every child component keeps working unchanged. */
-.cb-on-dark {
-  --cb-surface: var(--cb-dark);
-  --cb-surface-alt: #191a20;
-  --cb-card: #1f2128;
-  --cb-text: #f5f7f6;
-  --cb-body: #c9d1d6;
-  --cb-muted: #a2abb3;
-  --cb-border: #31343c;
-  --cb-link: var(--cb-accent-on-dark);
-  --cb-link-hover: #6fd3a0;
-  --cb-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
-  background: var(--cb-dark);
+/* The closing call to action is a solid accent band in both themes. Remapping
+   the token names means every child component keeps working unchanged. */
+.cb-band-accent {
+  --cb-surface: var(--cb-accent);
+  --cb-surface-alt: var(--cb-accent);
+  --cb-card: var(--cb-accent-hover);
+  --cb-text: var(--cb-on-accent);
+  --cb-body: color-mix(in srgb, var(--cb-on-accent) 88%, var(--cb-accent));
+  --cb-muted: color-mix(in srgb, var(--cb-on-accent) 82%, var(--cb-accent));
+  --cb-border: color-mix(in srgb, var(--cb-on-accent) 30%, var(--cb-accent));
+  --cb-link: var(--cb-on-accent);
+  --cb-link-hover: var(--cb-on-accent);
+  background: var(--cb-accent);
   color: var(--cb-body);
 }
 

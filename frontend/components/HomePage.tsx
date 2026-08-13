@@ -91,7 +91,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* ---------------------------------------------------------------- Hero */}
-      <section className="cb-on-dark cb-section">
+      <section className="cb-section cb-section-alt">
         <div className="cb-container">
           <div className="grid items-center gap-[var(--cb-space-5)] lg:grid-cols-[1.05fr_0.95fr]">
             <div>
@@ -157,7 +157,7 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------- Problem vs solution */}
-      <section id="students" className="cb-section cb-section-alt">
+      <section id="students" className="cb-section">
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.why.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.why.body")}</p>
@@ -170,7 +170,7 @@ export default function HomePage() {
       </section>
 
       {/* -------------------------------------------------------- How it works */}
-      <section className="cb-section">
+      <section className="cb-section cb-section-alt">
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.how.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.how.body")}</p>
@@ -218,7 +218,7 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------------- What you get */}
-      <section id="counselors" className="cb-section cb-section-alt">
+      <section id="counselors" className="cb-section">
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.get.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.get.body")}</p>
@@ -238,7 +238,7 @@ export default function HomePage() {
       </section>
 
       {/* -------------------------------------------- Why us (PLACEHOLDER) */}
-      <section className="cb-section">
+      <section className="cb-section cb-section-alt">
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">Why CourseBridge over the alternatives</h2>
           <p className="cb-lead cb-reveal">
@@ -269,7 +269,7 @@ export default function HomePage() {
       </section>
 
       {/* --------------------------------------- Social proof (PLACEHOLDER) */}
-      <section className="cb-section cb-section-alt">
+      <section className="cb-section">
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">What students say</h2>
           <p className="cb-lead cb-reveal">
@@ -326,7 +326,7 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------------------ Pricing */}
-      <section id="pricing" className="cb-section">
+      <section id="pricing" className="cb-section cb-section-alt">
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.pricing.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.pricing.body")}</p>
@@ -334,7 +334,7 @@ export default function HomePage() {
       </section>
 
       {/* ---------------------------------------------------------------- FAQ */}
-      <section id="faq" className="cb-section cb-section-alt">
+      <section id="faq" className="cb-section">
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.faq.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.faq.body")}</p>
@@ -348,7 +348,7 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------------------ Final CTA */}
-      <section className="cb-on-dark cb-section">
+      <section className="cb-section cb-band-accent">
         <div className="cb-container" style={{ textAlign: "center" }}>
           <h2 className="cb-h2" style={{ marginInline: "auto", maxWidth: "20ch" }}>
             {t("home.cta.title")}
@@ -503,8 +503,8 @@ function PlanPreview({ t }: { t: Translate }) {
               key={course}
               style={{
                 borderRadius: "var(--cb-radius-btn)",
-                background: "color-mix(in srgb, var(--cb-accent) 18%, var(--cb-card))",
-                color: "var(--cb-link)",
+                background: "var(--cb-accent)",
+                color: "var(--cb-on-accent)",
                 padding: "0.375rem 0.75rem",
                 fontSize: "var(--cb-fs-body-sm)",
                 fontWeight: 600,

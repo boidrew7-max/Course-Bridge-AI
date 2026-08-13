@@ -352,6 +352,27 @@ html.dark .cb-logo {
   .print-plan { position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
 }
 
+/* Thin, on-brand horizontal scrollbar for card rails (e.g. My Plan's
+   schedule board) — replaces the bare grey system scrollbar. */
+.cb-scroll-x {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cb-border) transparent;
+}
+.cb-scroll-x::-webkit-scrollbar {
+  height: 6px;
+}
+.cb-scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cb-scroll-x::-webkit-scrollbar-thumb {
+  background: var(--cb-border);
+  border-radius: 999px;
+}
+.cb-scroll-x::-webkit-scrollbar-thumb:hover {
+  background: var(--cb-accent-soft);
+}
+
 /* Sweeps across the transcript dropzone while a PDF is being parsed. */
 @keyframes shimmer {
   100% { transform: translateX(100%); }

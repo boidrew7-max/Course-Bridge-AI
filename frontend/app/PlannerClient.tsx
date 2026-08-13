@@ -1132,7 +1132,7 @@ function PlanTimeline({ text, completedRaw }: { text: string; school: string; ma
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border border-[#d8d0c3] dark:border-gray-600" />Still to take</span>
       </div>
 
-      <div className="mt-4 -mx-4 overflow-x-auto px-4 pb-2">
+      <div className="cb-scroll-x mt-4 -mx-4 px-4 pb-2">
         <div className="flex w-max items-start">
           {terms.map((term, ti) => (
             <div key={ti} className="flex items-start">

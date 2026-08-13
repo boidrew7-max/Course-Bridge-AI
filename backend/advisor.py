@@ -241,7 +241,26 @@ def _build_profile_context(user_profile):
     )
 
 
-def _build_messages(conversation_history, user_profile=None):
+_LANGUAGE_NAMES = {
+    "en": "English",
+    "es": "Spanish",
+    "zh": "Chinese (Simplified)",
+}
+
+
+def _language_instruction(language):
+    if not language or language == "en":
+        return ""
+    name = _LANGUAGE_NAMES.get(language, language)
+    return (
+        f"\n\nRESPOND IN {name.upper()}. Write your entire reply in {name}, "
+        f"regardless of what language the student writes in or what language "
+        f"the data context below is in. Keep course codes, school names, and "
+        f"proper nouns as-is — translate everything else."
+    )
+
+
+def _build_messages(conversation_history, user_profile=None, language="en"):
     query = conversation_history[-1]["content"]
     context_blocks = []
 
@@ -299,6 +318,7 @@ def _build_messages(conversation_history, user_profile=None):
     system = SYSTEM_PROMPT + _build_profile_context(user_profile)
     if context_str:
         system += f"\n\n=== DATA FOR THIS QUERY ===\n{context_str}\n=== END DATA ==="
+    system += _language_instruction(language)
 
     return [{"role": "system", "content": system}] + conversation_history
 
@@ -323,8 +343,8 @@ Rules:
 - Keep the JSON block on its own line at the very end — never in the middle of your message."""
 
 
-def ask_advisor_onboarding_stream(conversation_history):
-    messages = [{"role": "system", "content": ONBOARDING_PROMPT}] + list(conversation_history)
+def ask_advisor_onboarding_stream(conversation_history, language="en"):
+    messages = [{"role": "system", "content": ONBOARDING_PROMPT + _language_instruction(language)}] + list(conversation_history)
     stream = _get_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=messages,
@@ -338,8 +358,8 @@ def ask_advisor_onboarding_stream(conversation_history):
             yield delta
 
 
-def ask_advisor(conversation_history, user_profile=None):
-    messages = _build_messages(conversation_history, user_profile)
+def ask_advisor(conversation_history, user_profile=None, language="en"):
+    messages = _build_messages(conversation_history, user_profile, language)
     response = _get_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=messages,
@@ -349,8 +369,8 @@ def ask_advisor(conversation_history, user_profile=None):
     return response.choices[0].message.content
 
 
-def ask_advisor_stream(conversation_history, user_profile=None):
-    messages = _build_messages(conversation_history, user_profile)
+def ask_advisor_stream(conversation_history, user_profile=None, language="en"):
+    messages = _build_messages(conversation_history, user_profile, language)
     stream = _get_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=messages,
@@ -364,9 +384,9 @@ def ask_advisor_stream(conversation_history, user_profile=None):
             yield delta
 
 
-def ask_advisor_stream_fallback(conversation_history, user_profile=None):
+def ask_advisor_stream_fallback(conversation_history, user_profile=None, language="en"):
     """Fallback to a faster/smaller model when the primary is rate-limited."""
-    messages = _build_messages(conversation_history, user_profile)
+    messages = _build_messages(conversation_history, user_profile, language)
     stream = _get_client().chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=messages,

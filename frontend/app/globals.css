@@ -343,6 +343,37 @@ html.dark .cb-logo {
 }
 
 /* ==========================================================================
+   Legal pages (/privacy, /terms)
+   Applied to <main> only, so the nav and footer keep the site's own typeface.
+   Set in a text serif and pulled up closer to the nav: these are documents to
+   read, not sections to scroll past.
+   ========================================================================== */
+
+.cb-legal {
+  --cb-font-heading: var(--font-legal), Georgia, "Times New Roman", serif;
+  --cb-font-body: var(--font-legal), Georgia, "Times New Roman", serif;
+  --cb-ls-heading: normal;
+  /* Serif text carries a slightly longer line comfortably. */
+  --cb-measure: 72ch;
+  font-family: var(--cb-font-body);
+  /* Roughly a third of the usual top padding, so the title sits near the nav. */
+  padding-block: clamp(1.75rem, 3vw, 2.75rem) var(--cb-section-y);
+}
+
+.cb-legal h1,
+.cb-legal h2 {
+  font-family: var(--cb-font-heading);
+  letter-spacing: normal;
+  line-height: 1.25;
+}
+
+.cb-legal p,
+.cb-legal li {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+/* ==========================================================================
    App level leftovers
    ========================================================================== */
 

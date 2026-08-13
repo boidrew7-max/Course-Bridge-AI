@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LegalPage from "../../components/LegalPage";
 import terms from "../../lib/legal/terms";
+import { legalSerif } from "../../lib/legalFont";
 
 export const metadata: Metadata = {
   title: "Terms of service",
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  return <LegalPage doc={terms} />;
+  return <LegalPage doc={terms} fontClass={legalSerif.variable} />;
 }

@@ -10,7 +10,7 @@ import type { LegalDocSet } from "../lib/legal/types";
  * falling back to English. Uses the site's existing design tokens so these
  * pages need no styling of their own.
  */
-export default function LegalPage({ doc }: { doc: LegalDocSet }) {
+export default function LegalPage({ doc, fontClass = "" }: { doc: LegalDocSet; fontClass?: string }) {
   const { language } = useTranslation();
   const content = doc[language as keyof LegalDocSet] ?? doc.en;
 
@@ -18,7 +18,7 @@ export default function LegalPage({ doc }: { doc: LegalDocSet }) {
     <div style={{ background: "var(--cb-surface)", minHeight: "100vh" }}>
       <Navbar />
 
-      <main className="cb-section">
+      <main className={`cb-section cb-legal ${fontClass}`}>
         <div className="cb-container" style={{ maxWidth: "48rem" }}>
           <h1 className="cb-h2">{content.title}</h1>
           <p
@@ -80,18 +80,20 @@ function renderBody(body: string[]) {
     ) : (
       <ul
         key={i}
+        // No flex here: it strips list-item display and the markers vanish.
         style={{
           margin: "var(--cb-space-2) 0 0",
-          paddingLeft: "1.25rem",
+          // Tailwind's preflight strips list-style from every ul, so set it back.
+          listStyle: "disc",
+          paddingLeft: "1.5rem",
           maxWidth: "var(--cb-measure)",
           color: "var(--cb-muted)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "var(--cb-space-1)",
         }}
       >
         {block.items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item} style={{ marginBottom: "var(--cb-space-1)" }}>
+            {item}
+          </li>
         ))}
       </ul>
     ),

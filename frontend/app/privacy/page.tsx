@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import LegalPage from "../../components/LegalPage";
 import privacy from "../../lib/legal/privacy";
+import { legalSerif } from "../../lib/legalFont";
 
 export const metadata: Metadata = {
   title: "Privacy policy",
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  return <LegalPage doc={privacy} />;
+  return <LegalPage doc={privacy} fontClass={legalSerif.variable} />;
 }

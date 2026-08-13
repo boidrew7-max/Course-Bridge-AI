@@ -7,6 +7,7 @@ from flask import Flask, request, Response, stream_with_context, jsonify, redire
 from advisor import (
     ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream,
 )
+from search_professors import recommend_professor
 from plan_engine import (build_plan as _engine_build_plan,
                          render_plan_stream as _engine_render_stream,
                          repair_term_headers as _engine_repair_term_headers,
@@ -1064,6 +1065,20 @@ def tag_check():
         "filingPeriod":       shared.get("tagFilingPeriod", "September 1-30"),
         "nonParticipating":   shared.get("nonParticipatingCampuses", []),
     })
+
+
+@app.route("/api/professor-recommendation", methods=["POST"])
+def professor_recommendation():
+    data    = request.get_json() or {}
+    college = (data.get("college") or "").strip()
+    subject = (data.get("subject") or "").strip()
+    if not college or not subject:
+        return jsonify({"error": "college and subject are required"}), 400
+
+    professor = recommend_professor(college, subject)
+    if not professor:
+        return jsonify({"found": False})
+    return jsonify({"found": True, "professor": professor})
 
 
 if __name__ == "__main__":

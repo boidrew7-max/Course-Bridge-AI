@@ -958,6 +958,31 @@ const UC_STATS: Record<string, { rate: string; gpa: string; tag: boolean; tagGPA
   "UC Merced":         { rate: "72.1%", gpa: "3.0 to 3.4", tag: true,  tagGPA: "2.4" },
 };
 
+// The backend (plan_engine.py's _UC_NAME_MAP) stores/returns the bare campus
+// name — "Berkeley", "Los Angeles", "San Diego" — not "UC Berkeley"/"UCLA",
+// so a raw UC_STATS[schoolName] lookup silently misses for every real
+// school. These aliases mirror that same mapping so the two stay in sync.
+const UC_NAME_ALIASES: Record<string, string> = {
+  "ucla": "UCLA", "uc la": "UCLA", "los angeles": "UCLA",
+  "ucb": "UC Berkeley", "uc berkeley": "UC Berkeley", "cal": "UC Berkeley", "berkeley": "UC Berkeley",
+  "ucsd": "UC San Diego", "uc san diego": "UC San Diego", "san diego": "UC San Diego",
+  "uci": "UC Irvine", "uc irvine": "UC Irvine", "irvine": "UC Irvine",
+  "ucsb": "UC Santa Barbara", "uc santa barbara": "UC Santa Barbara", "santa barbara": "UC Santa Barbara",
+  "ucd": "UC Davis", "uc davis": "UC Davis", "davis": "UC Davis",
+  "ucsc": "UC Santa Cruz", "uc santa cruz": "UC Santa Cruz", "santa cruz": "UC Santa Cruz",
+  "ucr": "UC Riverside", "uc riverside": "UC Riverside", "riverside": "UC Riverside",
+  "ucm": "UC Merced", "uc merced": "UC Merced", "merced": "UC Merced",
+};
+
+function ucDisplayName(rawName: string) {
+  return UC_NAME_ALIASES[rawName.trim().toLowerCase()] || rawName;
+}
+
+function getUcStats(rawName: string) {
+  const key = UC_NAME_ALIASES[rawName.trim().toLowerCase()];
+  return key ? UC_STATS[key] : undefined;
+}
+
 const CALGETC_AREAS = [
   { id: "1a", area: "1A", title: "English Composition", detail: "1 course (e.g. English 1A)" },
   { id: "1b", area: "1B", title: "Critical Thinking / Composition", detail: "1 course" },
@@ -1112,9 +1137,49 @@ function courseLooksCompleted(code: string, completedRaw: string) {
   return normalize(completedRaw).includes(normalize(code));
 }
 
-function PlanTimeline({ text, completedRaw }: { text: string; school: string; major: string; completedRaw?: string }) {
+type ProfessorRecommendation = {
+  name: string;
+  department: string;
+  avgRating: number;
+  numRatings: number;
+  avgDifficulty: number;
+  wouldTakeAgainPercent: number;
+  school: string;
+};
+
+function PlanTimeline({ text, completedRaw, college }: { text: string; school: string; major: string; completedRaw?: string; college?: string }) {
   const terms = useMemo(() => parseTimeline(text), [text]);
   const [selected, setSelected] = useState<{ course: TimelineCourse; termLabel: string } | null>(null);
+  const [profState, setProfState] = useState<{ loading: boolean; found: boolean; professor: ProfessorRecommendation | null }>({
+    loading: false, found: false, professor: null,
+  });
+
+  useEffect(() => {
+    if (!selected) return;
+    const subject = getSubject(selected.course.code);
+    if (!college) {
+      setProfState({ loading: false, found: false, professor: null });
+      return;
+    }
+    let cancelled = false;
+    setProfState({ loading: true, found: false, professor: null });
+    fetch("/api/professor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ college, subject }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setProfState({ loading: false, found: !!data.found, professor: data.professor ?? null });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setProfState({ loading: false, found: false, professor: null });
+      });
+    return () => { cancelled = true; };
+  }, [selected, college]);
+
   if (terms.length === 0) return null;
 
   const totalUnits = terms.reduce((sum, t) => sum + t.units, 0);
@@ -1194,9 +1259,47 @@ function PlanTimeline({ text, completedRaw }: { text: string; school: string; ma
             </div>
 
             <p className="mt-6 text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500">Recommended professor</p>
-            <div className="mt-2 rounded-2xl border border-dashed border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4">
-              <p className="text-sm text-[#6f7680] dark:text-gray-400">Coming soon. CourseBridge already has professor rating data for 137,000+ professors across all 116 California community colleges; this panel will surface the best-rated section for this course once it&apos;s wired up.</p>
-            </div>
+            {profState.loading && (
+              <div className="mt-2 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4">
+                <div className="space-y-2 animate-pulse">
+                  <div className="h-3 w-1/2 rounded-full bg-[#e8e3da] dark:bg-gray-800" />
+                  <div className="h-3 w-1/3 rounded-full bg-[#e8e3da] dark:bg-gray-800" />
+                </div>
+              </div>
+            )}
+            {!profState.loading && profState.found && profState.professor && (
+              <div className="mt-2 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-[#1a2e22] dark:text-gray-50">{profState.professor.name}</p>
+                    <p className="text-xs text-[#7b818b] dark:text-gray-500">{profState.professor.department} &middot; {profState.professor.school}</p>
+                  </div>
+                  <p className="shrink-0 font-bold text-[#0b7f46]">{(profState.professor.avgRating ?? 0).toFixed(1)} &#9733;</p>
+                </div>
+                <div className="mt-3 flex gap-5">
+                  <div>
+                    <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-50">{profState.professor.numRatings}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-[#7b818b] dark:text-gray-500">Ratings</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-50">{(profState.professor.avgDifficulty ?? 0).toFixed(1)}/5</p>
+                    <p className="text-[10px] uppercase tracking-wide text-[#7b818b] dark:text-gray-500">Difficulty</p>
+                  </div>
+                  {profState.professor.wouldTakeAgainPercent != null && profState.professor.wouldTakeAgainPercent >= 0 && (
+                    <div>
+                      <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-50">{Math.round(profState.professor.wouldTakeAgainPercent)}%</p>
+                      <p className="text-[10px] uppercase tracking-wide text-[#7b818b] dark:text-gray-500">Would retake</p>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-3 text-[11px] text-[#a2a7af] dark:text-gray-600">Highest-rated instructor with enough reviews to be reliable in this department at {college || "your college"}, sourced from professor ratings.</p>
+              </div>
+            )}
+            {!profState.loading && !profState.found && (
+              <div className="mt-2 rounded-2xl border border-dashed border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4">
+                <p className="text-sm text-[#6f7680] dark:text-gray-400">No professor rating data found for this department at {college || "your college"} yet.</p>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -1373,14 +1476,14 @@ function SimpleMarkdown({ text }: { text: string }) {
 // ── UC Stats Panel ──────────────────────────────────────────────────────────
 
 function UCStatsPanel({ school }: { school: string }) {
-  const s = UC_STATS[school];
+  const s = getUcStats(school);
   if (!s) return null;
   const rateNum = parseFloat(s.rate);
   const color = rateNum < 30 ? "text-red-600" : rateNum < 55 ? "text-yellow-600" : "text-green-600";
   const label = rateNum < 30 ? "Very Selective" : rateNum < 55 ? "Selective" : "Accessible";
   return (
     <div className="mt-4 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500 mb-3">{school}: Admission Stats</p>
+      <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500 mb-3">{ucDisplayName(school)}: Admission Stats</p>
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-3">
           <p className={`text-xl font-bold ${color}`}>{s.rate}</p>
@@ -2061,11 +2164,12 @@ export default function PlannerClient() {
   }
 
   const schoolForStats = activeSchoolTab || targetSchool;
-  const ucStats = UC_STATS[schoolForStats];
+  const schoolDisplayName = ucDisplayName(schoolForStats);
+  const ucStats = getUcStats(schoolForStats);
   const heroTerms = useMemo(() => parseTimeline(aiPlan), [aiPlan]);
   const ucAppDate = DEADLINES.find((d) => d.label === "UC Application")?.date ?? "Nov 1 to 30";
   const competitivenessLine = ucStats
-    ? `${schoolForStats} admits about ${ucStats.rate} of transfer applicants, with successful applicants generally in the ${ucStats.gpa} GPA range.${ucStats.tag ? ` TAG is available here with a ${ucStats.tagGPA}+ GPA.` : " TAG isn't offered here, so you'll apply directly during the November filing period."}`
+    ? `${schoolDisplayName} admits about ${ucStats.rate} of transfer applicants, with successful applicants generally in the ${ucStats.gpa} GPA range.${ucStats.tag ? ` TAG is available here with a ${ucStats.tagGPA}+ GPA.` : " TAG isn't offered here, so you'll apply directly during the November filing period."}`
     : "";
 
   return (
@@ -2087,7 +2191,7 @@ export default function PlannerClient() {
                     loadOrGeneratePlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardMode ?? "competitive");
                   }}
                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#4d535c] dark:text-gray-400 hover:border-[#0b7f46] hover:bg-[#f0faf5] hover:dark:bg-[#0b7f46]/10 hover:text-[#0b7f46]"}`}>
-                  {school}
+                  {ucDisplayName(school)}
                 </button>
               ))}
             </div>
@@ -2135,7 +2239,7 @@ export default function PlannerClient() {
                       className="mt-1 text-[32px] md:text-[44px] font-semibold italic leading-[1.08] text-[#003262] dark:text-[#7fa8de]"
                       style={{ fontFamily: '"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif' }}
                     >
-                      {schoolForStats || "your target school"}
+                      {schoolDisplayName || "your target school"}
                     </h1>
                     <p className="mt-3 text-sm text-[#5b6169] dark:text-gray-400">
                       {[targetMajor, communityCollege && `from ${communityCollege}`].filter(Boolean).join(" · ") || "Set your college and major to get started."}
@@ -2218,7 +2322,7 @@ export default function PlannerClient() {
 
                 {aiPlan && (
                   <div className="flex flex-col gap-4">
-                    <PlanTimeline text={aiPlan} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} />
+                    <PlanTimeline text={aiPlan} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} college={communityCollege} />
 
                     <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4 text-sm text-[#303236] dark:text-gray-100">
                       <SimpleMarkdown text={aiPlan} />
@@ -2543,7 +2647,7 @@ export default function PlannerClient() {
                 className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="text-[15px] font-bold text-[#1a2e22] dark:text-gray-100">Key Notes{schoolForStats ? `: ${schoolForStats}` : ""}</span>
+                  <span className="text-[15px] font-bold text-[#1a2e22] dark:text-gray-100">Key Notes{schoolForStats ? `: ${schoolDisplayName}` : ""}</span>
                   <span className="text-xs font-medium text-[#7b818b] dark:text-gray-500">Competitiveness, GPA, and admissions context</span>
                 </div>
                 <span className="shrink-0 text-xl leading-none text-[#7b818b] dark:text-gray-500">{showKeyNotes ? "−" : "+"}</span>

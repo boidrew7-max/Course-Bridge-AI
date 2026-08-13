@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "../lib/theme";
 import { LanguageProvider } from "../lib/i18n";
 
 // Two families only: one for headings, one for body. Both swap so there is no
@@ -18,16 +17,6 @@ const body = Inter({
   display: "swap",
   variable: "--font-body",
 });
-
-const THEME_INIT_SCRIPT = `
-(function () {
-  try {
-    var theme = localStorage.getItem("cb_theme") || "system";
-    var dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", dark);
-  } catch (e) {}
-})();
-`;
 
 const SITE_URL = "https://coursebridge.us";
 const SITE_TITLE = "CourseBridge";
@@ -59,14 +48,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${heading.variable} ${body.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-      </head>
+    <html lang="en" className={`${heading.variable} ${body.variable}`}>
       <body>
-        <ThemeProvider>
-          <LanguageProvider>{children}</LanguageProvider>
-        </ThemeProvider>
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-import gzip, json, os
+import gzip, json, os, re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -100,3 +100,117 @@ def search_professors(query):
 
     matches.sort(key=_score, reverse=True)
     return matches[:5]
+
+
+# ── recommend_professor — one best pick for a specific course, at a specific
+# community college, used by the My Plan schedule board's "recommended
+# professor" drawer. Not a free-text search: caller supplies the course's
+# subject prefix (e.g. "MATH", "ECON") so matching is exact enough to trust
+# for a single recommendation instead of a top-5 list. ──────────────────────
+
+SUBJECT_TO_DEPARTMENT = {
+    "MATH": ["mathematics"],
+    "STAT": ["statistics", "mathematics"],
+    "ECON": ["economics"],
+    "ACCT": ["accounting"],
+    "CS":   ["computer science", "computer information", "computer applications", "computer engineering"],
+    "CIS":  ["computer science", "computer information", "computer applications"],
+    "ENGN": ["engineering"],
+    "ENGR": ["engineering"],
+    "ENGL": ["english"],
+    "EWRT": ["english"],
+    "COMM": ["communication", "speech"],
+    "MUS":  ["music"],
+    "CINE": ["film", "cinema"],
+    "PHIL": ["philosophy"],
+    "PSYC": ["psychology"],
+    "SOC":  ["sociology", "social science"],
+    "ASTR": ["astronomy"],
+    "OCAN": ["oceanography", "earth science", "geology"],
+    "GEOL": ["geology", "earth science"],
+    "ETHN": ["ethnic studies"],
+    "IDST": ["ethnic studies", "interdisciplinary"],
+    "LALS": ["ethnic studies", "chicano", "latin american"],
+    "POLS": ["political science"],
+    "HIST": ["history"],
+    "HLTH": ["health"],
+    "PE":   ["kinesiology", "physical education"],
+    "KIN":  ["kinesiology", "physical education"],
+    "CHEM": ["chemistry"],
+    "PHYS": ["physics"],
+    "BIOL": ["biology"],
+    "ART":  ["art"],
+    "ANTH": ["anthropology"],
+    "GEOG": ["geography"],
+    "JOUR": ["journalism"],
+    "ARCH": ["architecture"],
+    "NURS": ["nursing"],
+    "BUS":  ["business"],
+}
+
+_SCHOOL_STOPWORDS = {"college", "community", "district", "of", "the"}
+
+
+def _normalize_school(name):
+    words = [w for w in re.split(r"[^a-z]+", (name or "").lower()) if w and w not in _SCHOOL_STOPWORDS]
+    return " ".join(words)
+
+
+def _dept_matches(department, candidates):
+    # Candidate-in-department only (e.g. "economics" in "english & economics").
+    # The reverse direction is too loose: short generic department names like
+    # "Science" or "Math" are themselves substrings of nearly every candidate
+    # ("computer science", "earth science"), which pulled in unrelated
+    # professors for narrower subjects like CS.
+    d = (department or "").lower()
+    return any(c in d for c in candidates)
+
+
+def recommend_professor(college, subject, min_ratings=3):
+    """Return the single best-reviewed, most-consistently-rated professor for
+    `subject` (a course prefix like "ECON") at `college`. Ranks by a
+    Bayesian-weighted score (same formula as search_professors) so a
+    professor with a handful of glowing reviews can't outrank one with a
+    long, consistently strong record — that's the whole point of this
+    function, not an accident of the math. Falls back to a lower rating-count
+    floor only if nothing clears the preferred one, rather than returning
+    nothing.
+    """
+    candidates = SUBJECT_TO_DEPARTMENT.get((subject or "").upper())
+    if not candidates:
+        return None
+
+    professors = _get_professors()
+    n_college = _normalize_school(college)
+    if not n_college:
+        return None
+
+    pool = [p for p in professors if _normalize_school(p.get("school", "")) == n_college]
+    if not pool:
+        return None
+    pool = [p for p in pool if _dept_matches(p.get("department", ""), candidates)]
+    if not pool:
+        return None
+
+    C = 3.86  # same global-mean prior used by search_professors
+    m = 20
+
+    def _score(p):
+        v = p.get("numRatings", 0)
+        R = p.get("avgRating", 0)
+        return (v * R + m * C) / (v + m)
+
+    for floor in (min_ratings, 1):
+        eligible = [p for p in pool if p.get("numRatings", 0) >= floor]
+        if eligible:
+            best = max(eligible, key=_score)
+            return {
+                "name": f"{best.get('firstName', '')} {best.get('lastName', '')}".strip(),
+                "department": best.get("department", ""),
+                "avgRating": best.get("avgRating"),
+                "numRatings": best.get("numRatings"),
+                "avgDifficulty": best.get("avgDifficulty"),
+                "wouldTakeAgainPercent": best.get("wouldTakeAgainPercentRounded"),
+                "school": best.get("school", ""),
+            }
+    return None

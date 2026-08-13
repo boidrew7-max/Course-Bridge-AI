@@ -1,30 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import SettingsPanel from "./settings/SettingsPanel";
 import { useTranslation } from "../lib/i18n";
+import { useHasPlan } from "../lib/useHasPlan";
 
 export default function Navbar() {
   const { t } = useTranslation();
-  const [email, setEmail] = useState<string | null>(null);
-  const [hasLocalPlan, setHasLocalPlan] = useState(false);
+  const { hasPlan } = useHasPlan();
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      setHasLocalPlan(!!localStorage.getItem("cb_profile"));
-    } catch {}
-    (async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const user = await res.json();
-          setEmail(user.email ?? null);
-        }
-      } catch {}
-    })();
-  }, []);
 
   return (
     <>
@@ -52,10 +37,10 @@ export default function Navbar() {
 
         <div className="flex shrink-0 items-center gap-2">
           <Link
-            href={email || hasLocalPlan ? "/dashboard" : "/onboarding"}
+            href={hasPlan ? "/dashboard" : "/onboarding"}
             className="rounded-xl bg-[#0b7f46] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
           >
-            {email || hasLocalPlan ? t("nav.myPlan") : t("nav.buildMyPlan")}
+            {hasPlan ? t("nav.myPlan") : t("nav.buildMyPlan")}
           </Link>
           <button
             type="button"

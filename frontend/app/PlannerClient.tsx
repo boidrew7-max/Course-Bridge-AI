@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { interpretCompletedCourses } from "../lib/courseInterpreter.js";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { useTranslation } from "../lib/i18n";
 
 const commonCompletedCourseAliases: Record<string, string[]> = {
   // Keep this client-side fallback in sync with lib/courseInterpreter.js.
@@ -1401,6 +1402,7 @@ function UCStatsPanel({ school }: { school: string }) {
 
 export default function PlannerClient() {
   const router = useRouter();
+  const { language } = useTranslation();
   const [firstName, setFirstName] = useState("");
   const [assistOptions, setAssistOptions] = useState<RequirementOptions>({
     colleges: [],
@@ -1554,7 +1556,9 @@ export default function PlannerClient() {
   }
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatMessages.length > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }, [chatMessages]);
 
   // Hydrate from the profile /onboarding saved to localStorage, then kick
@@ -1719,7 +1723,7 @@ export default function PlannerClient() {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ history, plannerContext }),
+      body: JSON.stringify({ history, plannerContext, language }),
     });
     if (!res.ok || !res.body) throw new Error("Failed");
     const reader = res.body.getReader();
@@ -1737,7 +1741,7 @@ export default function PlannerClient() {
       }
     }
     return reply;
-  }, [plannerContext]);
+  }, [plannerContext, language]);
 
   const runOnboardingMessage = useCallback(async (history: { role: "user" | "assistant"; content: string }[]) => {
     setChatLoading(true);

@@ -5,9 +5,11 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import TransferAIWidget from "./TransferAIWidget";
 import { useTranslation } from "../lib/i18n";
+import { useHasPlan } from "../lib/useHasPlan";
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const { hasPlan } = useHasPlan();
 
   const STATS = [
     { n: "116", label: t("home.stats.communityColleges") },
@@ -60,10 +62,10 @@ export default function HomePage() {
 
             <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <Link
-                href="/onboarding"
+                href={hasPlan ? "/dashboard" : "/onboarding"}
                 className="rounded-xl bg-[#0b7f46] px-6 py-3.5 text-center font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
               >
-                {t("home.buildMyPlan")}
+                {hasPlan ? t("nav.myPlan") : t("home.buildMyPlan")}
               </Link>
               <Link
                 href="/login"
@@ -186,10 +188,10 @@ export default function HomePage() {
             {t("home.cta.body")}
           </p>
           <Link
-            href="/onboarding"
+            href={hasPlan ? "/dashboard" : "/onboarding"}
             className="mt-8 inline-block rounded-xl bg-white px-7 py-3.5 font-semibold text-[#0b7f46] shadow-sm transition hover:bg-[#f0faf5]"
           >
-            {t("home.buildMyPlan")}
+            {hasPlan ? t("nav.myPlan") : t("home.buildMyPlan")}
           </Link>
         </div>
       </section>

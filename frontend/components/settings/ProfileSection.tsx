@@ -103,8 +103,8 @@ function FieldRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2 border-b border-[#e5e0d5] py-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-      <span className="shrink-0 text-sm font-medium text-[#4d535c] dark:text-gray-400 sm:w-40">{label}</span>
+    <div className="flex flex-col gap-2 border-b border-[var(--cb-border)] py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <span className="shrink-0 text-sm font-medium text-[var(--cb-body)] sm:w-40">{label}</span>
       <div className="sm:max-w-[280px] sm:flex-1">{children}</div>
     </div>
   );
@@ -116,7 +116,7 @@ function TextField({ value, onChange, placeholder }: { value: string; onChange: 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-transparent bg-[#faf8f3] px-3 py-2 text-right text-sm text-[#303236] outline-none transition hover:border-[#d1c7b8] focus:border-[#0b7f46] focus:bg-white focus:ring-4 focus:ring-[#0b7f46]/10 dark:bg-white/5 dark:text-gray-100 dark:hover:border-gray-600 dark:focus:bg-[#1c1e24]"
+      className="w-full rounded-lg border border-transparent bg-[var(--cb-surface-alt)] px-3 py-2 text-right text-sm text-[var(--cb-text)] outline-none transition hover:border-[var(--cb-border)] focus:border-[var(--cb-accent)] focus:bg-[var(--cb-card)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
     />
   );
 }
@@ -139,7 +139,7 @@ function SelectField({
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-transparent bg-[#faf8f3] px-3 py-2 text-right text-sm text-[#303236] outline-none transition hover:border-[#d1c7b8] focus:border-[#0b7f46] focus:bg-white focus:ring-4 focus:ring-[#0b7f46]/10 disabled:opacity-50 dark:bg-white/5 dark:text-gray-100 dark:hover:border-gray-600 dark:focus:bg-[#1c1e24]"
+      className="w-full rounded-lg border border-transparent bg-[var(--cb-surface-alt)] px-3 py-2 text-right text-sm text-[var(--cb-text)] outline-none transition hover:border-[var(--cb-border)] focus:border-[var(--cb-accent)] focus:bg-[var(--cb-card)] focus:ring-4 focus:ring-[var(--cb-accent)]/10 disabled:opacity-50"
     >
       <option value="" disabled>
         {placeholder}
@@ -291,8 +291,8 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
             handleFile(e.dataTransfer.files?.[0]);
           }}
           title={t("settings.profile.dropPhoto")}
-          className={`group relative flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[#0b7f46] text-lg font-bold text-white outline-none transition ${
-            dragOver ? "ring-4 ring-[#0b7f46]/30" : ""
+          className={`group relative flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-[var(--cb-accent)] text-lg font-bold text-white outline-none transition ${
+            dragOver ? "ring-4 ring-[var(--cb-accent)]/30" : ""
           }`}
         >
           {avatar ? (
@@ -316,13 +316,13 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
           onChange={(e) => handleFile(e.target.files?.[0])}
         />
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-[#303236] dark:text-gray-100">{name || "Not set"}</p>
-          {user?.email && <p className="truncate text-sm text-[#7b818b] dark:text-gray-500">{user.email}</p>}
+          <p className="truncate text-base font-semibold text-[var(--cb-text)]">{name || "Not set"}</p>
+          {user?.email && <p className="truncate text-sm text-[var(--cb-muted)]">{user.email}</p>}
           <div className="mt-1 flex items-center gap-3">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-xs font-semibold text-[#0b7f46] transition hover:underline dark:text-[#3ba76a]"
+              className="text-xs font-semibold text-[var(--cb-link)] transition hover:underline"
             >
               {t("settings.profile.changePhoto")}
             </button>
@@ -330,7 +330,7 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
               <button
                 type="button"
                 onClick={() => setAvatar("")}
-                className="text-xs font-semibold text-[#8a8f98] transition hover:text-[#b5432e] dark:text-gray-500"
+                className="text-xs font-semibold text-[var(--cb-muted)] transition hover:text-[var(--cb-danger)]"
               >
                 {t("settings.profile.removePhoto")}
               </button>
@@ -338,7 +338,7 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
           </div>
         </div>
       </div>
-      {avatarError && <p className="text-xs text-[#b5432e]">{avatarError}</p>}
+      {avatarError && <p className="text-xs text-[var(--cb-danger)]">{avatarError}</p>}
 
       <div>
         <FieldRow label={t("settings.profile.name")}>
@@ -371,7 +371,7 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
           type="button"
           disabled={!dirty || saving}
           onClick={save}
-          className="rounded-xl bg-[#0b7f46] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#08683a] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl bg-[var(--cb-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--cb-accent-hover)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {saving ? t("settings.profile.saving") : t("settings.profile.save")}
         </button>
@@ -379,27 +379,27 @@ export default function ProfileSection({ user, setUser }: SettingsSectionProps) 
           <button
             type="button"
             onClick={cancel}
-            className="text-sm font-semibold text-[#4d535c] transition hover:text-[#0b7f46] dark:text-gray-400"
+            className="text-sm font-semibold text-[var(--cb-body)] transition hover:text-[var(--cb-link)]"
           >
             {t("settings.profile.cancel")}
           </button>
         )}
-        {saved && <span className="text-sm font-medium text-[#0b7f46] dark:text-[#3ba76a]">{t("settings.profile.saved")}</span>}
+        {saved && <span className="text-sm font-medium text-[var(--cb-link)]">{t("settings.profile.saved")}</span>}
       </div>
 
-      <div className="border-t border-[#e5e0d5] pt-5 dark:border-gray-800">
+      <div className="border-t border-[var(--cb-border)] pt-5">
         {authed ? (
           <button
             type="button"
             onClick={logout}
-            className="text-sm font-medium text-[#b5432e] transition hover:text-[#8f331f]"
+            className="text-sm font-medium text-[var(--cb-danger)] transition hover:text-[var(--cb-danger)]"
           >
             {t("settings.profile.logout")}
           </button>
         ) : (
-          <p className="text-sm text-[#4d535c] dark:text-gray-400">
+          <p className="text-sm text-[var(--cb-body)]">
             {t("settings.profile.guestNotice")}{" "}
-            <Link href="/login" className="font-semibold text-[#0b7f46] hover:underline">
+            <Link href="/login" className="font-semibold text-[var(--cb-link)] hover:underline">
               {t("settings.profile.logIn")}
             </Link>
           </p>

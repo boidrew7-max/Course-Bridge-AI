@@ -46,23 +46,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-[#2f3135] dark:bg-[#14151a] dark:text-gray-200">
+    <div className="flex min-h-screen flex-col bg-[var(--cb-surface)] text-[var(--cb-body)]">
       <Navbar />
 
       <main className="flex flex-1 items-center justify-center px-5 py-16 md:px-8">
         <div className="w-full max-w-sm">
           <div className="mb-8 text-center">
-            <img src="/coursebridge-logo.png" alt="CourseBridge" className="mx-auto mb-3 h-9 w-auto" />
-            <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">
+            <img src="/coursebridge-logo.png" alt="CourseBridge" className="cb-logo mx-auto mb-3 h-9 w-auto" />
+            <h1 className="text-2xl font-bold text-[var(--cb-text)]">
               {mode === "login" ? t("auth.welcomeBack") : t("auth.createAccount")}
             </h1>
-            <p className="mt-2 text-sm text-[#7b818b] dark:text-gray-500">
+            <p className="mt-2 text-sm text-[var(--cb-muted)]">
               {mode === "login" ? t("auth.loginSubtitle") : t("auth.signupSubtitle")}
             </p>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-[#f3c6c6] bg-[#fff0f0] px-4 py-3 text-sm text-[#9b1c1c] dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+            <div className="mb-4 rounded-xl border border-[var(--cb-danger-border)] bg-[var(--cb-danger-bg)] px-4 py-3 text-sm text-[var(--cb-danger)]">
               {error}
             </div>
           )}
@@ -70,32 +70,32 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <label className="block">
-                <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">{t("auth.name")}</span>
+                <span className="mb-1.5 block text-sm font-semibold text-[var(--cb-text)]">{t("auth.name")}</span>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Jordan"
-                  className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100"
+                  className="w-full rounded-xl border border-[var(--cb-border)] bg-[var(--cb-card)] px-4 py-3 text-sm text-[var(--cb-text)] outline-none transition focus:border-[var(--cb-accent)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
                 />
               </label>
             )}
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">{t("auth.emailLabel")}</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[var(--cb-text)]">{t("auth.emailLabel")}</span>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100"
+                className="w-full rounded-xl border border-[var(--cb-border)] bg-[var(--cb-card)] px-4 py-3 text-sm text-[var(--cb-text)] outline-none transition focus:border-[var(--cb-accent)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
               />
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236] dark:text-gray-300">{t("auth.password")}</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[var(--cb-text)]">{t("auth.password")}</span>
               <input
                 type="password"
                 required
@@ -103,21 +103,21 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10 dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100"
+                className="w-full rounded-xl border border-[var(--cb-border)] bg-[var(--cb-card)] px-4 py-3 text-sm text-[var(--cb-text)] outline-none transition focus:border-[var(--cb-accent)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
               />
             </label>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#0b7f46] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md disabled:opacity-60"
+              className="w-full rounded-xl bg-[var(--cb-accent)] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cb-accent-hover)] hover:shadow-md disabled:opacity-60"
             >
               {loading ? t("auth.pleaseWait") : mode === "login" ? t("auth.logIn") : t("auth.createAccountBtn")}
             </button>
 
             {mode === "login" && (
               <p className="text-center">
-                <Link href="/forgot-password" className="text-sm font-semibold text-[#4d535c] hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]">
+                <Link href="/forgot-password" className="text-sm font-semibold text-[var(--cb-body)] hover:text-[var(--cb-link)]">
                   {t("auth.forgotPassword")}
                 </Link>
               </p>
@@ -125,14 +125,14 @@ export default function LoginPage() {
           </form>
 
           <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-[#e5e0d5] dark:bg-gray-800" />
-            <span className="text-xs font-medium text-[#a3a9b3] dark:text-gray-500">{t("auth.or")}</span>
-            <div className="h-px flex-1 bg-[#e5e0d5] dark:bg-gray-800" />
+            <div className="h-px flex-1 bg-[var(--cb-border)]" />
+            <span className="text-xs font-medium text-[var(--cb-muted)]">{t("auth.or")}</span>
+            <div className="h-px flex-1 bg-[var(--cb-border)]" />
           </div>
 
           <a
             href="/api/auth/google/start"
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm font-semibold text-[#303236] transition hover:border-[#0b7f46] hover:text-[#0b7f46] dark:border-gray-700 dark:bg-[#1c1e24] dark:text-gray-100 dark:hover:text-[#3ba76a]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--cb-border)] bg-[var(--cb-card)] px-4 py-3 text-sm font-semibold text-[var(--cb-text)] transition hover:border-[var(--cb-accent)] hover:text-[var(--cb-link)]"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.88 2.7-6.62z"/>
@@ -143,14 +143,14 @@ export default function LoginPage() {
             {t("auth.continueWithGoogle")}
           </a>
 
-          <p className="mt-8 text-center text-sm text-[#7b818b] dark:text-gray-500">
+          <p className="mt-8 text-center text-sm text-[var(--cb-muted)]">
             {mode === "login" ? (
               <>
                 {t("auth.newToCourseBridge")}{" "}
                 <button
                   type="button"
                   onClick={() => { setMode("signup"); setError(""); }}
-                  className="font-semibold text-[#0b7f46] hover:underline"
+                  className="font-semibold text-[var(--cb-link)] hover:underline"
                 >
                   {t("auth.createAnAccount")}
                 </button>
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setMode("login"); setError(""); }}
-                  className="font-semibold text-[#0b7f46] hover:underline"
+                  className="font-semibold text-[var(--cb-link)] hover:underline"
                 >
                   {t("auth.logIn")}
                 </button>

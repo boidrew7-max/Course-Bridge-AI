@@ -49,10 +49,10 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="w-full max-w-sm text-center">
-        <p className="text-base font-semibold text-[#9b1c1c]">
+        <p className="text-base font-semibold text-[var(--cb-danger)]">
           {t("resetPassword.invalidLink")}
         </p>
-        <Link href="/forgot-password" className="mt-4 inline-block text-sm font-semibold text-[#0b7f46] hover:underline">
+        <Link href="/forgot-password" className="mt-4 inline-block text-sm font-semibold text-[var(--cb-link)] hover:underline">
           {t("resetPassword.requestNewLink")}
         </Link>
       </div>
@@ -62,25 +62,25 @@ function ResetPasswordForm() {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-8 text-center">
-        <img src="/coursebridge-logo.png" alt="CourseBridge" className="mx-auto mb-3 h-9 w-auto" />
-        <h1 className="text-2xl font-bold text-[#1a2e22]">{t("resetPassword.title")}</h1>
+        <img src="/coursebridge-logo.png" alt="CourseBridge" className="cb-logo mx-auto mb-3 h-9 w-auto" />
+        <h1 className="text-2xl font-bold text-[var(--cb-text)]">{t("resetPassword.title")}</h1>
       </div>
 
       {done ? (
-        <div className="rounded-xl border border-[#b8d8c7] bg-[#e7f3ed] px-4 py-3 text-sm text-[#0b7f46]">
+        <div className="rounded-xl border border-[var(--cb-accent)]/30 bg-[var(--cb-accent-tint)] px-4 py-3 text-sm text-[var(--cb-link)]">
           {t("resetPassword.done")}
         </div>
       ) : (
         <>
           {error && (
-            <div className="mb-4 rounded-xl border border-[#f3c6c6] bg-[#fff0f0] px-4 py-3 text-sm text-[#9b1c1c]">
+            <div className="mb-4 rounded-xl border border-[var(--cb-danger-border)] bg-[var(--cb-danger-bg)] px-4 py-3 text-sm text-[var(--cb-danger)]">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">{t("resetPassword.newPassword")}</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[var(--cb-text)]">{t("resetPassword.newPassword")}</span>
               <input
                 type="password"
                 required
@@ -88,12 +88,12 @@ function ResetPasswordForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                className="w-full rounded-xl border border-[var(--cb-border)] bg-[var(--cb-card)] px-4 py-3 text-sm text-[var(--cb-text)] outline-none transition focus:border-[var(--cb-accent)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
               />
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-[#303236]">{t("resetPassword.confirmPassword")}</span>
+              <span className="mb-1.5 block text-sm font-semibold text-[var(--cb-text)]">{t("resetPassword.confirmPassword")}</span>
               <input
                 type="password"
                 required
@@ -101,14 +101,14 @@ function ResetPasswordForm() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-[#d8d8dc] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                className="w-full rounded-xl border border-[var(--cb-border)] bg-[var(--cb-card)] px-4 py-3 text-sm text-[var(--cb-text)] outline-none transition focus:border-[var(--cb-accent)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
               />
             </label>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#0b7f46] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md disabled:opacity-60"
+              className="w-full rounded-xl bg-[var(--cb-accent)] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--cb-accent-hover)] hover:shadow-md disabled:opacity-60"
             >
               {loading ? t("auth.pleaseWait") : t("resetPassword.submit")}
             </button>
@@ -122,10 +122,10 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
   return (
-    <div className="flex min-h-screen flex-col bg-white text-[#2f3135]">
+    <div className="flex min-h-screen flex-col bg-[var(--cb-surface)] text-[var(--cb-body)]">
       <Navbar />
       <main className="flex flex-1 items-center justify-center px-5 py-16 md:px-8">
-        <Suspense fallback={<p className="text-base text-[#7b818b]">{t("resetPassword.loading")}</p>}>
+        <Suspense fallback={<p className="text-base text-[var(--cb-muted)]">{t("resetPassword.loading")}</p>}>
           <ResetPasswordForm />
         </Suspense>
       </main>

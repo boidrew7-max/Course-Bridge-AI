@@ -22,9 +22,9 @@ export default function LanguageSection({ user, setUser }: SettingsSectionProps)
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-[#e5e0d5] pb-4 dark:border-gray-800">
-        <p className="text-sm font-medium text-[#303236] dark:text-gray-200">{t("settings.language.title")}</p>
-        <p className="mt-0.5 text-xs text-[#8a8f98] dark:text-gray-500">{t("settings.language.description")}</p>
+      <div className="border-b border-[var(--cb-border)] pb-4">
+        <p className="text-sm font-medium text-[var(--cb-text)]">{t("settings.language.title")}</p>
+        <p className="mt-0.5 text-xs text-[var(--cb-muted)]">{t("settings.language.description")}</p>
       </div>
 
       <div className="space-y-2">
@@ -35,8 +35,8 @@ export default function LanguageSection({ user, setUser }: SettingsSectionProps)
             onClick={() => choose(opt.code)}
             className={`flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-sm font-semibold transition ${
               language === opt.code
-                ? "border-[#0b7f46] bg-[#0b7f46]/5 text-[#0b7f46] dark:bg-[#0b7f46]/10 dark:text-[#3ba76a]"
-                : "border-[#e5e0d5] text-[#4d535c] hover:border-[#0b7f46]/50 dark:border-gray-700 dark:text-gray-300"
+                ? "border-[var(--cb-accent)] bg-[var(--cb-accent-tint)] text-[var(--cb-link)]"
+                : "border-[var(--cb-border)] text-[var(--cb-body)] hover:border-[var(--cb-accent)]"
             }`}
           >
             {opt.label}

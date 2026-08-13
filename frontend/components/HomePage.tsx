@@ -9,35 +9,6 @@ import { useTranslation } from "../lib/i18n";
 import type { Dictionary } from "../lib/locales";
 import { useReveal } from "../lib/useReveal";
 
-/**
- * PLACEHOLDER CONTENT (do not ship as is).
- *
- * The comparison and social proof sections below are structural placeholders.
- * CourseBridge has no published testimonials and no vetted competitor claims
- * yet, so the copy here is invented and is deliberately left in English, out of
- * the locale files, and labelled in the UI. Replace the two arrays with real
- * quotes and real, verifiable comparisons before launch, then move the strings
- * into lib/locales.
- */
-const PLACEHOLDER_ALTERNATIVES = [
-  {
-    alternative: "TODO: alternative one",
-    theirs: "TODO: describe what this alternative actually does for a student.",
-    ours: "TODO: describe what CourseBridge does instead, in one sentence.",
-  },
-  {
-    alternative: "TODO: alternative two",
-    theirs: "TODO: describe what this alternative actually does for a student.",
-    ours: "TODO: describe what CourseBridge does instead, in one sentence.",
-  },
-];
-
-const PLACEHOLDER_TESTIMONIALS = [
-  { quote: "TODO: a real quote from a real student goes here.", name: "TODO: name", context: "TODO: college, major, target campus", result: "TODO: outcome" },
-  { quote: "TODO: a real quote from a real student goes here.", name: "TODO: name", context: "TODO: college, major, target campus", result: "TODO: outcome" },
-  { quote: "TODO: a real quote from a real student goes here.", name: "TODO: name", context: "TODO: college, major, target campus", result: "TODO: outcome" },
-];
-
 export default function HomePage() {
   const { t } = useTranslation();
   useReveal();
@@ -235,94 +206,6 @@ export default function HomePage() {
             ))}
           </ul>
         </div>
-      </section>
-
-      {/* -------------------------------------------- Why us (PLACEHOLDER) */}
-      <section className="cb-section cb-section-alt">
-        <div className="cb-container">
-          <h2 className="cb-h2 cb-reveal">Why CourseBridge over the alternatives</h2>
-          <p className="cb-lead cb-reveal">
-            Placeholder section. Replace both rows with real, checkable comparisons before this page goes live.
-          </p>
-
-          <div className="mt-[var(--cb-space-5)] flex flex-col gap-[var(--cb-space-3)]">
-            {PLACEHOLDER_ALTERNATIVES.map((row) => (
-              <div key={row.alternative} className="cb-reveal grid gap-[var(--cb-space-2)] md:grid-cols-2">
-                <div className="cb-card">
-                  <h3 className="cb-h3">{row.alternative}</h3>
-                  <p style={{ margin: "var(--cb-space-1) 0 0", color: "var(--cb-muted)" }}>{row.theirs}</p>
-                </div>
-                <div
-                  className="cb-card"
-                  style={{
-                    borderColor: "var(--cb-accent)",
-                    background: "color-mix(in srgb, var(--cb-accent) 6%, var(--cb-card))",
-                  }}
-                >
-                  <h3 className="cb-h3">CourseBridge</h3>
-                  <p style={{ margin: "var(--cb-space-1) 0 0", color: "var(--cb-muted)" }}>{row.ours}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --------------------------------------- Social proof (PLACEHOLDER) */}
-      <section className="cb-section">
-        <div className="cb-container">
-          <h2 className="cb-h2 cb-reveal">What students say</h2>
-          <p className="cb-lead cb-reveal">
-            Placeholder section. These are not real students. Swap in real quotes with permission, or delete the section.
-          </p>
-        </div>
-
-        <ul
-          className="mt-[var(--cb-space-5)] flex snap-x snap-mandatory gap-[var(--cb-space-2)] overflow-x-auto md:grid md:grid-cols-3 md:overflow-visible"
-          style={{
-            listStyle: "none",
-            margin: "var(--cb-space-5) auto 0",
-            maxWidth: "var(--cb-maxw)",
-            padding: "0 var(--cb-gutter) var(--cb-space-1)",
-            scrollPaddingInline: "var(--cb-gutter)",
-          }}
-        >
-          {PLACEHOLDER_TESTIMONIALS.map((item, i) => (
-            <li
-              key={i}
-              className="cb-card cb-reveal flex min-w-[82vw] snap-start flex-col sm:min-w-[20rem] md:min-w-0"
-            >
-              <blockquote style={{ margin: 0, color: "var(--cb-body)" }}>{item.quote}</blockquote>
-              <div
-                className="mt-auto flex items-center gap-[var(--cb-space-1)]"
-                style={{ paddingTop: "var(--cb-space-3)" }}
-              >
-                <span
-                  aria-hidden="true"
-                  style={{
-                    display: "grid",
-                    placeItems: "center",
-                    width: 40,
-                    height: 40,
-                    flexShrink: 0,
-                    borderRadius: "var(--cb-radius-pill)",
-                    background: "var(--cb-accent)",
-                    color: "var(--cb-on-accent)",
-                    fontFamily: "var(--cb-font-heading)",
-                    fontWeight: 700,
-                  }}
-                >
-                  ?
-                </span>
-                <span style={{ fontSize: "var(--cb-fs-body-sm)" }}>
-                  <span style={{ display: "block", fontWeight: 600, color: "var(--cb-text)" }}>{item.name}</span>
-                  <span style={{ display: "block", color: "var(--cb-muted)" }}>{item.context}</span>
-                  <span style={{ display: "block", color: "var(--cb-link)" }}>{item.result}</span>
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
       </section>
 
       {/* ------------------------------------------------------------ Pricing */}

@@ -353,7 +353,7 @@ html.dark .cb-logo {
 }
 
 /* Thin, on-brand horizontal scrollbar for card rails (e.g. My Plan's
-   schedule board) — replaces the bare grey system scrollbar. */
+   schedule board). Replaces the bare grey system scrollbar. */
 .cb-scroll-x {
   overflow-x: auto;
   scrollbar-width: thin;

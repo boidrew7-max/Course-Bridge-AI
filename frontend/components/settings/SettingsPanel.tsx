@@ -36,7 +36,7 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Lock background scroll while open — otherwise a wheel/trackpad scroll
+  // Lock background scroll while open: otherwise a wheel/trackpad scroll
   // over the modal can chain through to the page behind it once the modal's
   // own content hits its top/bottom.
   useEffect(() => {

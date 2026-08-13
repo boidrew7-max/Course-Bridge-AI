@@ -12,7 +12,7 @@ const SITE_URL = process.env.SITE_URL || "https://coursebridge.us";
 // Google redirects the user's browser here after they approve sign-in. This
 // route runs on the frontend server, exchanges the code with Google directly,
 // then hands the resulting identity to the backend over Railway's private
-// network to create/find the account and mint a session token — the backend
+// network to create/find the account and mint a session token: the backend
 // never needs a public URL for any of this.
 export async function GET(req: Request) {
   const url = new URL(req.url);

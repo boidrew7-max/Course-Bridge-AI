@@ -450,7 +450,7 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "ENGL C1000",
         name: "Academic Reading and Writing",
-        category: "GE Filler — English Composition",
+        category: "GE Filler: English Composition",
         priority: "Medium",
         aliases: ["ENGLC1000", "ENGLISH 1A", "ENGL 1A", "WRITING 1"],
       },
@@ -463,14 +463,14 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "ENGL C1001",
         name: "Critical Thinking and Writing",
-        category: "GE Filler — Critical Thinking",
+        category: "GE Filler: Critical Thinking",
         priority: "Low",
         aliases: ["ENGLC1001", "ENGLISH 1B", "ENGL 1B", "WRITING 2"],
       },
       {
         code: "COMM C1000",
         name: "Introduction to Public Speaking",
-        category: "GE Filler — Communication",
+        category: "GE Filler: Communication",
         priority: "Low",
         aliases: ["COMMC1000", "COMM 1", "PUBLIC SPEAKING"],
       },
@@ -483,7 +483,7 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "STAT C1000",
         name: "Introduction to Statistics",
-        category: "GE Filler — Quantitative Reasoning",
+        category: "GE Filler: Quantitative Reasoning",
         priority: "Medium",
         aliases: ["STATC1000", "STATISTICS", "STATS", "STAT"],
       },
@@ -496,21 +496,21 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "MUS 3A",
         name: "Music Appreciation",
-        category: "GE Filler — Arts/Humanities",
+        category: "GE Filler: Arts/Humanities",
         priority: "Low",
         aliases: ["MUS3A", "MUSIC APPRECIATION"],
       },
       {
         code: "CINE 18",
         name: "Introduction to Film Studies",
-        category: "GE Filler — Arts/Humanities",
+        category: "GE Filler: Arts/Humanities",
         priority: "Low",
         aliases: ["CINE18", "FILM", "FILM STUDIES"],
       },
       {
         code: "PHIL 2",
         name: "Introduction to Philosophy",
-        category: "GE Filler — Arts/Humanities",
+        category: "GE Filler: Arts/Humanities",
         priority: "Low",
         aliases: ["PHIL2", "PHILOSOPHY"],
       },
@@ -523,14 +523,14 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "PSYC C1000",
         name: "Introduction to Psychology",
-        category: "GE Filler — Social Science",
+        category: "GE Filler: Social Science",
         priority: "Low",
         aliases: ["PSYCC1000", "PSYCH", "PSYCHOLOGY"],
       },
       {
         code: "SOC 1",
         name: "Introduction to Sociology",
-        category: "GE Filler — Social Science",
+        category: "GE Filler: Social Science",
         priority: "Low",
         aliases: ["SOC1", "SOCIOLOGY"],
       },
@@ -543,21 +543,21 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "ASTR 1",
         name: "Introduction to Astronomy",
-        category: "GE Filler — Science",
+        category: "GE Filler: Science",
         priority: "Low",
         aliases: ["ASTR1", "ASTRONOMY"],
       },
       {
         code: "OCAN 1",
         name: "Introduction to Oceanography",
-        category: "GE Filler — Science",
+        category: "GE Filler: Science",
         priority: "Low",
         aliases: ["OCAN1", "OCEANOGRAPHY"],
       },
       {
         code: "GEOL 10",
         name: "Physical Geology",
-        category: "GE Filler — Science",
+        category: "GE Filler: Science",
         priority: "Low",
         aliases: ["GEOL10", "GEOLOGY"],
       },
@@ -570,14 +570,14 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "ETHN 37",
         name: "Introduction to Ethnic Studies",
-        category: "GE Filler — Ethnic Studies",
+        category: "GE Filler: Ethnic Studies",
         priority: "Low",
         aliases: ["ETHN37", "IDST 37", "ETHNIC STUDIES"],
       },
       {
         code: "LALS 1",
         name: "Latina/o/x America",
-        category: "GE Filler — Ethnic Studies",
+        category: "GE Filler: Ethnic Studies",
         priority: "Low",
         aliases: ["LALS1", "LATINO STUDIES", "LATIN AMERICAN STUDIES"],
       },
@@ -590,14 +590,14 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "POLS C1000",
         name: "American Government and Politics",
-        category: "GE Filler — U.S. History/Government",
+        category: "GE Filler: U.S. History/Government",
         priority: "Low",
         aliases: ["POLSC1000", "AMERICAN GOVERNMENT", "GOVERNMENT"],
       },
       {
         code: "HIST 17A",
         name: "United States History",
-        category: "GE Filler — U.S. History/Government",
+        category: "GE Filler: U.S. History/Government",
         priority: "Low",
         aliases: ["HIST17A", "US HISTORY"],
       },
@@ -610,14 +610,14 @@ const geFillerAreas: GEFillerArea[] = [
       {
         code: "HLTH 10",
         name: "Health Education",
-        category: "GE Filler — Health/Wellness",
+        category: "GE Filler: Health/Wellness",
         priority: "Low",
         aliases: ["HLTH10", "HEALTH"],
       },
       {
         code: "PE 28",
         name: "Physical Education",
-        category: "GE Filler — Health/Wellness",
+        category: "GE Filler: Health/Wellness",
         priority: "Low",
         aliases: ["PE28", "PHYSICAL EDUCATION"],
       },
@@ -890,14 +890,14 @@ function buildSequence(
 
 function getCompetitiveness(score: number, note: string) {
   if (score >= 80) {
-    return `Strong — most listed requirements are complete. ${note}`;
+    return `Strong: most listed requirements are complete. ${note}`;
   }
 
   if (score >= 50) {
-    return `Moderate — your plan is moving, but a few major prep courses still matter. ${note}`;
+    return `Moderate: your plan is moving, but a few major prep courses still matter. ${note}`;
   }
 
-  return `Needs improvement — complete more major prep before applying. ${note}`;
+  return `Needs improvement: complete more major prep before applying. ${note}`;
 }
 
 function getGEFillers(rawInputs: string[], amount: number) {
@@ -947,15 +947,15 @@ function buildRequirementOptions(database: RequirementDatabase) {
 // ── Static data ────────────────────────────────────────────────────────────
 
 const UC_STATS: Record<string, { rate: string; gpa: string; tag: boolean; tagGPA?: string }> = {
-  "UCLA":              { rate: "22.7%", gpa: "3.5–3.9", tag: false },
-  "UC Berkeley":       { rate: "24%",   gpa: "3.5–3.9", tag: false },
-  "UC San Diego":      { rate: "52.7%", gpa: "3.55–3.94", tag: false },
-  "UC Irvine":         { rate: "39.5%", gpa: "3.4–3.7", tag: true,  tagGPA: "3.4" },
-  "UC Santa Barbara":  { rate: "58.9%", gpa: "3.4–3.7", tag: true,  tagGPA: "3.2" },
-  "UC Davis":          { rate: "57%",   gpa: "3.4–3.7", tag: true,  tagGPA: "3.2" },
-  "UC Santa Cruz":     { rate: "68.8%", gpa: "3.3–3.6", tag: true,  tagGPA: "2.8" },
-  "UC Riverside":      { rate: "68.2%", gpa: "3.0–3.5", tag: true,  tagGPA: "2.8" },
-  "UC Merced":         { rate: "72.1%", gpa: "3.0–3.4", tag: true,  tagGPA: "2.4" },
+  "UCLA":              { rate: "22.7%", gpa: "3.5 to 3.9", tag: false },
+  "UC Berkeley":       { rate: "24%",   gpa: "3.5 to 3.9", tag: false },
+  "UC San Diego":      { rate: "52.7%", gpa: "3.55 to 3.94", tag: false },
+  "UC Irvine":         { rate: "39.5%", gpa: "3.4 to 3.7", tag: true,  tagGPA: "3.4" },
+  "UC Santa Barbara":  { rate: "58.9%", gpa: "3.4 to 3.7", tag: true,  tagGPA: "3.2" },
+  "UC Davis":          { rate: "57%",   gpa: "3.4 to 3.7", tag: true,  tagGPA: "3.2" },
+  "UC Santa Cruz":     { rate: "68.8%", gpa: "3.3 to 3.6", tag: true,  tagGPA: "2.8" },
+  "UC Riverside":      { rate: "68.2%", gpa: "3.0 to 3.5", tag: true,  tagGPA: "2.8" },
+  "UC Merced":         { rate: "72.1%", gpa: "3.0 to 3.4", tag: true,  tagGPA: "2.4" },
 };
 
 const CALGETC_AREAS = [
@@ -973,11 +973,11 @@ const CALGETC_AREAS = [
 ];
 
 const DEADLINES = [
-  { label: "TAG Application",     date: "Sept 1–30",   note: "Applies to UC Davis, Irvine, Merced, Riverside, UCSB, UCSC" },
-  { label: "UC Application",      date: "Nov 1–30",    note: "Apply at apply.universityofcalifornia.edu" },
-  { label: "FAFSA / CADAA Opens", date: "Oct 1",       note: "Apply early — CA Dream Act for undocumented students" },
+  { label: "TAG Application",     date: "Sept 1 to 30",   note: "Applies to UC Davis, Irvine, Merced, Riverside, UCSB, UCSC" },
+  { label: "UC Application",      date: "Nov 1 to 30",    note: "Apply at apply.universityofcalifornia.edu" },
+  { label: "FAFSA / CADAA Opens", date: "Oct 1",       note: "Apply early: CA Dream Act for undocumented students" },
   { label: "Cal Grant Deadline",  date: "March 2",     note: "Must file FAFSA/CADAA by this date" },
-  { label: "Transfer Decision",   date: "April–May",   note: "UCs typically notify transfer applicants" },
+  { label: "Transfer Decision",   date: "April to May",   note: "UCs typically notify transfer applicants" },
   { label: "SIR Deadline",        date: "June 1",      note: "Statement of Intent to Register at your chosen UC" },
 ];
 
@@ -1058,7 +1058,7 @@ type TimelineCourse = { code: string; title: string; units: string; category: "m
 type TimelineTerm = { label: string; units: number; courses: TimelineCourse[] };
 
 const TERM_HEADER_RE = /^##\s*Term\s+\d+\s*\(([^)]+)\)/;
-const COURSE_LINE_RE = /^-\s*([A-Z]{1,10}\s+[A-Z0-9]+H?)\s*[—-]{1,2}\s*(.+?)\s*\((\d+(?:\.\d+)?)u\)(?:\s*\[([^\]]*)\])?\s*$/;
+const COURSE_LINE_RE = /^-\s*([A-Z]{1,10}\s+[A-Z0-9]+H?)\s*[—:-]{1,2}\s*(.+?)\s*\((\d+(?:\.\d+)?)u\)(?:\s*\[([^\]]*)\])?\s*$/;
 
 function categorizeCourse(code: string, tags: string): TimelineCourse["category"] {
   const t = tags.toLowerCase();
@@ -1104,7 +1104,7 @@ const SCHEDULE_CATEGORY_META: Record<TimelineCourse["category"], { tag: string; 
   english: { tag: "English",      tagClass: "bg-[#eef5ff] dark:bg-blue-950/30 text-[#2f5fa8]" },
 };
 
-// Lightweight client-side "have they already told us this is done" check —
+// Lightweight client-side "have they already told us this is done" check.
 // the real match happens server-side when the plan is generated; this is
 // just a display hint for the schedule board's checkmark.
 function courseLooksCompleted(code: string, completedRaw: string) {
@@ -1279,7 +1279,7 @@ function SimpleMarkdown({ text }: { text: string }) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trimEnd();
 
-    // Term schedule is already shown by the PlanTimeline card above — skip
+    // Term schedule is already shown by the PlanTimeline card above: skip
     // the plain-text restatement of it here to avoid showing it twice.
     if (/^##\s*Term\s+\d+\s*\(/.test(line)) {
       flush();
@@ -1327,7 +1327,7 @@ function SimpleMarkdown({ text }: { text: string }) {
     if (inKeyNotes) {
       if (/^##\s/.test(line)) {
         flushKeyNotes();
-        // fall through — this is a new, different section
+        // fall through: this is a new, different section
       } else if (/^[\*\-]\s/.test(line)) {
         keyNotesBuf.push(line.slice(2));
         continue;
@@ -1371,7 +1371,7 @@ function UCStatsPanel({ school }: { school: string }) {
   const label = rateNum < 30 ? "Very Selective" : rateNum < 55 ? "Selective" : "Accessible";
   return (
     <div className="mt-4 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500 mb-3">{school} — Admission Stats</p>
+      <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500 mb-3">{school}: Admission Stats</p>
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-3">
           <p className={`text-xl font-bold ${color}`}>{s.rate}</p>
@@ -1386,7 +1386,7 @@ function UCStatsPanel({ school }: { school: string }) {
           <p className="text-xs text-[#7b818b] dark:text-gray-500 mt-1">{s.tag ? `Min GPA ${s.tagGPA}` : "No TAG offered"}</p>
         </div>
       </div>
-      <p className={`mt-3 text-xs font-semibold ${color}`}>{label} — Aim for 3.0+ minimum (3.5+ for selective campuses). UC eligibility floor is 2.4 but far from competitive.</p>
+      <p className={`mt-3 text-xs font-semibold ${color}`}>{label}: Aim for 3.0+ minimum (3.5+ for selective campuses). UC eligibility floor is 2.4 but far from competitive.</p>
     </div>
   );
 }
@@ -1426,8 +1426,8 @@ export default function PlannerClient() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   // PlannerClient only ever mounts (via app/page.tsx) once onboarding has
-  // completed and a profile exists in localStorage — see the hydration
-  // effect below — so it always starts in the "done" (dashboard) state.
+  // completed and a profile exists in localStorage: see the hydration
+  // effect below: so it always starts in the "done" (dashboard) state.
   const [onboardingDone, setOnboardingDone] = useState(true);
   const [aiPlan, setAiPlan] = useState("");
   const [aiPlanLoading, setAiPlanLoading] = useState(false);
@@ -1452,7 +1452,7 @@ export default function PlannerClient() {
 
   async function savePlanToAccount(college: string, uc: string, major: string, planText: string, completed: string) {
     if (!planText) return;
-    // Don't gate on the authedEmail React state here — it's frequently stale
+    // Don't gate on the authedEmail React state here: it's frequently stale
     // (set via setAuthedEmail() earlier in the very same async flow that
     // leads to this call, so the closure still sees its pre-update value
     // until the next render). The backend already requires a valid session
@@ -1553,7 +1553,7 @@ export default function PlannerClient() {
   }, [chatMessages]);
 
   // Hydrate from the profile /onboarding saved to localStorage, then kick
-  // off plan generation for it — this replaces the old in-page wizard's
+  // off plan generation for it: this replaces the old in-page wizard's
   // completeWizard() now that onboarding lives on its own route.
   // If there's no local profile (new device, cleared cache) but the user is
   // signed in, fall back to their most recently saved plan from the account
@@ -1592,7 +1592,7 @@ export default function PlannerClient() {
         return;
       }
 
-      // No local profile — check whether a signed-in account has a saved plan.
+      // No local profile: check whether a signed-in account has a saved plan.
       try {
         const meRes = await fetch("/api/auth/me");
         if (meRes.ok) {
@@ -1630,7 +1630,7 @@ export default function PlannerClient() {
               return;
             }
           }
-          // Signed in but no saved plan yet — send to the wizard, not "/".
+          // Signed in but no saved plan yet: send to the wizard, not "/".
           // "/" would re-detect this same signed-in state and render this
           // component again, looping forever.
           router.replace("/onboarding");
@@ -1644,7 +1644,7 @@ export default function PlannerClient() {
   }, []);
 
   // Settings (Navbar gear icon) can change the target school/college/name
-  // while this page is already mounted — re-hydrate from cb_profile and
+  // while this page is already mounted: re-hydrate from cb_profile and
   // reload the plan for the new school, same as the mount-time hydration
   // above.
   useEffect(() => {
@@ -1700,15 +1700,22 @@ export default function PlannerClient() {
     return text.replace(/\|\|\|JSON\{[\s\S]*?\}\|\|\|/, "").trim();
   }
 
+  // Sent with every chat turn so the advisor never has to ask the student
+  // something the planner already knows. The backend merges this over their
+  // saved account profile, so partial values are fine.
   const plannerContext = useMemo(() => ({
-    college:          communityCollege,
-    targetUniversity: targetSchool,
-    major:            targetMajor,
-    completedCourses: result?.completed ?? [],
-    missingCourses:   result?.missing ?? [],
-    blockedCourses:   result?.blocked ?? [],
-    readinessScore:   result?.readinessScore ?? null,
-  }), [communityCollege, targetSchool, targetMajor, result]);
+    firstName:          firstName,
+    college:            communityCollege,
+    targetUniversity:   targetSchool,
+    targetUniversities: planSchools.length ? planSchools : [targetSchool].filter(Boolean),
+    major:              targetMajor,
+    // Prefer the matched requirements, and fall back to whatever the student
+    // typed when no plan has been generated for them yet.
+    completedCourses:   result?.completed?.length ? result.completed : completedCourses,
+    missingCourses:     result?.missing ?? [],
+    blockedCourses:     result?.blocked ?? [],
+    readinessScore:     result?.readinessScore ?? null,
+  }), [firstName, communityCollege, targetSchool, planSchools, targetMajor, completedCourses, result]);
 
   const streamResponse = useCallback(async (endpoint: string, history: { role: string; content: string }[], onChunk: (reply: string) => void) => {
     const res = await fetch(endpoint, {
@@ -1806,7 +1813,7 @@ export default function PlannerClient() {
   }
 
   // Show an already-saved plan for this exact combo instead of burning a
-  // fresh (slow, Groq-quota-consuming) generation every time — e.g.
+  // fresh (slow, Groq-quota-consuming) generation every time: e.g.
   // navigating home and back, or re-clicking a school tab you already saw.
   function cachePlanText(text: string) {
     try {
@@ -2047,7 +2054,7 @@ export default function PlannerClient() {
   const schoolForStats = activeSchoolTab || targetSchool;
   const ucStats = UC_STATS[schoolForStats];
   const heroTerms = useMemo(() => parseTimeline(aiPlan), [aiPlan]);
-  const ucAppDate = DEADLINES.find((d) => d.label === "UC Application")?.date ?? "Nov 1–30";
+  const ucAppDate = DEADLINES.find((d) => d.label === "UC Application")?.date ?? "Nov 1 to 30";
   const competitivenessLine = ucStats
     ? `${schoolForStats} admits about ${ucStats.rate} of transfer applicants, with successful applicants generally in the ${ucStats.gpa} GPA range.${ucStats.tag ? ` TAG is available here with a ${ucStats.tagGPA}+ GPA.` : " TAG isn't offered here, so you'll apply directly during the November filing period."}`
     : "";
@@ -2145,7 +2152,7 @@ export default function PlannerClient() {
 
                 <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-[#e5e0d5] dark:border-gray-800 pt-6">
                   <div>
-                    <p className="text-base font-bold text-[#1a2e22] dark:text-gray-50">{heroTerms.length > 0 ? `~${heroTerms.length} term${heroTerms.length > 1 ? "s" : ""}` : "—"}</p>
+                    <p className="text-base font-bold text-[#1a2e22] dark:text-gray-50">{heroTerms.length > 0 ? `~${heroTerms.length} term${heroTerms.length > 1 ? "s" : ""}` : "Not set"}</p>
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b] dark:text-gray-500">Estimated</p>
                   </div>
                   <div>
@@ -2356,8 +2363,8 @@ export default function PlannerClient() {
                         <div className="rounded-xl border border-green-200 bg-green-50 p-3">
                           <p className="text-xs font-bold text-green-800 mb-1">Next steps for eligible campuses</p>
                           <ul className="text-xs text-green-700 space-y-0.5 list-disc pl-4">
-                            <li>Submit TAG application via <strong>UC TAP</strong>: September 1–30</li>
-                            <li>Submit UC Application: October 1 – November 30</li>
+                            <li>Submit TAG application via <strong>UC TAP</strong>: September 1 to 30</li>
+                            <li>Submit UC Application: October 1 to November 30</li>
                             <li>Major on TAG must exactly match your UC application major</li>
                             <li>Submit Transfer Academic Update (TAU) by January 31</li>
                           </ul>
@@ -2407,7 +2414,7 @@ export default function PlannerClient() {
                         className="mt-0.5 h-4 w-4 rounded accent-[#0b7f46]"
                       />
                       <div>
-                        <p className="text-sm font-semibold text-[#303236] dark:text-gray-100">Area {area.area} — {area.title}</p>
+                        <p className="text-sm font-semibold text-[#303236] dark:text-gray-100">Area {area.area}: {area.title}</p>
                         <p className="text-xs text-[#7b818b] dark:text-gray-500">{area.detail}</p>
                       </div>
                     </label>

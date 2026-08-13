@@ -39,10 +39,15 @@ const en = {
   "common.settingsAria": "Settings",
 
   // Navbar
-  "nav.forStudents": "For Students",
-  "nav.whatYouGet": "What You Get",
+  "nav.forStudents": "For students",
+  "nav.whatYouGet": "What you get",
   "nav.pricing": "Pricing",
-  "nav.myPlan": "My Plan",
+  "nav.faq": "FAQ",
+  "nav.logIn": "Log in",
+  "nav.openMenu": "Open menu",
+  "nav.closeMenu": "Close menu",
+  "nav.primaryAria": "Main",
+  "nav.myPlan": "My plan",
   "nav.buildMyPlan": "Build my plan",
 
   // Footer
@@ -52,13 +57,12 @@ const en = {
   "footer.login": "Log in",
   "footer.buildMyPlan": "Build my plan",
   "footer.disclaimer": "Demo data only. CourseBridge is independent and not affiliated with ASSIST, UC, CSU, or CCSF. Always verify requirements through ASSIST.org, official college catalogs, and a counselor.",
+  "footer.copyright": "© {year} CourseBridge. All rights reserved.",
 
-  // Home — hero
-  "home.badge": "Built around real transfer planning problems",
+  // Home: hero
   "home.heroTitle": "Know exactly what classes you need before you transfer.",
-  "home.heroBody": "CourseBridge plans your UC transfer requirements using real ASSIST articulation data — personalized to your community college, major, and target campus, so nothing falls through the cracks.",
+  "home.heroBody": "CourseBridge plans your UC transfer requirements using real ASSIST articulation data, personalized to your community college, major, and target campus, so nothing falls through the cracks.",
   "home.buildMyPlan": "Build my plan",
-  "home.alreadyHavePlan": "Already have a plan? Log in",
   "home.stats.communityColleges": "Community Colleges",
   "home.stats.coursesIndexed": "Courses indexed",
   "home.stats.ucCampuses": "UC campuses",
@@ -72,25 +76,32 @@ const en = {
   "home.preview.dataStructures": "Data Structures",
   "home.preview.linearAlgebra": "Linear Algebra",
 
-  // Home — why
-  "home.why.title": "Why CourseBridge",
+  // Home: why
+  "home.why.title": "Transfer planning, with and without CourseBridge",
   "home.why.body": "Transfer planning shouldn't depend on catching a counselor before appointments fill up. Here's the problem CourseBridge solves.",
+  "home.without.title": "Planning it yourself",
+  "home.with.title": "Planning it with CourseBridge",
   "home.painPoints.0": "ASSIST.org can be hard to read.",
   "home.painPoints.1": "Requirements change by school and major.",
   "home.painPoints.2": "One missing prerequisite can delay transfer.",
   "home.painPoints.3": "Counselors help, but appointments fill up fast.",
 
-  // Home — how it works
+  "home.gainPoints.0": "Your requirements are laid out in plain language.",
+  "home.gainPoints.1": "The plan is specific to your college, major, and target campus.",
+  "home.gainPoints.2": "Prerequisite chains are sequenced for you, so nothing gets missed.",
+  "home.gainPoints.3": "You can check your plan any time, without waiting for an appointment.",
+
+  // Home: how it works
   "home.how.title": "How it works",
   "home.how.body": "Three steps, and you'll have a term-by-term plan built on real articulation data.",
   "home.how.step1.title": "Add your courses",
-  "home.how.step1.body": "Enter your completed courses in plain text — no need to look up exact codes.",
+  "home.how.step1.body": "Enter your completed courses in plain text. There is no need to look up exact codes.",
   "home.how.step2.title": "Pick a UC and major",
   "home.how.step2.body": "Choose the UC campus and major you want to transfer into.",
   "home.how.step3.title": "Get a clear plan",
   "home.how.step3.body": "See major requirements, blocked classes, and lighter GE filler options.",
 
-  // Home — what you get
+  // Home: what you get
   "home.get.title": "What students get",
   "home.get.body": "Everything you need to plan your transfer with confidence, in one place.",
   "home.get.feature1.title": "Major prep tracking",
@@ -106,13 +117,26 @@ const en = {
   "home.get.feature6.title": "Application deadline reminders",
   "home.get.feature6.body": "Keep TAG, UC application, and financial aid deadlines in view as your plan comes together.",
 
-  // Home — pricing
+  // Home: pricing
   "home.pricing.title": "Free while in beta",
   "home.pricing.body": "CourseBridge is currently free to use for all California community college students while we build it out.",
 
-  // Home — final CTA
-  "home.cta.title": "Ready to see your plan?",
-  "home.cta.body": "Answer a few questions about your college, major, and target campus — CourseBridge does the rest.",
+  // Home: FAQ
+  "home.faq.title": "Common questions",
+  "home.faq.body": "What CourseBridge does, where the data comes from, and what it cannot do for you.",
+  "home.faq.q1": "Where does the course data come from?",
+  "home.faq.a1": "Plans are built from ASSIST articulation agreements between California community colleges and UC campuses. CourseBridge is independent and is not affiliated with ASSIST.",
+  "home.faq.q2": "Does this replace my counselor?",
+  "home.faq.a2": "No. It gives you a plan to bring to your counselor so the appointment starts further along. Always confirm your requirements with your college and with ASSIST.org.",
+  "home.faq.q3": "Do I need an account?",
+  "home.faq.a3": "You can build a plan without one. Creating an account saves your college, major, and completed courses so your plan is waiting for you next time.",
+  "home.faq.q4": "What does it cost?",
+  "home.faq.a4": "Nothing. CourseBridge is free for all California community college students while it is in beta.",
+  "home.faq.q5": "Can I upload my transcript instead of typing courses?",
+  "home.faq.a5": "Yes. Upload a PDF transcript during onboarding and CourseBridge pulls your completed courses out of it for you to review.",
+
+  // Home: final CTA
+  "home.cta.title": "See the classes you still need",
 
   // Auth (login/signup)
   "auth.welcomeBack": "Welcome back",
@@ -172,27 +196,28 @@ const en = {
   "onboarding.step2.title": "Where do you go to school?",
   "onboarding.step2.subtitle": "Enter your California community college.",
   "onboarding.step2.placeholder": "e.g. De Anza College",
-  "onboarding.step2.districtWarning": "\"Rancho Santiago College\" is the district name, not a specific campus — which college do you actually attend?",
+  "onboarding.step2.districtWarning": "\"Rancho Santiago College\" is the district name, not a specific campus. Which college do you actually attend?",
 
   "onboarding.step3.title": "Which UCs are you targeting?",
-  "onboarding.step3.subtitle": "Select all that apply — we'll build a plan for each.",
+  "onboarding.step3.subtitle": "Select all that apply. We'll build a plan for each.",
   "onboarding.step3.selectedOne": "1 school selected",
   "onboarding.step3.selectedMany": "{n} schools selected",
 
   "onboarding.step4.title": "What do you want to study?",
   "onboarding.step4.subtitle": "Enter your intended major.",
   "onboarding.step4.placeholder": "e.g. Computer Science",
-  "onboarding.step4.noMatch": "No major matches \"{q}\" — you can still type it exactly and continue.",
+  "onboarding.step4.noMatch": "No major matches \"{q}\". You can still type it exactly and continue.",
   "onboarding.step4.loadingMajors": "Loading the full major list for {college} → {uc}…",
 
   "onboarding.step5.title": "What courses have you completed?",
   "onboarding.step5.subtitle": "Upload your transcript or list your courses in plain text.",
   "onboarding.step5.uploadTranscript": "Upload transcript (PDF)",
+  "onboarding.step5.dropHere": "Drop your transcript to read it",
   "onboarding.step5.readingTranscript": "Reading your transcript…",
   "onboarding.step5.autoExtract": "We'll pull your completed courses out automatically",
   "onboarding.step5.noCoursesFound": "No courses found in that PDF.",
-  "onboarding.step5.addedCourseOne": "Added 1 course from your transcript — review the list below.",
-  "onboarding.step5.addedCourseMany": "Added {n} courses from your transcript — review the list below.",
+  "onboarding.step5.addedCourseOne": "Added 1 course from your transcript. Review the list below.",
+  "onboarding.step5.addedCourseMany": "Added {n} courses from your transcript. Review the list below.",
   "onboarding.step5.transcriptError": "Something went wrong reading that file. Try again or enter your courses manually.",
   "onboarding.step5.noCoursesYet": "I haven't completed any college courses yet",
   "onboarding.step5.coursesPlaceholder": "e.g. Calc 1, English 1A, Intro to CS, Econ 1",
@@ -205,7 +230,7 @@ const en = {
   "onboarding.step5.apPlaceholder": "e.g. AP Calculus AB (score 4), AP English Language (score 5)",
   "onboarding.step5.buildMyPlan": "Build My Plan →",
 
-  // Floating AI widget (chrome only — replies come from the backend and stay in the language it responds in)
+  // Floating AI widget (chrome only: replies come from the backend and stay in the language it responds in)
   "widget.askButton": "Ask CourseBridge AI",
   "widget.title": "CourseBridge AI",
   "widget.subtitle": "Ask me anything about UC transfer",

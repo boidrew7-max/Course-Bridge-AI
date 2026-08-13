@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 const isProd = process.env.NODE_ENV === "production";
 
 // Called by the /auth/callback page after a Google OAuth redirect delivers a
-// token in the URL — moves it into an HttpOnly cookie so client JS never
+// token in the URL: moves it into an HttpOnly cookie so client JS never
 // touches the raw token.
 export async function POST(req: Request) {
   const { token } = await req.json();

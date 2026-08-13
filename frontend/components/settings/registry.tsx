@@ -6,7 +6,7 @@ import type { SettingsSectionProps } from "./types";
 
 // Add a new settings section (Notifications, Privacy, Account, Subscription,
 // AI preferences, ...) by adding one entry here and one Component file next
-// to ProfileSection.tsx — no other wiring needed.
+// to ProfileSection.tsx: no other wiring needed.
 export type SettingsSection = {
   id: string;
   labelKey: "settings.nav.profile" | "settings.nav.appearance" | "settings.nav.language";

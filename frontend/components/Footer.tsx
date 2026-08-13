@@ -1,37 +1,91 @@
 "use client";
 
 import { useTranslation } from "../lib/i18n";
-import { useHasPlan } from "../lib/useHasPlan";
 
 export default function Footer() {
   const { t } = useTranslation();
-  const { hasPlan } = useHasPlan();
+
+  const columns = [
+    {
+      heading: t("footer.product"),
+      links: [
+        { href: "/#students", label: t("nav.forStudents") },
+        { href: "/#counselors", label: t("nav.whatYouGet") },
+        { href: "/#pricing", label: t("nav.pricing") },
+        { href: "/#faq", label: t("nav.faq") },
+      ],
+    },
+    {
+      heading: t("footer.account"),
+      links: [
+        { href: "/login", label: t("footer.login") },
+        { href: "/onboarding", label: t("footer.buildMyPlan") },
+      ],
+    },
+  ];
 
   return (
-    <footer className="border-t border-[#e5e0d5] bg-white dark:border-gray-800 dark:bg-[#14151a]">
-      <div className="mx-auto max-w-7xl px-5 py-10 md:px-8">
-        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-          <div className="max-w-xs">
-            <img src="/coursebridge-logo.png" alt="CourseBridge" className="h-7 w-auto" />
-            <p className="mt-3 text-sm leading-6 text-[#7b818b] dark:text-gray-400">
+    <footer
+      style={{
+        background: "var(--cb-surface)",
+        borderTop: "1px solid var(--cb-border)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
+      <div className="cb-container" style={{ paddingBlock: "var(--cb-space-5)" }}>
+        <div className="flex flex-col gap-[var(--cb-space-4)] md:flex-row md:justify-between">
+          <div style={{ maxWidth: "22rem" }}>
+            <img src="/coursebridge-logo.png" alt="CourseBridge" width={160} height={32} className="cb-logo h-8 w-auto" />
+            <p style={{ margin: "var(--cb-space-2) 0 0", fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-muted)" }}>
               {t("footer.tagline")}
             </p>
           </div>
 
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-[#a3a9b3] dark:text-gray-500">{t("footer.product")}</p>
-            <ul className="mt-3 space-y-2 text-sm text-[#4d535c] dark:text-gray-400">
-              <li><a href="/#students" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.forStudents")}</a></li>
-              <li><a href="/#counselors" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.whatYouGet")}</a></li>
-              <li><a href="/#pricing" className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{t("nav.pricing")}</a></li>
-              <li><a href={hasPlan ? "/dashboard" : "/onboarding"} className="hover:text-[#0b7f46] dark:hover:text-[#3ba76a]">{hasPlan ? t("nav.myPlan") : t("footer.buildMyPlan")}</a></li>
-            </ul>
+          <div className="flex flex-col gap-[var(--cb-space-4)] sm:flex-row sm:gap-[var(--cb-space-6)]">
+            {columns.map((column) => (
+              <div key={column.heading}>
+                <h2
+                  style={{
+                    fontSize: "var(--cb-fs-body-sm)",
+                    fontWeight: 600,
+                    color: "var(--cb-text)",
+                    letterSpacing: "normal",
+                  }}
+                >
+                  {column.heading}
+                </h2>
+                <ul style={{ listStyle: "none", margin: "var(--cb-space-1) 0 0", padding: 0 }}>
+                  {column.links.map((link) => (
+                    <li key={link.href}>
+                      <a
+                        href={link.href}
+                        className="cb-link flex items-center"
+                        style={{ minHeight: 44, fontSize: "var(--cb-fs-body-sm)" }}
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="mt-10 border-t border-[#e5e0d5] pt-6 text-xs leading-6 text-[#a3a9b3] dark:border-gray-800 dark:text-gray-500">
+        <p
+          style={{
+            margin: "var(--cb-space-4) 0 0",
+            paddingTop: "var(--cb-space-3)",
+            borderTop: "1px solid var(--cb-border)",
+            fontSize: "var(--cb-fs-body-sm)",
+            color: "var(--cb-muted)",
+          }}
+        >
           {t("footer.disclaimer")}
-        </div>
+        </p>
+        <p style={{ margin: "var(--cb-space-1) 0 0", fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-muted)" }}>
+          {t("footer.copyright", { year: new Date().getFullYear() })}
+        </p>
       </div>
     </footer>
   );

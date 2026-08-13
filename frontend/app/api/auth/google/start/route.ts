@@ -4,7 +4,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "";
 const SITE_URL = process.env.SITE_URL || "https://coursebridge.us";
 
-// Full-page redirect straight to Google (not to the backend — the backend
+// Full-page redirect straight to Google (not to the backend: the backend
 // has no public URL, so it can't be an OAuth redirect target). Google
 // eventually redirects back to /api/auth/google/callback on this domain.
 export async function GET() {

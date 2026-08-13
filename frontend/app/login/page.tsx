@@ -35,7 +35,7 @@ export default function LoginPage() {
         return;
       }
       // /dashboard checks for an existing saved plan (or sends to the
-      // wizard if none yet) — don't force the wizard here directly, that
+      // wizard if none yet): don't force the wizard here directly, that
       // would restart returning users who already have a plan.
       router.push("/dashboard");
     } catch {

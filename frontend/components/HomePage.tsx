@@ -1,15 +1,17 @@
 "use client";
 
+import { useId, useState } from "react";
 import Link from "next/link";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import TransferAIWidget from "./TransferAIWidget";
 import { useTranslation } from "../lib/i18n";
-import { useHasPlan } from "../lib/useHasPlan";
+import type { Dictionary } from "../lib/locales";
+import { useReveal } from "../lib/useReveal";
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const { hasPlan } = useHasPlan();
+  useReveal();
 
   const STATS = [
     { n: "116", label: t("home.stats.communityColleges") },
@@ -23,6 +25,13 @@ export default function HomePage() {
     t("home.painPoints.1"),
     t("home.painPoints.2"),
     t("home.painPoints.3"),
+  ];
+
+  const GAIN_POINTS = [
+    t("home.gainPoints.0"),
+    t("home.gainPoints.1"),
+    t("home.gainPoints.2"),
+    t("home.gainPoints.3"),
   ];
 
   const HOW_IT_WORKS = [
@@ -40,164 +49,426 @@ export default function HomePage() {
     { title: t("home.get.feature6.title"), body: t("home.get.feature6.body") },
   ];
 
+  const FAQS = [
+    { q: t("home.faq.q1"), a: t("home.faq.a1") },
+    { q: t("home.faq.q2"), a: t("home.faq.a2") },
+    { q: t("home.faq.q3"), a: t("home.faq.a3") },
+    { q: t("home.faq.q4"), a: t("home.faq.a4") },
+    { q: t("home.faq.q5"), a: t("home.faq.a5") },
+  ];
+
   return (
-    <div className="min-h-screen bg-white text-[#2f3135] dark:bg-[#14151a] dark:text-gray-200">
+    <div style={{ background: "var(--cb-surface)" }}>
       <Navbar />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-7xl px-5 pb-16 pt-14 md:px-8 md:pt-20">
-        <div className="grid gap-12 lg:grid-cols-[1fr_0.9fr] lg:items-center">
-          <div>
-            <p className="mb-5 inline-flex rounded-full border border-[#b8d8c7] bg-[#e7f3ed] px-4 py-1.5 text-sm font-semibold text-[#0b7f46] dark:border-[#0b7f46]/40 dark:bg-[#0b7f46]/15 dark:text-[#3ba76a]">
-              {t("home.badge")}
-            </p>
+      {/* ---------------------------------------------------------------- Hero */}
+      <section className="cb-section cb-section-alt">
+        <div className="cb-container">
+          <div className="grid items-center gap-[var(--cb-space-5)] lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <h1 className="cb-h1" style={{ maxWidth: "18ch" }}>
+                {t("home.heroTitle")}
+              </h1>
 
-            <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-[#1a2e22] sm:text-5xl lg:text-6xl dark:text-gray-50">
-              {t("home.heroTitle")}
-            </h1>
+              <p className="cb-lead" style={{ marginTop: "var(--cb-space-3)" }}>
+                {t("home.heroBody")}
+              </p>
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-[#5b6169] dark:text-gray-400">
-              {t("home.heroBody")}
-            </p>
+              <div style={{ marginTop: "var(--cb-space-4)" }}>
+                <Link href="/onboarding" className="cb-btn cb-btn-primary w-full sm:w-auto">
+                  {t("home.buildMyPlan")}
+                </Link>
+              </div>
 
-            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-              <Link
-                href={hasPlan ? "/dashboard" : "/onboarding"}
-                className="rounded-xl bg-[#0b7f46] px-6 py-3.5 text-center font-semibold text-white shadow-sm transition hover:bg-[#08683a] hover:shadow-md"
+              {/* Trust element: counts from the articulation data the plans are built on. */}
+              <dl
+                className="grid grid-cols-2 sm:grid-cols-4"
+                style={{
+                  gap: "var(--cb-space-3)",
+                  marginTop: "var(--cb-space-5)",
+                  paddingTop: "var(--cb-space-4)",
+                  borderTop: "1px solid var(--cb-border)",
+                }}
               >
-                {hasPlan ? t("nav.myPlan") : t("home.buildMyPlan")}
-              </Link>
-              <Link
-                href="/login"
-                className="text-sm font-semibold text-[#4d535c] transition hover:text-[#0b7f46] dark:text-gray-400 dark:hover:text-[#3ba76a]"
-              >
-                {t("home.alreadyHavePlan")}
-              </Link>
+                {STATS.map((s) => (
+                  <div key={s.label}>
+                    <dt className="sr-only">{s.label}</dt>
+                    <dd style={{ margin: 0 }}>
+                      <span
+                        style={{
+                          display: "block",
+                          fontFamily: "var(--cb-font-heading)",
+                          fontSize: "var(--cb-fs-stat)",
+                          fontWeight: 700,
+                          lineHeight: 1.1,
+                          color: "var(--cb-link)",
+                        }}
+                      >
+                        {s.n}
+                      </span>
+                      <span
+                        style={{
+                          display: "block",
+                          marginTop: "0.25rem",
+                          fontSize: "var(--cb-fs-body-sm)",
+                          color: "var(--cb-muted)",
+                        }}
+                      >
+                        {s.label}
+                      </span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
 
-            <div className="mt-12 flex flex-wrap gap-x-10 gap-y-6 border-t border-[#eceae4] pt-8 dark:border-gray-800">
-              {STATS.map((s) => (
-                <div key={s.label}>
-                  <p className="text-2xl font-bold text-[#0b7f46] dark:text-[#3ba76a]">{s.n}</p>
-                  <p className="mt-0.5 text-xs text-[#7b818b] dark:text-gray-500">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-[#e5e0d5] bg-[#faf9f6] p-6 shadow-[0_20px_50px_rgba(20,30,25,0.06)] dark:border-gray-800 dark:bg-[#191a20]">
-            <p className="text-sm font-semibold text-[#7b818b] dark:text-gray-500">{t("home.preview.label")}</p>
-            <h2 className="mt-1 text-xl font-bold text-[#1a2e22] dark:text-gray-50">UC Berkeley · Computer Science</h2>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4 dark:border-gray-800 dark:bg-[#1c1e24]">
-                <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-100">{t("home.preview.completed")}</p>
-                <p className="mt-2 text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.calc1")}</p>
-                <p className="text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.introProgramming")}</p>
-              </div>
-              <div className="rounded-2xl border border-[#e5e0d5] bg-white p-4 dark:border-gray-800 dark:bg-[#1c1e24]">
-                <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-100">{t("home.preview.missing")}</p>
-                <p className="mt-2 text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.dataStructures")}</p>
-                <p className="text-sm text-[#6f7680] dark:text-gray-400">{t("home.preview.linearAlgebra")}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-[#e5e0d5] bg-white p-4 dark:border-gray-800 dark:bg-[#1c1e24]">
-              <p className="mb-2 text-sm font-bold text-[#1a2e22] dark:text-gray-100">{t("home.preview.recommendedNextTerm")}</p>
-              <div className="flex flex-wrap gap-2">
-                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46] dark:bg-[#0b7f46]/15 dark:text-[#3ba76a]">{t("home.preview.dataStructures")}</span>
-                <span className="rounded-lg bg-[#e7f3ed] px-3 py-1.5 text-sm font-semibold text-[#0b7f46] dark:bg-[#0b7f46]/15 dark:text-[#3ba76a]">{t("home.preview.linearAlgebra")}</span>
-              </div>
-            </div>
+            <PlanPreview t={t} />
           </div>
         </div>
       </section>
 
-      {/* Why CourseBridge */}
-      <section id="students" className="border-t border-[#eceae4] bg-[#faf9f6] dark:border-gray-800 dark:bg-[#191a20]">
-        <div className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-          <h2 className="text-3xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.why.title")}</h2>
-          <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169] dark:text-gray-400">
-            {t("home.why.body")}
-          </p>
+      {/* ------------------------------------------------- Problem vs solution */}
+      <section id="students" className="cb-section">
+        <div className="cb-container">
+          <h2 className="cb-h2 cb-reveal">{t("home.why.title")}</h2>
+          <p className="cb-lead cb-reveal">{t("home.why.body")}</p>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
-            {PAIN_POINTS.map((text) => (
-              <div key={text} className="rounded-2xl border border-[#e5e0d5] bg-white p-5 text-[15px] font-medium text-[#4d535c] shadow-sm dark:border-gray-800 dark:bg-[#1c1e24] dark:text-gray-300">
-                {text}
-              </div>
-            ))}
+          <div className="mt-[var(--cb-space-5)] grid gap-[var(--cb-space-3)] md:grid-cols-2">
+            <ComparisonCard title={t("home.without.title")} points={PAIN_POINTS} />
+            <ComparisonCard title={t("home.with.title")} points={GAIN_POINTS} accent />
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-        <h2 className="text-3xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.how.title")}</h2>
-        <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169] dark:text-gray-400">
-          {t("home.how.body")}
-        </p>
+      {/* -------------------------------------------------------- How it works */}
+      <section className="cb-section cb-section-alt">
+        <div className="cb-container">
+          <h2 className="cb-h2 cb-reveal">{t("home.how.title")}</h2>
+          <p className="cb-lead cb-reveal">{t("home.how.body")}</p>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {HOW_IT_WORKS.map((step) => (
-            <div key={step.number} className="rounded-3xl border border-[#e5e0d5] bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-[#1c1e24]">
-              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-[#0b7f46] text-sm font-bold text-white">
-                {step.number}
-              </div>
-              <h3 className="text-xl font-bold text-[#1a2e22] dark:text-gray-50">{step.title}</h3>
-              <p className="mt-2 leading-6 text-[#6f7680] dark:text-gray-400">{step.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* What students get */}
-      <section id="counselors" className="border-t border-[#eceae4] bg-[#faf9f6] dark:border-gray-800 dark:bg-[#191a20]">
-        <div className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-          <h2 className="text-3xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.get.title")}</h2>
-          <p className="mt-3 max-w-2xl text-lg leading-7 text-[#5b6169] dark:text-gray-400">
-            {t("home.get.body")}
-          </p>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {WHAT_YOU_GET.map((f) => (
-              <div key={f.title} className="rounded-2xl border border-[#e5e0d5] bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#1c1e24]">
-                <h3 className="font-bold text-[#1a2e22] dark:text-gray-50">{f.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-[#6f7680] dark:text-gray-400">{f.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing (simple, honest placeholder — this is a free demo tool) */}
-      <section id="pricing" className="mx-auto max-w-7xl px-5 py-16 md:px-8">
-        <div className="rounded-3xl border border-[#e5e0d5] bg-white p-8 text-center shadow-sm dark:border-gray-800 dark:bg-[#1c1e24]">
-          <h2 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">{t("home.pricing.title")}</h2>
-          <p className="mx-auto mt-3 max-w-xl leading-7 text-[#5b6169] dark:text-gray-400">
-            {t("home.pricing.body")}
-          </p>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="border-t border-[#eceae4] bg-[#0b7f46]">
-        <div className="mx-auto max-w-7xl px-5 py-16 text-center md:px-8">
-          <h2 className="text-3xl font-bold text-white">{t("home.cta.title")}</h2>
-          <p className="mx-auto mt-3 max-w-xl leading-7 text-white/85">
-            {t("home.cta.body")}
-          </p>
-          <Link
-            href={hasPlan ? "/dashboard" : "/onboarding"}
-            className="mt-8 inline-block rounded-xl bg-white px-7 py-3.5 font-semibold text-[#0b7f46] shadow-sm transition hover:bg-[#f0faf5]"
+          <ol
+            className="mt-[var(--cb-space-5)] flex flex-col gap-[var(--cb-space-5)]"
+            style={{ listStyle: "none", margin: 0, padding: 0 }}
           >
-            {hasPlan ? t("nav.myPlan") : t("home.buildMyPlan")}
+            {HOW_IT_WORKS.map((step, i) => (
+              <li
+                key={step.number}
+                className={`cb-reveal grid items-center gap-[var(--cb-space-3)] md:grid-cols-2 md:gap-[var(--cb-space-6)] ${
+                  i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""
+                }`}
+              >
+                <div>
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 40,
+                      height: 40,
+                      borderRadius: "var(--cb-radius-pill)",
+                      background: "var(--cb-accent)",
+                      color: "var(--cb-on-accent)",
+                      fontFamily: "var(--cb-font-heading)",
+                      fontWeight: 700,
+                      marginBottom: "var(--cb-space-2)",
+                    }}
+                  >
+                    {step.number}
+                  </div>
+                  <h3 className="cb-h3">{step.title}</h3>
+                  <p style={{ margin: "var(--cb-space-1) 0 0", maxWidth: "var(--cb-measure)", color: "var(--cb-muted)" }}>
+                    {step.body}
+                  </p>
+                </div>
+                <StepFigure index={i} t={t} />
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------- What you get */}
+      <section id="counselors" className="cb-section">
+        <div className="cb-container">
+          <h2 className="cb-h2 cb-reveal">{t("home.get.title")}</h2>
+          <p className="cb-lead cb-reveal">{t("home.get.body")}</p>
+
+          <ul
+            className="mt-[var(--cb-space-5)] grid gap-[var(--cb-space-2)] sm:grid-cols-2 lg:grid-cols-3"
+            style={{ listStyle: "none", margin: 0, padding: 0 }}
+          >
+            {WHAT_YOU_GET.map((f) => (
+              <li key={f.title} className="cb-card cb-reveal flex h-full flex-col">
+                <h3 className="cb-h3">{f.title}</h3>
+                <p style={{ margin: "var(--cb-space-1) 0 0", color: "var(--cb-muted)" }}>{f.body}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ Pricing */}
+      <section id="pricing" className="cb-section cb-section-alt">
+        <div className="cb-container">
+          <h2 className="cb-h2 cb-reveal">{t("home.pricing.title")}</h2>
+          <p className="cb-lead cb-reveal">{t("home.pricing.body")}</p>
+        </div>
+      </section>
+
+      {/* ---------------------------------------------------------------- FAQ */}
+      <section id="faq" className="cb-section">
+        <div className="cb-container">
+          <h2 className="cb-h2 cb-reveal">{t("home.faq.title")}</h2>
+          <p className="cb-lead cb-reveal">{t("home.faq.body")}</p>
+
+          <div className="mt-[var(--cb-space-4)]" style={{ maxWidth: "48rem" }}>
+            {FAQS.map((item, i) => (
+              <FaqRow key={item.q} question={item.q} answer={item.a} defaultOpen={i === 0} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ Final CTA */}
+      <section className="cb-section cb-band-accent">
+        <div className="cb-container" style={{ textAlign: "center" }}>
+          <h2 className="cb-h2" style={{ marginInline: "auto", maxWidth: "20ch" }}>
+            {t("home.cta.title")}
+          </h2>
+          <Link
+            href="/onboarding"
+            className="cb-btn cb-btn-invert w-full sm:w-auto"
+            style={{ marginTop: "var(--cb-space-4)" }}
+          >
+            {t("home.buildMyPlan")}
           </Link>
         </div>
       </section>
 
       <Footer />
       <TransferAIWidget />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ pieces */
+
+type Translate = (key: keyof Dictionary, params?: Record<string, string | number>) => string;
+
+function ComparisonCard({
+  title,
+  points,
+  accent = false,
+}: {
+  title: string;
+  points: string[];
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className="cb-card cb-reveal"
+      style={
+        accent
+          ? {
+              borderColor: "var(--cb-accent)",
+              background: "color-mix(in srgb, var(--cb-accent) 6%, var(--cb-card))",
+            }
+          : undefined
+      }
+    >
+      <h3 className="cb-h3">{title}</h3>
+      <ul
+        className="flex flex-col"
+        style={{ gap: "var(--cb-space-1)", listStyle: "none", margin: "var(--cb-space-2) 0 0", padding: 0 }}
+      >
+        {points.map((point) => (
+          <li key={point} className="flex gap-[var(--cb-space-1)]" style={{ color: "var(--cb-muted)" }}>
+            <span aria-hidden="true" style={{ color: "var(--cb-link)", flexShrink: 0 }}>
+              {accent ? "✓" : "•"}
+            </span>
+            {point}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Illustrative figure beside each step, built from the same tokens as the page. */
+function StepFigure({ index, t }: { index: number; t: Translate }) {
+  const rows = [
+    [t("home.preview.calc1"), t("home.preview.introProgramming")],
+    ["UC Berkeley", "Computer Science"],
+    [t("home.preview.dataStructures"), t("home.preview.linearAlgebra")],
+  ][index];
+
+  return (
+    <div className="cb-card" aria-hidden="true" style={{ background: "var(--cb-surface-alt)" }}>
+      <div className="flex flex-col" style={{ gap: "var(--cb-space-1)" }}>
+        {rows.map((row) => (
+          <div
+            key={row}
+            style={{
+              background: "var(--cb-card)",
+              border: "1px solid var(--cb-border)",
+              borderRadius: "var(--cb-radius-btn)",
+              padding: "0.75rem 1rem",
+              fontSize: "var(--cb-fs-body-sm)",
+              color: "var(--cb-body)",
+            }}
+          >
+            {row}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlanPreview({ t }: { t: Translate }) {
+  const cell = {
+    background: "var(--cb-card)",
+    border: "1px solid var(--cb-border)",
+    borderRadius: "var(--cb-radius-btn)",
+    padding: "var(--cb-space-2)",
+  } as const;
+
+  return (
+    <div
+      className="cb-card"
+      role="img"
+      aria-label={t("home.preview.label")}
+      style={{ background: "var(--cb-surface-alt)", padding: "var(--cb-space-3)", boxShadow: "var(--cb-shadow)" }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "var(--cb-font-heading)",
+          fontSize: "var(--cb-fs-h3)",
+          fontWeight: 700,
+          color: "var(--cb-text)",
+        }}
+      >
+        UC Berkeley, Computer Science
+      </p>
+
+      <div className="grid gap-[var(--cb-space-2)] sm:grid-cols-2" style={{ marginTop: "var(--cb-space-3)" }}>
+        <div style={cell}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-text)" }}>
+            {t("home.preview.completed")}
+          </p>
+          <p style={{ margin: "var(--cb-space-1) 0 0", fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-muted)" }}>
+            {t("home.preview.calc1")}
+            <br />
+            {t("home.preview.introProgramming")}
+          </p>
+        </div>
+        <div style={cell}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-text)" }}>
+            {t("home.preview.missing")}
+          </p>
+          <p style={{ margin: "var(--cb-space-1) 0 0", fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-muted)" }}>
+            {t("home.preview.dataStructures")}
+            <br />
+            {t("home.preview.linearAlgebra")}
+          </p>
+        </div>
+      </div>
+
+      <div style={{ ...cell, marginTop: "var(--cb-space-2)" }}>
+        <p style={{ margin: 0, fontWeight: 600, fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-text)" }}>
+          {t("home.preview.recommendedNextTerm")}
+        </p>
+        <div className="flex flex-wrap" style={{ gap: "var(--cb-space-1)", marginTop: "var(--cb-space-1)" }}>
+          {[t("home.preview.dataStructures"), t("home.preview.linearAlgebra")].map((course) => (
+            <span
+              key={course}
+              style={{
+                borderRadius: "var(--cb-radius-btn)",
+                background: "var(--cb-accent)",
+                color: "var(--cb-on-accent)",
+                padding: "0.375rem 0.75rem",
+                fontSize: "var(--cb-fs-body-sm)",
+                fontWeight: 600,
+              }}
+            >
+              {course}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FaqRow({
+  question,
+  answer,
+  defaultOpen,
+}: {
+  question: string;
+  answer: string;
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const panelId = useId();
+
+  return (
+    <div style={{ borderTop: "1px solid var(--cb-border)" }}>
+      <h3 style={{ margin: 0 }}>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          className="flex w-full items-center justify-between gap-[var(--cb-space-2)] text-left"
+          style={{
+            minHeight: 64,
+            padding: "var(--cb-space-2) 0",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            font: "inherit",
+            fontFamily: "var(--cb-font-heading)",
+            fontSize: "var(--cb-fs-h3)",
+            fontWeight: 600,
+            color: "var(--cb-text)",
+          }}
+        >
+          {question}
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            aria-hidden="true"
+            style={{
+              flexShrink: 0,
+              color: "var(--cb-muted)",
+              transform: open ? "rotate(180deg)" : "none",
+              transition: "transform var(--cb-motion) var(--cb-ease)",
+            }}
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </h3>
+      {open && (
+        <p
+          id={panelId}
+          style={{
+            margin: "0 0 var(--cb-space-3)",
+            maxWidth: "var(--cb-measure)",
+            color: "var(--cb-muted)",
+          }}
+        >
+          {answer}
+        </p>
+      )}
     </div>
   );
 }

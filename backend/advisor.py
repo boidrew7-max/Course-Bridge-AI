@@ -208,19 +208,35 @@ def _build_profile_context(user_profile):
     if not user_profile:
         return ""
     parts = []
+    if user_profile.get("first_name"):
+        parts.append(f"Name: {user_profile['first_name']}")
     if user_profile.get("college"):
         parts.append(f"Community College: {user_profile['college']}")
     if user_profile.get("major"):
         parts.append(f"Intended Major: {user_profile['major']}")
     if user_profile.get("target_schools"):
         parts.append(f"Target UC Campuses: {user_profile['target_schools']}")
+    if user_profile.get("completed_courses"):
+        parts.append(f"Courses Already Completed: {user_profile['completed_courses']}")
+    if user_profile.get("missing_courses"):
+        parts.append(f"Still Missing For Their Major: {user_profile['missing_courses']}")
+    if user_profile.get("blocked_courses"):
+        parts.append(
+            f"Blocked (prerequisites not met yet): {user_profile['blocked_courses']}"
+        )
+    if user_profile.get("readiness_score") is not None:
+        parts.append(f"Transfer Readiness Score: {user_profile['readiness_score']}/100")
     if not parts:
         return ""
     lines = "\n".join(f"- {p}" for p in parts)
     return (
         "\n\n=== THIS STUDENT'S PROFILE ===\n"
         + lines
-        + "\nPersonalize every answer to their specific college, major, and target campuses when relevant."
+        + "\nPersonalize every answer to their specific college, major, and target"
+        + " campuses when relevant. Never tell them to take a course they have"
+        + " already completed, and never ask them for something listed above:"
+        + " you already know it. If their profile is missing what you need to"
+        + " answer well, ask for just that one thing."
         + "\n=== END PROFILE ==="
     )
 

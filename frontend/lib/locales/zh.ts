@@ -44,6 +44,11 @@ const zh: Dictionary = {
   "nav.forStudents": "面向学生",
   "nav.whatYouGet": "你将获得",
   "nav.pricing": "价格",
+  "nav.faq": "常见问题",
+  "nav.logIn": "登录",
+  "nav.openMenu": "打开菜单",
+  "nav.closeMenu": "关闭菜单",
+  "nav.primaryAria": "主导航",
   "nav.myPlan": "我的计划",
   "nav.buildMyPlan": "制定我的计划",
 
@@ -54,13 +59,12 @@ const zh: Dictionary = {
   "footer.login": "登录",
   "footer.buildMyPlan": "制定我的计划",
   "footer.disclaimer": "仅为演示数据。CourseBridge 为独立产品，与 ASSIST、UC、CSU 或 CCSF 均无关联。请务必通过 ASSIST.org、官方院校目录以及顾问核实相关要求。",
+  "footer.copyright": "© {year} CourseBridge 保留所有权利。",
 
-  // Home — hero
-  "home.badge": "针对真实转学规划难题而打造",
+  // Home: hero
   "home.heroTitle": "在转学之前，准确了解你还需要修哪些课程。",
-  "home.heroBody": "CourseBridge 使用真实的 ASSIST 课程对接数据为你规划 UC 转学要求 —— 根据你所在的社区学院、专业和目标校区个性化定制，确保万无一失。",
+  "home.heroBody": "CourseBridge 使用真实的 ASSIST 课程对接数据为你规划 UC 转学要求，根据你所在的社区学院、专业和目标校区个性化定制，确保万无一失。",
   "home.buildMyPlan": "制定我的计划",
-  "home.alreadyHavePlan": "已经有计划了？登录",
   "home.stats.communityColleges": "所社区学院",
   "home.stats.coursesIndexed": "门课程已收录",
   "home.stats.ucCampuses": "个 UC 校区",
@@ -74,15 +78,22 @@ const zh: Dictionary = {
   "home.preview.dataStructures": "数据结构",
   "home.preview.linearAlgebra": "线性代数",
 
-  // Home — why
-  "home.why.title": "为什么选择 CourseBridge",
+  // Home: why
+  "home.why.title": "有没有 CourseBridge，转学规划的差别",
   "home.why.body": "转学规划不应该依赖于赶在预约约满之前联系上顾问。以下是 CourseBridge 所解决的问题。",
+  "home.without.title": "自己规划",
+  "home.with.title": "用 CourseBridge 规划",
   "home.painPoints.0": "ASSIST.org 可能很难读懂。",
   "home.painPoints.1": "要求因学校和专业而异。",
   "home.painPoints.2": "少一门先修课程就可能延误转学。",
   "home.painPoints.3": "顾问虽然有帮助，但预约名额很快就会约满。",
 
-  // Home — how it works
+  "home.gainPoints.0": "你的要求会以通俗易懂的方式列出。",
+  "home.gainPoints.1": "计划针对你的学院、专业和目标校区量身定制。",
+  "home.gainPoints.2": "先修课程顺序已为你排好，不会有遗漏。",
+  "home.gainPoints.3": "随时可以查看计划，无需等待预约。",
+
+  // Home: how it works
   "home.how.title": "运作方式",
   "home.how.body": "只需三步，你就能获得基于真实课程对接数据的学期规划。",
   "home.how.step1.title": "添加你的课程",
@@ -92,7 +103,7 @@ const zh: Dictionary = {
   "home.how.step3.title": "获得清晰的规划",
   "home.how.step3.body": "查看专业要求、被阻塞的课程，以及更轻松的通识教育替代选项。",
 
-  // Home — what you get
+  // Home: what you get
   "home.get.title": "学生可以获得什么",
   "home.get.body": "在一个地方就能自信地规划你的转学之路，所需的一切都在这里。",
   "home.get.feature1.title": "专业课程完成情况追踪",
@@ -108,13 +119,26 @@ const zh: Dictionary = {
   "home.get.feature6.title": "申请截止日期提醒",
   "home.get.feature6.body": "在规划过程中持续关注 TAG、UC 申请及经济资助的各项截止日期。",
 
-  // Home — pricing
+  // Home: pricing
   "home.pricing.title": "测试期间免费使用",
   "home.pricing.body": "在我们持续完善产品期间，CourseBridge 目前对所有加州社区学院学生免费开放。",
 
-  // Home — final CTA
-  "home.cta.title": "准备好查看你的计划了吗？",
-  "home.cta.body": "回答几个关于你的学院、专业和目标校区的问题 —— 剩下的交给 CourseBridge。",
+  // Home: FAQ
+  "home.faq.title": "常见问题",
+  "home.faq.body": "CourseBridge 能做什么、数据从哪里来，以及它不能替你做什么。",
+  "home.faq.q1": "课程数据来自哪里？",
+  "home.faq.a1": "计划基于加州社区学院与 UC 校区之间的 ASSIST 课程对接协议生成。CourseBridge 是独立产品，与 ASSIST 无隶属关系。",
+  "home.faq.q2": "它可以取代我的辅导员吗？",
+  "home.faq.a2": "不能。它让你带着一份计划去见辅导员，让面谈从更靠前的地方开始。请务必与你的学院和 ASSIST.org 核实要求。",
+  "home.faq.q3": "我需要注册账号吗？",
+  "home.faq.a3": "不注册也可以生成计划。注册后会保存你的学院、专业和已修课程，下次回来计划仍在。",
+  "home.faq.q4": "收费吗？",
+  "home.faq.a4": "不收费。在测试阶段，CourseBridge 对所有加州社区学院学生免费。",
+  "home.faq.q5": "可以上传成绩单而不用手动输入课程吗？",
+  "home.faq.a5": "可以。在引导流程中上传 PDF 成绩单，CourseBridge 会自动提取你已完成的课程供你确认。",
+
+  // Home: final CTA
+  "home.cta.title": "看看你还缺哪些课",
 
   // Auth (login/signup)
   "auth.welcomeBack": "欢迎回来",
@@ -174,27 +198,28 @@ const zh: Dictionary = {
   "onboarding.step2.title": "你就读于哪所学院？",
   "onboarding.step2.subtitle": "输入你所在的加州社区学院。",
   "onboarding.step2.placeholder": "例如：De Anza College",
-  "onboarding.step2.districtWarning": "“Rancho Santiago College” 是学区名称，不是具体校区 —— 你实际就读的是哪所学院？",
+  "onboarding.step2.districtWarning": "“Rancho Santiago College” 是学区名称，不是具体校区。你实际就读的是哪所学院？",
 
   "onboarding.step3.title": "你的目标是哪些 UC 校区？",
-  "onboarding.step3.subtitle": "选择所有适用项 —— 我们会为每一个校区制定计划。",
+  "onboarding.step3.subtitle": "选择所有适用项。我们会为每一个校区制定计划。",
   "onboarding.step3.selectedOne": "已选择 1 所学校",
   "onboarding.step3.selectedMany": "已选择 {n} 所学校",
 
   "onboarding.step4.title": "你想学习什么专业？",
   "onboarding.step4.subtitle": "输入你打算攻读的专业。",
   "onboarding.step4.placeholder": "例如：计算机科学",
-  "onboarding.step4.noMatch": "没有与“{q}”匹配的专业 —— 你仍可以准确输入并继续。",
+  "onboarding.step4.noMatch": "没有与“{q}”匹配的专业。你仍可以准确输入并继续。",
   "onboarding.step4.loadingMajors": "正在加载 {college} → {uc} 的完整专业列表…",
 
   "onboarding.step5.title": "你已完成哪些课程？",
   "onboarding.step5.subtitle": "上传你的成绩单，或用简单文字列出你的课程。",
   "onboarding.step5.uploadTranscript": "上传成绩单（PDF）",
+  "onboarding.step5.dropHere": "松开以读取你的成绩单",
   "onboarding.step5.readingTranscript": "正在读取你的成绩单…",
   "onboarding.step5.autoExtract": "我们会自动提取你已完成的课程",
   "onboarding.step5.noCoursesFound": "未在该 PDF 中找到任何课程。",
-  "onboarding.step5.addedCourseOne": "已从你的成绩单中添加 1 门课程 —— 请查看下方列表。",
-  "onboarding.step5.addedCourseMany": "已从你的成绩单中添加 {n} 门课程 —— 请查看下方列表。",
+  "onboarding.step5.addedCourseOne": "已从你的成绩单中添加 1 门课程。请查看下方列表。",
+  "onboarding.step5.addedCourseMany": "已从你的成绩单中添加 {n} 门课程。请查看下方列表。",
   "onboarding.step5.transcriptError": "读取该文件时出了点问题，请重试或手动输入课程。",
   "onboarding.step5.noCoursesYet": "我还没有完成任何大学课程",
   "onboarding.step5.coursesPlaceholder": "例如：微积分 1、英语 1A、编程入门、经济学 1",
@@ -207,7 +232,7 @@ const zh: Dictionary = {
   "onboarding.step5.apPlaceholder": "例如：AP 微积分 AB（4 分）、AP 英语语言（5 分）",
   "onboarding.step5.buildMyPlan": "制定我的计划 →",
 
-  // Floating AI widget (chrome only — replies come from the backend and stay in the language it responds in)
+  // Floating AI widget (chrome only: replies come from the backend and stay in the language it responds in)
   "widget.askButton": "咨询 CourseBridge AI",
   "widget.title": "CourseBridge AI",
   "widget.subtitle": "有关 UC 转学的问题都可以问我",

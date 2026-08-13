@@ -155,6 +155,88 @@ def home():
     return app.send_static_file("index.html")
 
 
+
+def _stringify_courses(value):
+    """Render a course list from any shape the clients send.
+
+    The planner sends objects ({"code", "name", ...}), the floating widget
+    sends the student's own free text, and older callers send plain lists of
+    strings. All three end up as one comma separated line for the prompt.
+    """
+    if isinstance(value, str):
+        return value.strip()
+    if not isinstance(value, list):
+        return ""
+    parts = []
+    for item in value:
+        if isinstance(item, dict):
+            code = str(item.get("code") or "").strip()
+            name = str(item.get("name") or "").strip()
+            text = f"{code} ({name})" if code and name else code or name
+        else:
+            text = str(item).strip()
+        if text:
+            parts.append(text)
+    return ", ".join(parts)
+
+
+def _merge_chat_profile(stored, client):
+    """Combine the saved account profile with the context the browser sends.
+
+    The account row says who the student is; the client context says what
+    they have actually entered, which is newer during onboarding and is the
+    only source at all for a student without an account. Client values win
+    where present. None of this grants access to anything: it only shapes
+    the advisor's prompt, so an unauthenticated caller can describe nobody
+    but themselves.
+    """
+    profile = dict(stored or {})
+    client = client if isinstance(client, dict) else {}
+
+    def take(target, *keys):
+        for key in keys:
+            value = client.get(key)
+            if isinstance(value, list) and value and not isinstance(value[0], dict):
+                value = ", ".join(str(v).strip() for v in value if str(v).strip())
+            elif isinstance(value, list):
+                value = _stringify_courses(value)
+            elif isinstance(value, str):
+                value = value.strip()
+            if value:
+                profile[target] = value
+                return
+
+    take("college", "college")
+    take("major", "major")
+    take("target_schools", "targetUniversities", "targetUniversity")
+    take("first_name", "firstName")
+    take("completed_courses", "completedCourses")
+    take("missing_courses", "missingCourses")
+    take("blocked_courses", "blockedCourses")
+
+    score = client.get("readinessScore")
+    if isinstance(score, (int, float)):
+        profile["readiness_score"] = score
+
+    # A signed in student whose browser sent no course context: fall back to
+    # the most recently updated saved plan, which is what they last worked on.
+    if stored and not profile.get("completed_courses"):
+        try:
+            plans = get_user_plans(stored["id"])
+        except Exception:
+            plans = []
+        if plans:
+            latest = plans[0]
+            profile.setdefault("college", latest.get("college") or "")
+            profile.setdefault("major", latest.get("major") or "")
+            if latest.get("completed_courses"):
+                profile["completed_courses"] = latest["completed_courses"]
+            if not profile.get("target_schools") and latest.get("uc"):
+                profile["target_schools"] = latest["uc"]
+
+    return {k: v for k, v in profile.items() if v not in (None, "")} or None
+
+
 @app.route("/chat", methods=["POST"])
 def chat():
     ip = _get_ip()
@@ -208,7 +290,10 @@ def chat():
         history = history[-20:]
 
     uid = _current_uid()
-    user_profile = get_user_by_id(uid) if uid else None
+    stored_profile = get_user_by_id(uid) if uid else None
+    # The browser knows things the account row does not: the courses the
+    # student has already completed, and every campus they are targeting.
+    user_profile = _merge_chat_profile(stored_profile, data.get("plannerContext"))
 
     def generate():
         try:

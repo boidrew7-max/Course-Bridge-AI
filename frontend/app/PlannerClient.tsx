@@ -1705,15 +1705,22 @@ export default function PlannerClient() {
     return text.replace(/\|\|\|JSON\{[\s\S]*?\}\|\|\|/, "").trim();
   }
 
+  // Sent with every chat turn so the advisor never has to ask the student
+  // something the planner already knows. The backend merges this over their
+  // saved account profile, so partial values are fine.
   const plannerContext = useMemo(() => ({
-    college:          communityCollege,
-    targetUniversity: targetSchool,
-    major:            targetMajor,
-    completedCourses: result?.completed ?? [],
-    missingCourses:   result?.missing ?? [],
-    blockedCourses:   result?.blocked ?? [],
-    readinessScore:   result?.readinessScore ?? null,
-  }), [communityCollege, targetSchool, targetMajor, result]);
+    firstName:          firstName,
+    college:            communityCollege,
+    targetUniversity:   targetSchool,
+    targetUniversities: planSchools.length ? planSchools : [targetSchool].filter(Boolean),
+    major:              targetMajor,
+    // Prefer the matched requirements, and fall back to whatever the student
+    // typed when no plan has been generated for them yet.
+    completedCourses:   result?.completed?.length ? result.completed : completedCourses,
+    missingCourses:     result?.missing ?? [],
+    blockedCourses:     result?.blocked ?? [],
+    readinessScore:     result?.readinessScore ?? null,
+  }), [firstName, communityCollege, targetSchool, planSchools, targetMajor, completedCourses, result]);
 
   const streamResponse = useCallback(async (endpoint: string, history: { role: string; content: string }[], onChunk: (reply: string) => void) => {
     const res = await fetch(endpoint, {

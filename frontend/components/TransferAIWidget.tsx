@@ -2,13 +2,16 @@
 
 import { useRef, useState } from "react";
 import { useTranslation } from "../lib/i18n";
+import { readLocalChatContext } from "../lib/chatContext";
 
 type Message = { role: "user" | "assistant"; content: string };
 
 // Lightweight floating "Ask Transfer AI" chat, usable on pages that don't
 // have an existing plan/session context yet (homepage, onboarding). The
 // dashboard has its own richer, plan-aware version inside PlannerClient.
-// This one just talks to /api/chat directly with no extra context.
+// This one sends whatever onboarding saved locally, so the advisor knows the
+// student's college, target campuses and completed courses even before they
+// have an account.
 export default function TransferAIWidget() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -28,7 +31,7 @@ export default function TransferAIWidget() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history }),
+        body: JSON.stringify({ history, plannerContext: readLocalChatContext() }),
       });
       if (!res.ok || !res.body) throw new Error("failed");
       const reader = res.body.getReader();

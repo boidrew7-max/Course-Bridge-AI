@@ -888,20 +888,6 @@ function buildSequence(
   return terms;
 }
 
-// Format course display, avoiding duplicates
-function formatCourseDisplay(course: CourseRequirement): string {
-  const codeNorm = normalize(course.code);
-  const nameNorm = normalize(course.name);
-  
-  // If code and name are essentially the same (normalized), show only once
-  if (codeNorm === nameNorm) {
-    return course.code;
-  }
-  
-  // Otherwise show both
-  return `${course.code}: ${course.name}`;
-}
-
 function getCompetitiveness(score: number, note: string) {
   if (score >= 80) {
     return `Strong: most listed requirements are complete. ${note}`;
@@ -912,10 +898,6 @@ function getCompetitiveness(score: number, note: string) {
   }
 
   return `Needs improvement: complete more major prep before applying. ${note}`;
-}
-
-function formatRequirementOptions(options: string[][]) {
-  return options.map((group) => group.join(" + ")).join(" OR ");
 }
 
 function getGEFillers(rawInputs: string[], amount: number) {
@@ -1116,87 +1098,108 @@ function parseTimeline(text: string): TimelineTerm[] {
   return terms.filter((t) => t.courses.length > 0);
 }
 
-const CATEGORY_STYLES: Record<TimelineCourse["category"], { dot: string; label: string }> = {
-  major:   { dot: "bg-[#0b7f46]", label: "Major prep" },
-  breadth: { dot: "bg-[#c9862f]", label: "Breadth / GE" },
-  english: { dot: "bg-[#8a6a4f]", label: "English" },
+const SCHEDULE_CATEGORY_META: Record<TimelineCourse["category"], { tag: string; tagClass: string }> = {
+  major:   { tag: "Major prep",   tagClass: "bg-[#e7f3ed] dark:bg-[#0b7f46]/15 text-[#0b7f46]" },
+  breadth: { tag: "Breadth / GE", tagClass: "bg-[#fff7db] dark:bg-yellow-950/30 text-[#8a6100] dark:text-yellow-400" },
+  english: { tag: "English",      tagClass: "bg-[#eef5ff] dark:bg-blue-950/30 text-[#2f5fa8]" },
 };
 
-function PlanTimeline({ text, school, major }: { text: string; school: string; major: string }) {
+// Lightweight client-side "have they already told us this is done" check.
+// the real match happens server-side when the plan is generated; this is
+// just a display hint for the schedule board's checkmark.
+function courseLooksCompleted(code: string, completedRaw: string) {
+  if (!completedRaw.trim()) return false;
+  return normalize(completedRaw).includes(normalize(code));
+}
+
+function PlanTimeline({ text, completedRaw }: { text: string; school: string; major: string; completedRaw?: string }) {
   const terms = useMemo(() => parseTimeline(text), [text]);
+  const [selected, setSelected] = useState<{ course: TimelineCourse; termLabel: string } | null>(null);
   if (terms.length === 0) return null;
 
   const totalUnits = terms.reduce((sum, t) => sum + t.units, 0);
-  const usedCategories = new Set(terms.flatMap((t) => t.courses.map((c) => c.category)));
 
   return (
     <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-lg font-bold text-[#303236] dark:text-gray-100">Recommended Plan</h2>
+        <h2 className="text-lg font-bold text-[#303236] dark:text-gray-100">Your Schedule</h2>
         <p className="text-xs font-medium text-[#7b818b] dark:text-gray-500">
           {terms.length} term{terms.length > 1 ? "s" : ""} · {totalUnits % 1 === 0 ? totalUnits : totalUnits.toFixed(1)} units
         </p>
       </div>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[#7b818b] dark:text-gray-500">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#0b7f46]" />Completed</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border border-[#d8d0c3] dark:border-gray-600" />Still to take</span>
+      </div>
 
-      <div className="mt-4 space-y-5">
-        {terms.map((term, ti) => (
-          <div key={ti} className="relative pl-5">
-            <span className="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-[#0b7f46]" />
-            {ti < terms.length - 1 && (
-              <span className="absolute left-[4.5px] top-4 bottom-[-20px] w-px bg-[#d8d0c3]" />
-            )}
-            <div className="flex items-baseline justify-between">
-              <h4 className="text-sm font-bold text-[#1a2e22] dark:text-gray-50">{term.label}</h4>
-              <span className="text-xs text-[#7b818b] dark:text-gray-500">{term.units % 1 === 0 ? term.units : term.units.toFixed(1)} units</span>
-            </div>
-            <div className="mt-2 overflow-x-auto rounded-xl border border-[#e5e0d5] dark:border-gray-800">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="bg-[#faf9f6] dark:bg-[#191a20]">
-                    <th className="border-b border-[#e5e0d5] dark:border-gray-800 px-3 py-2 text-left font-semibold text-[#303236] dark:text-gray-100">Course</th>
-                    <th className="border-b border-[#e5e0d5] dark:border-gray-800 px-3 py-2 text-right font-semibold text-[#303236] dark:text-gray-100">Units</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {term.courses.map((c, ci) => (
-                    <tr key={ci} className={ci % 2 === 1 ? "bg-[#faf9f6]/60" : undefined}>
-                      <td className="border-b border-[#eceae4] dark:border-gray-800 px-3 py-2 align-top text-[#4d535c] dark:text-gray-400 last:border-b-0">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span className={`h-2 w-2 shrink-0 rounded-sm ${CATEGORY_STYLES[c.category].dot}`} />
-                          <span className="truncate">
-                            <span className="font-semibold text-[#303236] dark:text-gray-100">{c.code}</span>
-                            <span className="text-[#6E6A5C] dark:text-gray-400"> · {c.title}</span>
-                          </span>
+      <div className="mt-4 -mx-4 overflow-x-auto px-4 pb-2">
+        <div className="flex w-max items-start">
+          {terms.map((term, ti) => (
+            <div key={ti} className="flex items-start">
+              <div className="w-[230px] shrink-0 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4 shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0b7f46] text-[11px] font-bold text-white">{ti + 1}</span>
+                  <div>
+                    <p className="text-sm font-bold text-[#1a2e22] dark:text-gray-50">{term.label}</p>
+                    <p className="text-[11px] text-[#7b818b] dark:text-gray-500">{term.courses.length} course{term.courses.length > 1 ? "s" : ""} · {term.units % 1 === 0 ? term.units : term.units.toFixed(1)}u</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-col">
+                  {term.courses.map((c, ci) => {
+                    const done = courseLooksCompleted(c.code, completedRaw ?? "");
+                    const meta = SCHEDULE_CATEGORY_META[c.category];
+                    return (
+                      <button
+                        key={ci}
+                        type="button"
+                        onClick={() => setSelected({ course: c, termLabel: term.label })}
+                        className={`flex flex-col gap-1 rounded-xl border-t px-1.5 py-2.5 text-left transition hover:bg-white hover:dark:bg-[#232530] ${ci === 0 ? "border-t-0" : "border-[#eceae4] dark:border-gray-800"}`}
+                      >
+                        <span className="flex items-center justify-between gap-2">
+                          <span className={`text-xs font-bold ${done ? "text-[#7b818b] dark:text-gray-500 line-through decoration-[#b8d8c7]" : "text-[#1a2e22] dark:text-gray-50"}`}>{c.code}</span>
+                          <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] ${done ? "bg-[#0b7f46] text-white" : "border border-[#d8d0c3] dark:border-gray-600"}`}>{done ? "✓" : ""}</span>
                         </span>
-                      </td>
-                      <td className="border-b border-[#eceae4] dark:border-gray-800 px-3 py-2 text-right align-top text-[#6E6A5C] dark:text-gray-400 last:border-b-0">{c.units}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <span className={`text-[11px] leading-tight ${done ? "text-[#a2a7af] dark:text-gray-600" : "text-[#7b818b] dark:text-gray-500"}`}>{c.title}</span>
+                        <span className="flex items-center justify-between">
+                          <span className="text-[10px] font-semibold text-[#a2a7af] dark:text-gray-600">{c.units}u</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${meta.tagClass}`}>{meta.tag}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {ti < terms.length - 1 && (
+                <div className="flex items-center self-stretch px-1.5 pt-12 text-[#d8d0c3] dark:text-gray-700">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
-
-        <div className="relative pl-5">
-          <span className="absolute left-0 top-1.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-[#0b7f46] text-[6px] text-white">
-            ✓
-          </span>
-          <div className="rounded-xl border border-[#bfe0cd] bg-[#e7f3ed] dark:bg-[#0b7f46]/15 px-3 py-2.5">
-            <p className="text-sm font-bold text-[#0b7f46]">Transfer to {school || "your UC"}</p>
-            {major && <p className="text-xs text-[#4d7a63] dark:text-emerald-400">{major}</p>}
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[#e5e0d5] dark:border-gray-800 pt-3">
-        {Array.from(usedCategories).map((cat) => (
-          <span key={cat} className="flex items-center gap-1.5 text-xs text-[#7b818b] dark:text-gray-500">
-            <span className={`h-2 w-2 rounded-sm ${CATEGORY_STYLES[cat].dot}`} />
-            {CATEGORY_STYLES[cat].label}
-          </span>
-        ))}
-      </div>
+      {selected && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setSelected(null)} />
+          <div className="fixed right-0 top-0 z-50 h-full w-full max-w-[380px] overflow-y-auto bg-white dark:bg-[#1c1e24] p-6 shadow-2xl">
+            <button onClick={() => setSelected(null)} className="absolute right-5 top-5 rounded-lg border border-[#d8d0c3] dark:border-gray-700 p-1.5 text-[#7b818b] dark:text-gray-500 hover:text-[#303236] hover:dark:text-gray-100">✕</button>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500">{selected.termLabel}</p>
+            <h3 className="mt-1 text-xl font-bold text-[#1a2e22] dark:text-gray-50">{selected.course.code}</h3>
+            <p className="text-sm text-[#6f7680] dark:text-gray-400">{selected.course.title}</p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${SCHEDULE_CATEGORY_META[selected.course.category].tagClass}`}>{SCHEDULE_CATEGORY_META[selected.course.category].tag}</span>
+              <span className="rounded-full border border-[#d8d0c3] dark:border-gray-700 px-3 py-1 text-xs font-bold text-[#4d535c] dark:text-gray-400">{selected.course.units} units</span>
+            </div>
+
+            <p className="mt-6 text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500">Recommended professor</p>
+            <div className="mt-2 rounded-2xl border border-dashed border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4">
+              <p className="text-sm text-[#6f7680] dark:text-gray-400">Coming soon. CourseBridge already has professor rating data for 137,000+ professors across all 116 California community colleges; this panel will surface the best-rated section for this course once it&apos;s wired up.</p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1414,7 +1417,6 @@ export default function PlannerClient() {
   const [majorOptions2, setMajorOptions2] = useState<string[]>([]);
 
   const [communityCollege, setCommunityCollege] = useState("");
-  const isDeAnza = communityCollege.trim().toLowerCase() === "de anza college";
   const [targetSchool, setTargetSchool] = useState("");
   const [targetMajor, setTargetMajor] = useState("");
   const [completedCourses, setCompletedCourses] = useState("");
@@ -1427,11 +1429,11 @@ export default function PlannerClient() {
   // ── Multi-school tabs ─────────────────────────────────────────
   const [planSchools, setPlanSchools] = useState<string[]>([]);
   const [activeSchoolTab, setActiveSchoolTab] = useState("");
-  const isBerkeley = (activeSchoolTab || targetSchool).trim().toLowerCase() === "berkeley";
   const [chatMode, setChatMode] = useState<"onboarding" | "advisor">("onboarding");
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   // PlannerClient only ever mounts (via app/page.tsx) once onboarding has
   // completed and a profile exists in localStorage: see the hydration
   // effect below: so it always starts in the "done" (dashboard) state.
@@ -1495,6 +1497,7 @@ export default function PlannerClient() {
   const [showTracker, setShowTracker] = useState(false);
   const [showDeadlines, setShowDeadlines] = useState(false);
   const [showTagChecker, setShowTagChecker] = useState(false);
+  const [showKeyNotes, setShowKeyNotes] = useState(true);
 
   // ── Plan feedback ("report an issue") ─────────────────────────
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -2057,23 +2060,22 @@ export default function PlannerClient() {
     });
   }
 
+  const schoolForStats = activeSchoolTab || targetSchool;
+  const ucStats = UC_STATS[schoolForStats];
+  const heroTerms = useMemo(() => parseTimeline(aiPlan), [aiPlan]);
+  const ucAppDate = DEADLINES.find((d) => d.label === "UC Application")?.date ?? "Nov 1 to 30";
+  const competitivenessLine = ucStats
+    ? `${schoolForStats} admits about ${ucStats.rate} of transfer applicants, with successful applicants generally in the ${ucStats.gpa} GPA range.${ucStats.tag ? ` TAG is available here with a ${ucStats.tagGPA}+ GPA.` : " TAG isn't offered here, so you'll apply directly during the November filing period."}`
+    : "";
+
   return (
     <main className="min-h-screen bg-[#faf9f6] dark:bg-[#191a20] text-[#2f3135] dark:text-gray-200">
       <Navbar />
 
-      <section className="mx-auto max-w-7xl px-5 py-8 md:px-8">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-[#1a2e22] dark:text-gray-50">
-            {firstName ? `Welcome back, ${firstName}.` : "Your transfer plan"}
-          </h1>
-          <p className="mt-1 text-sm text-[#7b818b] dark:text-gray-500">
-            {communityCollege || "Not set"} → {targetSchool || "Not set"} · {targetMajor || "Not set"}
-          </p>
-        </div>
-
+      <section className="mx-auto max-w-[980px] px-5 py-8 md:px-8">
         {/* ── School tabs ─────────────────────────────────────── */}
         {planSchools.length > 1 && (
-          <div className="mt-16 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-5 py-4 shadow-sm">
+          <div className="mb-6 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-5 py-4 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] dark:text-gray-500 mb-3">Your target schools</p>
             <div className="flex flex-wrap gap-2">
               {planSchools.map(school => (
@@ -2092,443 +2094,208 @@ export default function PlannerClient() {
           </div>
         )}
 
-        <section
-          id="planner"
-          className={`${planSchools.length > 1 ? "mt-4" : "mt-16"} scroll-mt-4 grid gap-6 lg:grid-cols-[0.72fr_1.28fr] items-start`}
-        >
-          {/* Left column: profile summary + embedded AI chat, stacked */}
-          <div className="flex flex-col gap-6">
-          <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
-            {onboardingDone ? (
-              <div className="flex flex-col">
-                {/* Green gradient header */}
-                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isDeAnza ? "h-36 bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] to-[#0d9456]"}`}>
-                  {isDeAnza && (
-                    <>
-                      <img
-                        src="/deanza-campus.jpg"
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
-                    </>
-                  )}
-                  <div className="relative flex items-center gap-3">
-                    {!isDeAnza && (
-                      <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center text-white font-bold text-lg shrink-0 overflow-hidden">
-                        {(communityCollege || "?").slice(0,1).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-white/70 uppercase tracking-widest drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">Your Profile</p>
-                      <p className="text-base font-bold text-white truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{communityCollege || "Not set"}</p>
-                    </div>
-                  </div>
-                  <div className="relative mt-3 flex flex-wrap gap-2">
-                    {(planSchools.length > 1 ? planSchools : [targetSchool]).filter(Boolean).map(s => (
-                      <span key={s} className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white">{s}</span>
-                    ))}
-                    {targetMajor && <span className="rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs text-white/80">{targetMajor}</span>}
-                  </div>
-                </div>
-                <div className="p-5 flex flex-col gap-4">
-                  <div className="space-y-2">
-                    {[
-                      { label: "Completed Courses", value: completedCourses || "None yet" },
-                    ].map(({ label, value }) => (
-                      <div key={label} className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3">
-                        <p className="text-xs font-semibold text-[#7b818b] dark:text-gray-500 mb-1">{label}</p>
-                        <p className="text-sm text-[#303236] dark:text-gray-100 break-words">{value || "Not set"}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => { try { localStorage.removeItem("cb_profile"); } catch {} router.push("/onboarding"); }}
-                    className="w-full rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm font-semibold text-[#7b818b] dark:text-gray-500 transition hover:border-[#0b7f46] hover:text-[#0b7f46]"
-                  >
-                    Edit my info
-                  </button>
-                  <button
-                    type="button"
-                    data-generate-plan
-                    onClick={checkTransferPlan}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="p-6">
-                <h2 className="text-3xl font-bold text-[#303236] dark:text-gray-100">Build your plan</h2>
-                <p className="mt-3 text-base leading-7 text-[#7b818b] dark:text-gray-500">Major prep comes first.</p>
-                <form className="mt-8 space-y-5">
-                  <SelectField label="Current college" value={communityCollege} options={collegeOptions}
-                    onChange={(value) => { setCommunityCollege(value); setTargetSchool(""); setTargetMajor(""); resetResults(); }} />
-                  <SelectField label="Target university" value={targetSchool} options={schoolOptions}
-                    onChange={(value) => { setTargetSchool(value); setTargetMajor(""); resetResults(); }} />
-                  <SelectField label="Target major" value={targetMajor} options={majorOptions}
-                    onChange={(value) => { setTargetMajor(value); resetResults(); }} />
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-[#303236] dark:text-gray-100">Completed courses</span>
-                    <textarea value={completedCourses}
-                      onChange={(e) => { setCompletedCourses(e.target.value); resetResults(); }}
-                      className="min-h-40 w-full rounded-2xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition placeholder:text-[#a2a7af] placeholder:dark:text-gray-500 focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
-                      placeholder="Example: econ1, math110a, math130, cs111c" />
-                  </label>
-                  <button type="button" data-generate-plan onClick={checkTransferPlan}
-                    className="w-full rounded-2xl bg-[#0b7f46] px-5 py-4 text-lg font-bold text-white shadow-sm transition hover:bg-[#08683a]">
-                    Generate Plan
-                  </button>
-                </form>
-              </div>
-            )}
+        {!onboardingDone ? (
+          <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] p-6">
+            <h2 className="text-3xl font-bold text-[#303236] dark:text-gray-100">Build your plan</h2>
+            <p className="mt-3 text-base leading-7 text-[#7b818b] dark:text-gray-500">Major prep comes first.</p>
+            <form className="mt-8 space-y-5">
+              <SelectField label="Current college" value={communityCollege} options={collegeOptions}
+                onChange={(value) => { setCommunityCollege(value); setTargetSchool(""); setTargetMajor(""); resetResults(); }} />
+              <SelectField label="Target university" value={targetSchool} options={schoolOptions}
+                onChange={(value) => { setTargetSchool(value); setTargetMajor(""); resetResults(); }} />
+              <SelectField label="Target major" value={targetMajor} options={majorOptions}
+                onChange={(value) => { setTargetMajor(value); resetResults(); }} />
+              <label className="block">
+                <span className="mb-2 block text-sm font-bold text-[#303236] dark:text-gray-100">Completed courses</span>
+                <textarea value={completedCourses}
+                  onChange={(e) => { setCompletedCourses(e.target.value); resetResults(); }}
+                  className="min-h-40 w-full rounded-2xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#303236] dark:text-gray-100 outline-none transition placeholder:text-[#a2a7af] placeholder:dark:text-gray-500 focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+                  placeholder="Example: econ1, math110a, math130, cs111c" />
+              </label>
+              <button type="button" data-generate-plan onClick={checkTransferPlan}
+                className="w-full rounded-2xl bg-[#0b7f46] px-5 py-4 text-lg font-bold text-white shadow-sm transition hover:bg-[#08683a]">
+                Generate Plan
+              </button>
+            </form>
           </div>
-
-          {/* CourseBridge AI — embedded inline here instead of a floating popup */}
-          {onboardingDone && (
-            <div className="flex flex-col rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-hidden min-h-[420px]">
-              <div className="flex items-center justify-between rounded-t-3xl bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4 shrink-0">
-                <div>
-                  <p className="text-base font-bold text-white">CourseBridge AI</p>
-                  {communityCollege && targetSchool
-                    ? <p className="text-xs text-white/80 mt-0.5">{communityCollege} → {targetSchool}{targetMajor ? ` · ${targetMajor}` : ""}</p>
-                    : <p className="text-xs text-white/80 mt-0.5">Ask me anything about your transfer</p>
-                  }
-                </div>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4 max-h-[520px]">
-                {chatMessages.length === 0 && chatLoading && (
-                  <div className="flex justify-start">
-                    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#7b818b] dark:text-gray-500">
-                      <span className="animate-pulse">CourseBridge AI is thinking…</span>
-                    </div>
+        ) : (
+          <>
+            <div className="print-plan">
+              {/* ── Hero: school name as a wordmark, key facts as a plain stat rail ── */}
+              <div className="rounded-[26px] border border-[#d8d0c3] dark:border-gray-700 bg-[#faf9f6] dark:bg-[#1c1e24] p-7 md:p-10">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <span className="inline-flex items-center rounded-full border border-[#b8d8c7] dark:border-[#0b7f46]/40 bg-[#e7f3ed] dark:bg-[#0b7f46]/15 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-[#0b7f46] dark:text-[#3ba76a]">
+                      Transfer Plan
+                    </span>
+                    <p className="mt-4 text-sm font-semibold text-[#7b818b] dark:text-gray-500">
+                      {firstName ? `Welcome back, ${firstName}. Your path to` : "Your path to"}
+                    </p>
+                    <h1
+                      className="mt-1 text-[32px] md:text-[44px] font-semibold italic leading-[1.08] text-[#003262] dark:text-[#7fa8de]"
+                      style={{ fontFamily: '"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif' }}
+                    >
+                      {schoolForStats || "your target school"}
+                    </h1>
+                    <p className="mt-3 text-sm text-[#5b6169] dark:text-gray-400">
+                      {[targetMajor, communityCollege && `from ${communityCollege}`].filter(Boolean).join(" · ") || "Set your college and major to get started."}
+                    </p>
                   </div>
-                )}
-                {chatMessages.length === 0 && !chatLoading && (
-                  <p className="text-sm text-[#7b818b] dark:text-gray-500">
-                    Ask about your transfer plan, GE, TAG, or what to take next semester.
-                  </p>
-                )}
-                {chatMessages.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pb-1">
-                    {["What should I take next semester?", "How competitive is my GPA?", "Tell me about TAG"].map((q) => (
-                      <button key={q} onClick={() => sendChatMessage(q)}
-                        className="rounded-full border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-3 py-1.5 text-xs text-[#4d535c] dark:text-gray-400 transition hover:border-[#0b7f46] hover:text-[#0b7f46]">
-                        {q}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {chatMessages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                      msg.role === "user"
-                        ? "bg-[#0b7f46] text-white"
-                        : "border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100"
-                    }`}>
-                      {msg.content || (msg.role === "assistant" && chatLoading ? <span className="animate-pulse">…</span> : "")}
-                    </div>
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
-              </div>
-
-              <div className="border-t border-[#d8d0c3] dark:border-gray-700 p-4 shrink-0">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
-                    placeholder="Ask about your transfer plan…"
-                    className="flex-1 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-base outline-none transition focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
-                  />
-                  <button
-                    onClick={() => sendChatMessage()}
-                    disabled={!chatInput.trim() || chatLoading}
-                    className="rounded-2xl bg-[#0b7f46] px-4 py-3 text-white transition hover:bg-[#08683a] disabled:opacity-40"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          </div>
-
-          <div className="rounded-3xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] shadow-[0_18px_45px_rgba(67,54,36,0.08)] overflow-visible">
-            {/* AI-generated plan from Flask backend */}
-            {(aiPlanLoading || aiPlan) && (
-              <div className="print-plan">
-                {/* Green gradient header */}
-                <div className={`relative overflow-hidden rounded-t-3xl px-6 pt-6 pb-5 ${isBerkeley ? "h-36 bg-[#1a2e22]" : "bg-gradient-to-br from-[#0a6e3d] via-[#0b7f46] to-[#0d9456]"}`}>
-                  {isBerkeley && (
-                    <>
-                      <img
-                        src="/berkeley-campus.jpg"
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
-                    </>
-                  )}
-                  <div className="relative flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">CourseBridge Plan</p>
-                      <h3 className="text-xl font-bold text-white truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{activeSchoolTab || targetSchool || "Your UC"}</h3>
-                      {targetMajor && <p className="text-sm text-white/85 mt-0.5 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">{targetMajor}</p>}
-                    </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      onClick={() => { try { localStorage.removeItem("cb_profile"); } catch {} router.push("/onboarding"); }}
+                      className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3.5 py-2 text-xs font-semibold text-[#7b818b] dark:text-gray-500 transition hover:border-[#0b7f46] hover:text-[#0b7f46] print:hidden"
+                    >
+                      Edit my info
+                    </button>
                     {aiPlan && !aiPlanLoading && (
                       <button
                         onClick={() => window.print()}
-                        className="shrink-0 rounded-xl bg-white/20 hover:bg-white/30 px-3 py-2 text-xs font-semibold text-white transition print:hidden"
+                        className="rounded-xl bg-[#0b7f46] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#08683a] print:hidden"
                       >
                         Print / PDF
                       </button>
                     )}
                   </div>
-                  {aiPlanLoading && (
-                    <div className="mt-3 flex items-center gap-1.5">
-                      {[0, 150, 300].map(d => (
-                        <div key={d} className="w-2 h-2 rounded-full bg-white/70 animate-bounce" style={{animationDelay:`${d}ms`}} />
-                      ))}
-                      <span className="ml-2 text-xs text-white/60">Building your plan…</span>
-                    </div>
-                  )}
                 </div>
-                <div className="p-6 space-y-4">
-                  {aiPlan && (
-                    <PlanTimeline text={aiPlan} school={activeSchoolTab || targetSchool} major={targetMajor} />
-                  )}
-                  <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4 text-sm text-[#303236] dark:text-gray-100">
-                    {aiPlan
-                      ? <SimpleMarkdown text={aiPlan} />
-                      : (
-                        <div className="space-y-3 animate-pulse">
-                          {[80,60,90,50,70].map((w,i) => (
-                            <div key={i} className="h-3 rounded-full bg-[#e8e3da]" style={{width:`${w}%`}} />
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                  {aiPlan && activeSchoolTab && <UCStatsPanel school={activeSchoolTab} />}
 
-                  {aiPlan && !aiPlanLoading && (
-                    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4 text-xs text-[#7b818b] dark:text-gray-500 print:hidden">
-                      <p>
-                        This plan is built from real ASSIST.org and Cal-GETC data, but requirements can change
-                        and every combination isn&apos;t equally well-documented. Always confirm your final plan
-                        with a counselor before registering.
-                      </p>
-                      {!feedbackOpen ? (
-                        <button
-                          type="button"
-                          onClick={() => { setFeedbackOpen(true); setFeedbackStatus("idle"); }}
-                          className="mt-2 font-semibold text-[#0b7f46] hover:underline"
-                        >
-                          Something look wrong? Report it
-                        </button>
-                      ) : feedbackStatus === "sent" ? (
-                        <p className="mt-2 font-semibold text-[#0b7f46]">Thanks. We&apos;ll take a look.</p>
-                      ) : (
-                        <div className="mt-3 space-y-2">
-                          <textarea
-                            value={feedbackText}
-                            onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="What looked wrong with this plan?"
-                            className="w-full min-h-20 rounded-xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3 py-2 text-sm text-[#303236] dark:text-gray-100 outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
-                          />
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={submitPlanFeedback}
-                              disabled={feedbackStatus === "sending" || !feedbackText.trim()}
-                              className="rounded-lg bg-[#0b7f46] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#08683a] disabled:opacity-50"
-                            >
-                              {feedbackStatus === "sending" ? "Sending…" : "Send"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { setFeedbackOpen(false); setFeedbackText(""); }}
-                              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#7b818b] dark:text-gray-500 hover:text-[#303236] hover:dark:text-gray-100"
-                            >
-                              Cancel
-                            </button>
-                            {feedbackStatus === "error" && (
-                              <span className="text-xs text-[#9b1c1c] dark:text-red-400">Couldn&apos;t send. Try again.</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            {!result && !aiPlan && !aiPlanLoading && (
-              <div className="p-6"><EmptyDashboard /></div>
-            )}
-
-            {result?.error && (
-              <div className="m-6 rounded-2xl border border-[#ef9a9a] dark:border-red-900/50 bg-[#fff0f0] dark:bg-red-950/30 p-6">
-                <h3 className="text-xl font-bold text-[#9b1c1c] dark:text-red-400">
-                  {result.error}
-                </h3>
-
-                <p className="mt-2 text-[#7f1d1d] dark:text-red-400">{result.notes}</p>
-              </div>
-            )}
-
-            {result && !result.error && (
-              <div className="p-6">
-                <div className="flex flex-col gap-4 border-b border-[#d8d0c3] dark:border-gray-700 pb-5 md:flex-row md:items-start md:justify-between">
+                <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-[#e5e0d5] dark:border-gray-800 pt-6">
                   <div>
-                    <p className="text-sm font-semibold text-[#7b818b] dark:text-gray-500">
-                      Personalized plan
-                    </p>
-
-                    <h2 className="mt-1 text-3xl font-bold text-[#303236] dark:text-gray-100">
-                      {targetSchool} · {targetMajor}
-                    </h2>
+                    <p className="text-base font-bold text-[#1a2e22] dark:text-gray-50">{heroTerms.length > 0 ? `~${heroTerms.length} term${heroTerms.length > 1 ? "s" : ""}` : "Not set"}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b] dark:text-gray-500">Estimated</p>
                   </div>
-
-                  <div className="rounded-2xl border border-[#b8d8c7] dark:border-[#0b7f46]/40 bg-[#e7f3ed] dark:bg-[#0b7f46]/15 px-5 py-4 text-center">
-                    <p className="text-sm font-bold text-[#0b7f46]">
-                      Readiness
-                    </p>
-
-                    <p className="text-3xl font-bold text-[#0b7f46]">
-                      {result.readinessScore}%
-                    </p>
+                  <div>
+                    <p className="text-base font-bold text-[#1a2e22] dark:text-gray-50">{ucAppDate}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b] dark:text-gray-500">Apply by</p>
                   </div>
-                </div>
-
-                <div className="mt-5 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
-                  <p className="font-bold text-[#303236] dark:text-gray-100">
-                    Competitiveness estimate
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-[#6f7680] dark:text-gray-400">
-                    {result.competitiveness}
-                  </p>
-                </div>
-
-                <div className="mt-6 h-3 overflow-hidden rounded-full bg-[#e0d9cf] dark:bg-gray-800">
-                  <div
-                    className="h-full rounded-full bg-[#0b7f46]"
-                    style={{ width: `${result.readinessScore}%` }}
-                  />
-                </div>
-
-                <div className="mt-2 flex items-center justify-between text-sm text-[#7b818b] dark:text-gray-500">
-                  <span>Status: {readinessLabel}</span>
-                  <span>{result.completed.length} completed</span>
-                </div>
-
-                <div className="mt-6 grid gap-5 md:grid-cols-2">
-                  <CoursePanel
-                    title="Completed requirements"
-                    tone="complete"
-                    courses={result.completed}
-                    empty="No matched requirements yet."
-                  />
-
-                  <CoursePanel
-                    title="Missing requirements"
-                    tone="missing"
-                    courses={result.missing}
-                    empty="No missing requirements."
-                  />
-
-                  <CoursePanel
-                    title="Recommended next courses"
-                    tone="recommended"
-                    courses={result.recommended}
-                    empty="No recommended courses."
-                  />
-
-                  <CoursePanel
-                    title="Blocked by course order"
-                    tone="blocked"
-                    courses={result.blocked}
-                    empty="No blocked courses."
-                  />
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-5">
-                  <h3 className="font-bold text-[#303236] dark:text-gray-100">
-                    Possible course sequence
-                  </h3>
-
-                  {result.sequence.length === 0 ? (
-                    <p className="mt-2 text-sm text-[#7b818b] dark:text-gray-500">
-                      No sequence needed yet.
-                    </p>
-                  ) : (
-                    <div className="mt-4 grid gap-3 md:grid-cols-3">
-                      {result.sequence.map((term, index) => (
-                        <div
-                          key={`term-${index}`}
-                          className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4"
-                        >
-                          <p className="mb-3 font-bold text-[#303236] dark:text-gray-100">
-                            Term {index + 1}
-                          </p>
-
-                          <div className="space-y-2">
-                            {term.map((course) => (
-                              <p
-                                key={course.code}
-                                className="text-sm text-[#6f7680] dark:text-gray-400"
-                              >
-                                {formatCourseDisplay(course)}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  {ucStats && (
+                    <>
+                      <div>
+                        <p className={`text-base font-bold ${ucStats.tag ? "text-[#1a2e22] dark:text-gray-50" : "text-[#8a6100] dark:text-yellow-400"}`}>{ucStats.tag ? `${ucStats.tagGPA}+ GPA` : "Not offered"}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b] dark:text-gray-500">TAG</p>
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-[#1a2e22] dark:text-gray-50">{ucStats.gpa}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b] dark:text-gray-500">GPA target</p>
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-[#1a2e22] dark:text-gray-50">{ucStats.rate}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b] dark:text-gray-500">Admit rate</p>
+                      </div>
+                    </>
                   )}
                 </div>
-
-                <div className="mt-5 rounded-2xl border border-[#ef9a9a] dark:border-red-900/50 bg-[#fff0f0] dark:bg-red-950/30 p-4">
-                  <p className="font-bold text-[#9b1c1c] dark:text-red-400">Warning</p>
-
-                  <p className="mt-2 text-sm leading-6 text-[#7f1d1d] dark:text-red-400">
-                    {result.warning}
-                  </p>
-                </div>
-
-                <div className="mt-5 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4">
-                  <p className="font-bold text-[#303236] dark:text-gray-100">
-                    Counselor-ready notes
-                  </p>
-
-                  <p className="mt-2 text-sm leading-6 text-[#6f7680] dark:text-gray-400">
-                    {result.notes}
-                  </p>
-                </div>
+                {competitivenessLine && (
+                  <p className="mt-4 text-sm italic text-[#5b6169] dark:text-gray-400">{competitivenessLine}</p>
+                )}
+                <button type="button" data-generate-plan onClick={checkTransferPlan} className="hidden" />
               </div>
-            )}
-          </div>
-        </section>
+
+              {/* ── Plan: schedule board, full notes, empty/error states ── */}
+              <div className="mt-6">
+                {result?.error && (
+                  <div className="rounded-2xl border border-[#ef9a9a] dark:border-red-900/50 bg-[#fff0f0] dark:bg-red-950/30 p-6">
+                    <h3 className="text-xl font-bold text-[#9b1c1c] dark:text-red-400">{result.error}</h3>
+                    <p className="mt-2 text-[#7f1d1d] dark:text-red-400">{result.notes}</p>
+                  </div>
+                )}
+
+                {aiPlanLoading && !aiPlan && (
+                  <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-6">
+                    <div className="flex items-center gap-1.5">
+                      {[0, 150, 300].map(d => (
+                        <div key={d} className="h-2 w-2 rounded-full bg-[#0b7f46]/70 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                      ))}
+                      <span className="ml-2 text-xs text-[#7b818b] dark:text-gray-500">Building your plan…</span>
+                    </div>
+                    <div className="mt-5 space-y-3 animate-pulse">
+                      {[80, 60, 90, 50, 70].map((w, i) => (
+                        <div key={i} className="h-3 rounded-full bg-[#e8e3da] dark:bg-gray-800" style={{ width: `${w}%` }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {aiPlan && (
+                  <div className="flex flex-col gap-4">
+                    <PlanTimeline text={aiPlan} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} />
+
+                    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-4 text-sm text-[#303236] dark:text-gray-100">
+                      <SimpleMarkdown text={aiPlan} />
+                    </div>
+
+                    {!aiPlanLoading && (
+                      <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] p-4 text-xs text-[#7b818b] dark:text-gray-500 print:hidden">
+                        <p>
+                          This plan is built from real ASSIST.org and Cal-GETC data, but requirements can change
+                          and every combination isn&apos;t equally well-documented. Always confirm your final plan
+                          with a counselor before registering.
+                        </p>
+                        {!feedbackOpen ? (
+                          <button
+                            type="button"
+                            onClick={() => { setFeedbackOpen(true); setFeedbackStatus("idle"); }}
+                            className="mt-2 font-semibold text-[#0b7f46] hover:underline"
+                          >
+                            Something look wrong? Report it
+                          </button>
+                        ) : feedbackStatus === "sent" ? (
+                          <p className="mt-2 font-semibold text-[#0b7f46]">Thanks, we&apos;ll take a look.</p>
+                        ) : (
+                          <div className="mt-3 space-y-2">
+                            <textarea
+                              value={feedbackText}
+                              onChange={(e) => setFeedbackText(e.target.value)}
+                              placeholder="What looked wrong with this plan?"
+                              className="w-full min-h-20 rounded-xl border border-[#d1c7b8] dark:border-gray-700 bg-white dark:bg-[#1c1e24] px-3 py-2 text-sm text-[#303236] dark:text-gray-100 outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={submitPlanFeedback}
+                                disabled={feedbackStatus === "sending" || !feedbackText.trim()}
+                                className="rounded-lg bg-[#0b7f46] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#08683a] disabled:opacity-50"
+                              >
+                                {feedbackStatus === "sending" ? "Sending…" : "Send"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setFeedbackOpen(false); setFeedbackText(""); }}
+                                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#7b818b] dark:text-gray-500 hover:text-[#303236] hover:dark:text-gray-100"
+                              >
+                                Cancel
+                              </button>
+                              {feedbackStatus === "error" && (
+                                <span className="text-xs text-[#9b1c1c] dark:text-red-400">Couldn&apos;t send, try again.</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!aiPlan && !aiPlanLoading && !result && <EmptyDashboard />}
+              </div>
+            </div>
 
         {/* ── Extra tools (visible after onboarding) ────────────── */}
         {onboardingDone && (
-          <div className="mt-10 space-y-4 print:hidden">
+          <div className="mt-10 space-y-3 print:hidden">
+            <h2 className="mb-1 text-lg font-bold text-[#1a2e22] dark:text-gray-50">Checkers</h2>
 
             {/* TAG Eligibility Checker */}
-            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
+            <div className="rounded-[22px] border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-sm overflow-hidden">
               <button
                 onClick={() => setShowTagChecker(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
+                className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
                   <span className="text-sm font-bold text-[#303236] dark:text-gray-100">TAG Eligibility Checker</span>
                   <span className="ml-2 text-xs text-[#7b818b] dark:text-gray-500">Transfer Admission Guarantee</span>
                 </div>
-                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showTagChecker ? "−" : "+"}</span>
+                <span className="shrink-0 text-xl leading-none text-[#7b818b] dark:text-gray-500">{showTagChecker ? "−" : "+"}</span>
               </button>
               {showTagChecker && (
                 <div className="px-5 pb-5 space-y-4">
@@ -2631,10 +2398,10 @@ export default function PlannerClient() {
             </div>
 
             {/* Cal-GETC Checklist */}
-            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
+            <div className="rounded-[22px] border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-sm overflow-hidden">
               <button
                 onClick={() => setShowCalgetc(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
+                className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
                   <span className="text-sm font-bold text-[#303236] dark:text-gray-100">Cal-GETC Checklist</span>
@@ -2642,7 +2409,7 @@ export default function PlannerClient() {
                     {Object.values(calgetcChecked).filter(Boolean).length}/{CALGETC_AREAS.length} areas done
                   </span>
                 </div>
-                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showCalgetc ? "−" : "+"}</span>
+                <span className="shrink-0 text-xl leading-none text-[#7b818b] dark:text-gray-500">{showCalgetc ? "−" : "+"}</span>
               </button>
               {showCalgetc && (
                 <div className="px-5 pb-5 space-y-2">
@@ -2672,10 +2439,10 @@ export default function PlannerClient() {
             </div>
 
             {/* Course Progress Tracker */}
-            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
+            <div className="rounded-[22px] border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-sm overflow-hidden">
               <button
                 onClick={() => setShowTracker(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
+                className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
                   <span className="text-sm font-bold text-[#303236] dark:text-gray-100">Course Progress Tracker</span>
@@ -2683,7 +2450,7 @@ export default function PlannerClient() {
                     {trackerCourses.filter(c => c.status === "done").length} done · {trackerCourses.filter(c => c.status === "in-progress").length} in progress
                   </span>
                 </div>
-                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showTracker ? "−" : "+"}</span>
+                <span className="shrink-0 text-xl leading-none text-[#7b818b] dark:text-gray-500">{showTracker ? "−" : "+"}</span>
               </button>
               {showTracker && (
                 <div className="px-5 pb-5 space-y-3">
@@ -2738,16 +2505,16 @@ export default function PlannerClient() {
             </div>
 
             {/* Application Deadline Reminders */}
-            <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] overflow-hidden">
+            <div className="rounded-[22px] border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-sm overflow-hidden">
               <button
                 onClick={() => setShowDeadlines(v => !v)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
+                className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
               >
                 <div>
                   <span className="text-sm font-bold text-[#303236] dark:text-gray-100">Application Deadline Reminders</span>
                   <span className="ml-2 text-xs text-[#7b818b] dark:text-gray-500">TAG · UC App · FAFSA · more</span>
                 </div>
-                <span className="text-[#7b818b] dark:text-gray-500 text-lg">{showDeadlines ? "−" : "+"}</span>
+                <span className="shrink-0 text-xl leading-none text-[#7b818b] dark:text-gray-500">{showDeadlines ? "−" : "+"}</span>
               </button>
               {showDeadlines && (
                 <div className="px-5 pb-5">
@@ -2769,12 +2536,133 @@ export default function PlannerClient() {
               )}
             </div>
 
+            {/* Key Notes about the target school */}
+            <div className="rounded-[22px] border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] shadow-sm overflow-hidden">
+              <button
+                onClick={() => setShowKeyNotes(v => !v)}
+                className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:dark:bg-[#1c1e24]"
+              >
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-[15px] font-bold text-[#1a2e22] dark:text-gray-100">Key Notes{schoolForStats ? `: ${schoolForStats}` : ""}</span>
+                  <span className="text-xs font-medium text-[#7b818b] dark:text-gray-500">Competitiveness, GPA, and admissions context</span>
+                </div>
+                <span className="shrink-0 text-xl leading-none text-[#7b818b] dark:text-gray-500">{showKeyNotes ? "−" : "+"}</span>
+              </button>
+              {showKeyNotes && (
+                <div className="px-6 pb-6 space-y-3">
+                  {schoolForStats
+                    ? <UCStatsPanel school={schoolForStats} />
+                    : <p className="text-xs text-[#7b818b] dark:text-gray-500">Pick a target school to see admissions context here.</p>
+                  }
+                  {result && !result.error && (
+                    <p className="text-xs text-[#7b818b] dark:text-gray-500">
+                      Local readiness estimate from your entered courses: <span className="font-bold text-[#0b7f46]">{result.readinessScore}% ({readinessLabel})</span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
-
+          </>
+        )}
       </section>
 
       <Footer />
+
+      {/* ── Floating CourseBridge AI chat ────────────────────── */}
+      {onboardingDone && (
+        <>
+          {!chatOpen && (
+            <button
+              onClick={() => setChatOpen(true)}
+              className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[#0b7f46] px-5 py-4 text-sm font-semibold text-white shadow-xl transition hover:bg-[#08683a] active:scale-95 print:hidden"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              CourseBridge AI
+            </button>
+          )}
+
+          {chatOpen && (
+            <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] shadow-2xl print:hidden">
+              <div className="flex items-center justify-between bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4 shrink-0">
+                <div className="min-w-0">
+                  <p className="text-base font-bold text-white">CourseBridge AI</p>
+                  {communityCollege && targetSchool
+                    ? <p className="text-xs text-white/80 mt-0.5 truncate">{communityCollege} → {targetSchool}{targetMajor ? ` · ${targetMajor}` : ""}</p>
+                    : <p className="text-xs text-white/80 mt-0.5">Ask me anything about your transfer</p>
+                  }
+                </div>
+                <button onClick={() => setChatOpen(false)} className="shrink-0 text-white/80 hover:text-white" aria-label="Close chat">
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
+                {chatMessages.length === 0 && chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#7b818b] dark:text-gray-500">
+                      <span className="animate-pulse">CourseBridge AI is thinking…</span>
+                    </div>
+                  </div>
+                )}
+                {chatMessages.length === 0 && !chatLoading && (
+                  <p className="text-sm text-[#7b818b] dark:text-gray-500">
+                    Ask about your transfer plan, GE, TAG, or what to take next semester.
+                  </p>
+                )}
+                {chatMessages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pb-1">
+                    {["What should I take next semester?", "How competitive is my GPA?", "Tell me about TAG"].map((q) => (
+                      <button key={q} onClick={() => sendChatMessage(q)}
+                        className="rounded-full border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-3 py-1.5 text-xs text-[#4d535c] dark:text-gray-400 transition hover:border-[#0b7f46] hover:text-[#0b7f46]">
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                      msg.role === "user"
+                        ? "bg-[#0b7f46] text-white"
+                        : "border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] text-[#303236] dark:text-gray-100"
+                    }`}>
+                      {msg.content || (msg.role === "assistant" && chatLoading ? <span className="animate-pulse">…</span> : "")}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="border-t border-[#d8d0c3] dark:border-gray-700 p-4 shrink-0">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
+                    placeholder="Ask about your transfer plan…"
+                    className="flex-1 rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-sm outline-none transition focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+                  />
+                  <button
+                    onClick={() => sendChatMessage()}
+                    disabled={!chatInput.trim() || chatLoading}
+                    className="rounded-2xl bg-[#0b7f46] px-4 py-3 text-white transition hover:bg-[#08683a] disabled:opacity-40"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </main>
   );
 }
@@ -2878,76 +2766,3 @@ function EmptyDashboard() {
   );
 }
 
-function CoursePanel({
-  title,
-  courses,
-  tone,
-  empty,
-}: {
-  title: string;
-  courses: CourseRequirement[];
-  tone: "complete" | "missing" | "recommended" | "blocked";
-  empty: string;
-}) {
-  const styles = {
-    complete: "border-[#b8d8c7] dark:border-[#0b7f46]/40 bg-[#e7f3ed] dark:bg-[#0b7f46]/15",
-    missing: "border-[#f0c15d] bg-[#fff7db] dark:bg-yellow-950/30",
-    recommended: "border-[#b7cce5] bg-[#eef5ff] dark:bg-blue-950/30",
-    blocked: "border-[#ef9a9a] dark:border-red-900/50 bg-[#fff0f0] dark:bg-red-950/30",
-  };
-
-  return (
-    <div className={`rounded-2xl border p-5 ${styles[tone]}`}>
-      <h3 className="font-bold text-[#303236] dark:text-gray-100">{title}</h3>
-
-      {courses.length === 0 ? (
-        <p className="mt-3 text-sm text-[#7b818b] dark:text-gray-500">{empty}</p>
-      ) : (
-        <div className="mt-4 space-y-3">
-          {courses.map((course) => (
-            <CourseItem key={course.code} course={course} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CourseItem({ course }: { course: CourseRequirement }) {
-  return (
-    <div className="rounded-xl border border-[#d8d0c3] dark:border-gray-700 bg-white dark:bg-[#1c1e24] p-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-bold text-[#303236] dark:text-gray-100">
-            {course.code}: {course.name}
-          </p>
-
-          <p className="mt-1 text-xs text-[#7b818b] dark:text-gray-500">{course.category}</p>
-
-          {course.prerequisites && course.prerequisites.length > 0 && (
-            <p className="mt-2 text-xs font-bold text-[#8a6100] dark:text-yellow-400">
-              Prereq: {course.prerequisites.join(", ")}
-            </p>
-          )}
-
-          {course.prerequisiteOptions &&
-            course.prerequisiteOptions.length > 0 && (
-              <p className="mt-2 text-xs font-bold text-[#8a6100] dark:text-yellow-400">
-                Prereq: {formatRequirementOptions(course.prerequisiteOptions)}
-              </p>
-            )}
-
-          {course.satisfiedBy && course.satisfiedBy.length > 0 && (
-            <p className="mt-2 text-xs font-bold text-[#0b7f46]">
-              Also satisfied by: {formatRequirementOptions(course.satisfiedBy)}
-            </p>
-          )}
-        </div>
-
-        <span className="rounded-full border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-2 py-1 text-xs font-bold text-[#4d535c] dark:text-gray-400">
-          {course.priority}
-        </span>
-      </div>
-    </div>
-  );
-}

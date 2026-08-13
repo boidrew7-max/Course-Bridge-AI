@@ -22,6 +22,13 @@ export default function Footer() {
         { href: "/onboarding", label: t("footer.buildMyPlan") },
       ],
     },
+    {
+      heading: t("footer.legal"),
+      links: [
+        { href: "/privacy", label: t("footer.privacy") },
+        { href: "/terms", label: t("footer.terms") },
+      ],
+    },
   ];
 
   return (

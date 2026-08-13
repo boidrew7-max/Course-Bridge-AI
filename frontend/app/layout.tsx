@@ -43,13 +43,11 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     url: SITE_URL,
     type: "website",
-    images: [{ url: "/coursebridge-logo.png" }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/coursebridge-logo.png"],
   },
 };
 

@@ -167,14 +167,21 @@ def _dept_matches(department, candidates):
 
 
 def recommend_professor(college, subject, min_ratings=3):
-    """Return the single best-reviewed, most-consistently-rated professor for
-    `subject` (a course prefix like "ECON") at `college`. Ranks by a
-    Bayesian-weighted score (same formula as search_professors) so a
-    professor with a handful of glowing reviews can't outrank one with a
-    long, consistently strong record — that's the whole point of this
-    function, not an accident of the math. Falls back to a lower rating-count
-    floor only if nothing clears the preferred one, rather than returning
-    nothing.
+    """Return the single best-reviewed, most-consistently-rated, reasonably
+    manageable professor for `subject` (a course prefix like "ECON") at
+    `college`.
+
+    Ranks by a Bayesian-weighted rating (same formula as search_professors)
+    so a professor with a handful of glowing reviews can't outrank one with
+    a long, consistently strong record, then adjusts that score against
+    avgDifficulty (RMP's 1-5 scale, ~3 is a typical class): difficulty above
+    average costs a little, below average gains a little. The weight is
+    intentionally modest — a genuinely excellent, well-reviewed professor
+    who happens to run a harder class should still usually win over a
+    mediocre easy one, but between two comparably well-reviewed professors
+    this is what breaks the tie toward the less brutal one. Falls back to a
+    lower rating-count floor only if nothing clears the preferred one,
+    rather than returning nothing.
     """
     candidates = SUBJECT_TO_DEPARTMENT.get((subject or "").upper())
     if not candidates:
@@ -194,11 +201,17 @@ def recommend_professor(college, subject, min_ratings=3):
 
     C = 3.86  # same global-mean prior used by search_professors
     m = 20
+    DIFFICULTY_BASELINE = 3.0
+    DIFFICULTY_WEIGHT = 0.3
 
     def _score(p):
         v = p.get("numRatings", 0)
         R = p.get("avgRating", 0)
-        return (v * R + m * C) / (v + m)
+        bayesian = (v * R + m * C) / (v + m)
+        difficulty = p.get("avgDifficulty")
+        if difficulty is None:
+            difficulty = DIFFICULTY_BASELINE
+        return bayesian - DIFFICULTY_WEIGHT * (difficulty - DIFFICULTY_BASELINE)
 
     for floor in (min_ratings, 1):
         eligible = [p for p in pool if p.get("numRatings", 0) >= floor]

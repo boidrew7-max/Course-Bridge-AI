@@ -528,6 +528,14 @@ _UC_REQ_OR_GROUPS: list = [
     # Berkeley CS / EECS: "MATH 54 or EECS 16A or MATH 56"
     ("berkeley", frozenset({("MATH", "54"), ("EECS", "16A"), ("MATH", "56")})),
 
+    # Berkeley Math 51/52 (4-unit) vs Math 16A/16B (3-unit business calc) tracks:
+    # ASSIST lists these as alternative sequences ("Math 51 or Math 16A", "Math 52
+    # or Math 16B") — applies to Econ, Business Admin, and any other Berkeley major
+    # that reuses this same articulation menu. Without this, both tracks get
+    # committed independently and both show as separate "MET" rows.
+    ("berkeley", frozenset({("MATH", "51"), ("MATH", "16A")})),
+    ("berkeley", frozenset({("MATH", "52"), ("MATH", "16B")})),
+
     # Davis Sociology A.B. — breadth elective clusters ("pick one" per group).
     # ASSIST lists the full GE elective menu as separate required entries, causing
     # the engine to schedule all ~11 History, ~8 Ethnic Studies, etc. options.

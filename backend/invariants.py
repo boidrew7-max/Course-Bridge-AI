@@ -244,8 +244,32 @@ def check_required_never_silently_dropped(result: PlanResult) -> list:
 
 # ── Combined runner ─────────────────────────────────────────────────────────────
 
+def check_no_unexplained_honors(result: PlanResult, accept_honors: bool) -> list:
+    """When accept_honors=False, every scheduled honors course must carry a
+    matching HONORS_SUBSTITUTION warning (plan_engine._pick_cc only emits one
+    when it verified no honors-free option existed at all — see
+    _resolve_major_prep). An honors course present WITHOUT that warning means
+    something scheduled it outside that guarded path — including the
+    ledger-contention fallback silently overriding accept_honors=False,
+    which is the defect this check exists to catch. Campus-agnostic: applies
+    to any (college, uc, major) triple, not a hardcoded case."""
+    if accept_honors:
+        return []
+    honors_slots = [s for s in result.all_courses() if s.is_honors]
+    if not honors_slots:
+        return []
+    explained = any(w.startswith("HONORS_SUBSTITUTION:") for w in result.warnings)
+    if explained:
+        return []
+    return [
+        f"Honors course {s.code!r} scheduled despite accept_honors=False, with no "
+        f"HONORS_SUBSTITUTION warning justifying it (uc_reqs={s.uc_reqs})"
+        for s in honors_slots
+    ]
+
+
 def run_all_invariants(result: PlanResult, college: str, completed: set | None = None,
-                        course_index: dict | None = None) -> list:
+                        course_index: dict | None = None, accept_honors: bool = False) -> list:
     """Full invariant battery for one built PlanResult. Returns a flat list of
     violation message strings; empty means the plan is clean."""
     errors = []
@@ -261,4 +285,5 @@ def run_all_invariants(result: PlanResult, college: str, completed: set | None =
     errors += check_unit_math(result)
     errors += check_termination_sane(result)
     errors += check_required_never_silently_dropped(result)
+    errors += check_no_unexplained_honors(result, accept_honors)
     return errors

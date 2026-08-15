@@ -748,8 +748,18 @@ def _resolve_major_prep(
     # preferred when one exists.
     ledger: dict = {}
 
+    # Cross-campus, not tied to any one college: every honors-course
+    # substitution the ledger-contention fallback forces despite
+    # accept_honors=False gets recorded here (campus-agnostic since _pick_cc
+    # itself is campus-agnostic — see build_plan, which turns these into
+    # plan-level warnings).
+    honors_substitution_notes: list = []
+
     # ── Process NFromArea groups ───────────────────────────────────────────────
     seen_uc_sets: set = set()   # deduplicate groups with identical UC-code menus
+
+    def _has_honors(grp) -> bool:
+        return any(c.get("n", "").upper().endswith("H") for c in grp)
 
     def _pick_cc(valid_groups, uc_key=None):
         """Select the best CC option group from a list of alternatives.
@@ -757,6 +767,14 @@ def _resolve_major_prep(
         Prefers a group with no course already claimed by a *different*
         requirement in the ledger; falls back to the full candidate list
         (allowing legitimate reuse) only if every option is claimed elsewhere.
+
+        accept_honors=False must hold through the ledger-contention fallback,
+        not just the primary path: a MIXED group (e.g. [MATH 1BH, MATH 1C])
+        survives the initial all-honors filter below since it isn't purely
+        honors, so if the ledger then prefers it merely for being unclaimed,
+        the student ends up assigned an honors course they explicitly opted
+        out of, on top of the non-honors sibling already claimed elsewhere —
+        two courses covering what should have been reuse of one.
         """
         if not accept_honors:
             filtered = [g for g in valid_groups if not all(
@@ -766,14 +784,33 @@ def _resolve_major_prep(
                 valid_groups = filtered
 
         if uc_key is not None:
-            unclaimed = [
-                g for g in valid_groups
-                if all(
+            def _unclaimed(g):
+                return all(
                     ledger.get((c.get("p",""), c.get("n","")), uc_key) == uc_key
                     for c in g
                 )
-            ]
-            if unclaimed:
+            unclaimed = [g for g in valid_groups if _unclaimed(g)]
+
+            if not accept_honors:
+                # Prefer an unclaimed option that's ALSO honors-free — ledger
+                # contention should never be a backdoor into scheduling an
+                # honors course the student opted out of.
+                unclaimed_clean = [g for g in unclaimed if not _has_honors(g)]
+                if unclaimed_clean:
+                    valid_groups = unclaimed_clean
+                elif unclaimed:
+                    # Every unclaimed option carries an honors course. Prefer
+                    # REUSING an already-claimed honors-free option (the
+                    # student is already taking it) over introducing a new
+                    # honors course just because it happens to be unclaimed.
+                    claimed_clean = [
+                        g for g in valid_groups
+                        if not _unclaimed(g) and not _has_honors(g)
+                    ]
+                    valid_groups = claimed_clean if claimed_clean else unclaimed
+                # else: no unclaimed option at all — fall through to the
+                # full (already honors-pure-filtered) valid_groups.
+            elif unclaimed:
                 valid_groups = unclaimed
 
         def _overlap(grp):
@@ -781,8 +818,21 @@ def _resolve_major_prep(
         def _honors_cnt(grp):
             return sum(1 for c in grp if c.get("n","").upper().endswith("H"))
         if accept_honors:
-            return max(valid_groups, key=lambda g: (_overlap(g), _honors_cnt(g)))
-        return max(valid_groups, key=_overlap)
+            chosen = max(valid_groups, key=lambda g: (_overlap(g), _honors_cnt(g)))
+        else:
+            chosen = max(valid_groups, key=_overlap)
+
+        if not accept_honors and _has_honors(chosen):
+            # Only reachable when literally every remaining option (post
+            # honors-filter, post ledger-preference) still carries an honors
+            # course — i.e. ASSIST genuinely offers no honors-free path here,
+            # not a fallback artifact. Recorded so the backtest harness can
+            # verify that's actually true rather than assume it.
+            honors_substitution_notes.append(
+                f"Honors course selected despite accept_honors=False (no honors-free "
+                f"option available for this requirement): {[c.get('p','')+' '+c.get('n','') for c in chosen]}"
+            )
+        return chosen
 
     def _cc_cost(chosen):
         return sum(
@@ -1002,7 +1052,8 @@ def _resolve_major_prep(
             not_articulated = still_not_articulated
 
     return (list(committed.values()), audit_rows, post_transfer, multi_track,
-            loser_cc_codes, not_articulated, stale_notes, recommended_optional)
+            loser_cc_codes, not_articulated, stale_notes, recommended_optional,
+            honors_substitution_notes)
 
 
 # Colleges that have been renamed/rebranded since some ASSIST articulation
@@ -1707,7 +1758,8 @@ def build_plan(
     result = PlanResult(college=college, uc=uc, major=major)
 
     (major_courses, audit_rows, post_transfer, multi_track,
-     loser_cc_codes, not_articulated, stale_notes, recommended_optional) = _resolve_major_prep(
+     loser_cc_codes, not_articulated, stale_notes, recommended_optional,
+     honors_substitution_notes) = _resolve_major_prep(
         arts, accept_honors, completed_keys, uc_normalized=uc_l, major=major, college=college
     )
     result.requirement_audit = audit_rows
@@ -1716,6 +1768,7 @@ def build_plan(
     result.not_articulated   = not_articulated
     result.recommended_optional = recommended_optional
     result.warnings.extend(stale_notes)
+    result.warnings.extend(f"HONORS_SUBSTITUTION: {n}" for n in honors_substitution_notes)
 
     # A combo can legitimately match a shard entry (best_key found, score OK)
     # yet have almost nothing CC-articulated — e.g. a niche major at a small

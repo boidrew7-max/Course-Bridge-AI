@@ -630,6 +630,27 @@ def _resolve_major_prep(
     """
     major_l = major.lower()
 
+    # ── Normalize whitespace once, at the source ────────────────────────────
+    # Some colleges' raw ASSIST data has stray internal whitespace baked into
+    # a course number (e.g. "ANTHRO  1" with a double space). Left unstripped,
+    # every downstream (prefix, number) key built from these dicts — the
+    # consumption ledger, the `committed`/`completed` lookups, the displayed
+    # cc_code audit text — silently mismatches against the already-normalized
+    # CourseSlot.code (CourseSlot.__post_init__ strips), causing correctly-
+    # scheduled courses to read as "missing" in the audit and letting the
+    # ledger/completed-course checks miss real matches. Mutates `arts` in
+    # place — arts is a reference into the cached shard (_ART_SHARDS), so
+    # this normalizes once per shard load rather than on every call.
+    for art in arts:
+        uc_c = art.get("uc")
+        if uc_c:
+            if "p" in uc_c: uc_c["p"] = uc_c["p"].strip()
+            if "n" in uc_c: uc_c["n"] = uc_c["n"].strip()
+        for grp in art.get("cc", []) or []:
+            for c in grp:
+                if "p" in c: c["p"] = c["p"].strip()
+                if "n" in c: c["n"] = c["n"].strip()
+
     # ── Split out "na" rows: required by the major (present in ASSIST's own
     #    template) but with NO articulation entry at all — not even an explicit
     #    noArticulationReason. Render these as their own NOT ARTICULATED list
@@ -774,7 +795,19 @@ def _resolve_major_prep(
         cc_codes = []
         conditional = any(c.get("cond") for c in chosen)
         for c in chosen:
-            key = (c.get("p",""), c.get("n",""))
+            # Some colleges' raw ASSIST source data has stray internal
+            # whitespace baked into the course number (e.g. "ANTHRO  1" with
+            # a double space) that never gets stripped before being joined
+            # into this displayed cc_code text. CourseSlot.code IS
+            # normalized (CourseSlot.__post_init__ strips), so an unstripped
+            # key here causes a real mismatch: the audit table shows
+            # "ANTHRO  1" while the actually-scheduled course is "ANTHRO 1",
+            # making the AND-group completeness check falsely report it
+            # missing even though it was correctly scheduled. Stripping here
+            # also matters for `completed`/`ledger` dict lookups, which would
+            # otherwise silently miss a match against user-provided or
+            # previously-committed keys that use normal single-space codes.
+            key = (c.get("p","").strip(), c.get("n","").strip())
             if uc_key is not None:
                 ledger.setdefault(key, uc_key)
             if key in completed:

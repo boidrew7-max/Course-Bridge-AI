@@ -105,7 +105,7 @@ def _run_one(triple) -> dict:
     row = {
         "shard_key": shard_key, "college": college, "uc": uc, "major": major,
         "status": "ERROR", "failed_invariants": [], "notes": "",
-        "duration_ms": 0,
+        "duration_ms": 0, "total_units": None, "course_count": None,
     }
     try:
         if shard_key.startswith("GOLDEN__"):
@@ -137,6 +137,8 @@ def _run_one(triple) -> dict:
 
     errors = run_all_invariants(result, college, course_index=_get_course_index())
     row["duration_ms"] = int((time.time() - t0) * 1000)
+    row["total_units"] = round(result.total_units, 1)
+    row["course_count"] = len(result.all_courses())
     if errors:
         row["status"] = "INVARIANT_FAIL"
         row["failed_invariants"] = errors
@@ -196,11 +198,20 @@ def init_db(conn: sqlite3.Connection) -> None:
             failed_invariants TEXT NOT NULL,
             notes TEXT NOT NULL,
             duration_ms INTEGER NOT NULL,
+            total_units REAL,
+            course_count INTEGER,
             PRIMARY KEY (run_id, shard_key)
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_run ON backtest_runs(run_id)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_status ON backtest_runs(run_id, status)")
+    # Older DBs predate these columns — add them if missing so existing
+    # stored runs stay queryable (their values just come back NULL).
+    existing_cols = {r[1] for r in conn.execute("PRAGMA table_info(backtest_runs)")}
+    if "total_units" not in existing_cols:
+        conn.execute("ALTER TABLE backtest_runs ADD COLUMN total_units REAL")
+    if "course_count" not in existing_cols:
+        conn.execute("ALTER TABLE backtest_runs ADD COLUMN course_count INTEGER")
     conn.commit()
 
 
@@ -211,12 +222,12 @@ def write_results(run_id: str, rows: list) -> None:
     conn.executemany(
         """INSERT OR REPLACE INTO backtest_runs
            (run_id, timestamp, shard_key, college, uc, major, status, bucket,
-            failed_invariants, notes, duration_ms)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            failed_invariants, notes, duration_ms, total_units, course_count)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         [
             (run_id, ts, r["shard_key"], r["college"], r["uc"], r["major"],
              r["status"], triage_bucket(r), json.dumps(r["failed_invariants"]),
-             r["notes"], r["duration_ms"])
+             r["notes"], r["duration_ms"], r.get("total_units"), r.get("course_count"))
             for r in rows
         ],
     )

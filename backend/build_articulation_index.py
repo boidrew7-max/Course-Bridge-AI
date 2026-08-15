@@ -226,11 +226,56 @@ def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict]:
             if not isinstance(s, dict):
                 continue
             rows = s.get("rows", [])
-            row_units = _row_units(rows) if use_sections else None
+
+            # ── Section-level advisement override ──────────────────────────
+            # ASSIST sometimes expresses "pick N of the following" not via
+            # the item's top-level instruction (which may just say
+            # Conjunction/And, since there's only one section) but via an
+            # advisement attached to the SECTION itself. Two variants seen:
+            #   {"type":"NFollowing","amount":1,"amountUnitType":"Sequence"}
+            #     — "complete 1 SEQUENCE" (a bundled multi-course track, e.g.
+            #     "Math 51+52 OR Math 16A+16B") — section-atomic, needs
+            #     row_units to bundle the rows that form each sequence.
+            #   {"type":"NFollowing","amount":1,"amountUnitType":"Course"}
+            #     — "complete 1 COURSE" (a flat pick among independent rows,
+            #     e.g. "Math 53/54/56") — course-level, no row bundling.
+            # Both were previously unread entirely, so the item fell through
+            # to itype="Conjunction"/conj="And" -> pick_n=0, flattening every
+            # such group into independent AND requirements. Detected
+            # per-section (not per-item) since only some sections carry this
+            # advisement even within groups that have several sections.
+            sec_pick_n = pick_n
+            sec_use_sections = use_sections
+            sec_overridden = False
+            for adv in (s.get("advisements") or []):
+                if not isinstance(adv, dict):
+                    continue
+                if adv.get("type") not in ("NFollowing", "NFromFollowing"):
+                    continue
+                unit = adv.get("amountUnitType")
+                if unit not in _SECTION_UNIT_TYPES and unit != "Course":
+                    continue
+                amt = adv.get("amount", 1)
+                sec_pick_n = max(1, int(amt)) if amt else 1
+                sec_use_sections = unit in _SECTION_UNIT_TYPES
+                sec_overridden = True
+                break
+
+            # A single RequirementGroup (one groupId) can contain several
+            # INDEPENDENT section-level advisements (e.g. "pick 1 of
+            # STAT20/DATA C8" in one section and, separately, "pick 1 of
+            # MATH54/56" in another section of the SAME group). Reusing the
+            # bare item-level gid for both would merge two unrelated
+            # pick-1-of-2 choices into one incorrect pick-1-of-4 group.
+            # Synthesize a per-section id whenever an override actually
+            # fired so each section-level advisement forms its own group.
+            eff_gid = f"{gid}::sec{sec_idx}" if sec_overridden else gid
+
+            row_units = _row_units(rows) if sec_use_sections else None
             for row_idx, r in enumerate(rows):
                 if not isinstance(r, dict):
                     continue
-                unit_key = f"{sec_idx}:{row_units[row_idx]}" if use_sections else None
+                unit_key = f"{sec_idx}:{row_units[row_idx]}" if sec_use_sections else None
                 for c in r.get("cells", []):
                     if not isinstance(c, dict):
                         continue
@@ -240,7 +285,7 @@ def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict]:
                         # If the same course appears in multiple groups, first wins.
                         # (Duplicate across emphasis tracks handled at engine level.)
                         if ciid not in cell_to_group:
-                            cell_to_group[ciid] = (gid, pick_n, unit_key)
+                            cell_to_group[ciid] = (eff_gid, sec_pick_n, unit_key)
                         if ciid not in all_uc_cells:
                             all_uc_cells[ciid] = {
                                 "p": course.get("prefix", ""),
@@ -289,6 +334,17 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
 
     rows = []
     covered_ciids: set = set()
+    seen_row_ciids: set = set()   # dedupe duplicate raw articulation rows for
+                                   # the same UC course (ASSIST sometimes lists
+                                   # the identical course twice when it belongs
+                                   # to two different RequirementGroups in the
+                                   # same agreement, e.g. Math 54 as both an
+                                   # alternative to Math 53 AND to Math 56 —
+                                   # without this, both raw rows survive and
+                                   # the same requirement renders twice in the
+                                   # audit table). Keeps first occurrence,
+                                   # consistent with cell_to_group's existing
+                                   # first-wins group assignment above.
     for art in arts:
         if not isinstance(art, dict):
             continue
@@ -301,6 +357,9 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
         ciid = uc_c.get("courseIdentifierParentId")
         if ciid is not None:
             covered_ciids.add(ciid)
+            if ciid in seen_row_ciids:
+                continue
+            seen_row_ciids.add(ciid)
         gid, pick_n, sec_idx = (
             cell_to_group.get(ciid, ("", 0, None)) if ciid is not None else ("", 0, None)
         )

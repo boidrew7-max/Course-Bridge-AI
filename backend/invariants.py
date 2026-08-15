@@ -113,12 +113,43 @@ def check_or_group_exactly_one(result: PlanResult) -> list:
     return errors
 
 
-def check_calgetc_no_double_count(result: PlanResult) -> list:
+_CALGETC_CARVEOUT_CACHE: dict | None = None
+
+
+def _load_calgetc_carveouts() -> dict:
+    """(school_lower, prefix, number) -> frozenset(areas) for every course
+    that appears under more than one area in calgetc_map's own byArea data —
+    a real ASSIST allowance, pulled from the source rather than hardcoded.
+    Mirrors plan_engine._select_calgetc's own carve-out derivation exactly,
+    so this invariant judges the engine by the same data it used."""
+    global _CALGETC_CARVEOUT_CACHE
+    if _CALGETC_CARVEOUT_CACHE is not None:
+        return _CALGETC_CARVEOUT_CACHE
+    data = load_calgetc_map()
+    out: dict = {}
+    for school, sdata in data.get("bySchool", {}).items():
+        course_areas: dict = {}
+        for area, courses in sdata.get("byArea", {}).items():
+            for c in courses:
+                k = (c.get("prefix","").strip().upper(), c.get("number","").strip().upper())
+                course_areas.setdefault(k, set()).add(area)
+        for k, areas in course_areas.items():
+            if len(areas) > 1:
+                out[(school.lower(), k[0], k[1])] = frozenset(areas)
+    _CALGETC_CARVEOUT_CACHE = out
+    return out
+
+
+def check_calgetc_no_double_count(result: PlanResult, college: str = "") -> list:
     """If Cal-GETC certification is claimed, no single course may satisfy two
-    different areas (each area needs its own course), and every claimed area
-    must resolve to a real, non-empty assignment."""
+    different areas unless the source data itself certifies it for that
+    exact set of areas (a real ASSIST allowance — e.g. a combined lab
+    satisfying 5B+5C, or a History course certified for both 3B and 4).
+    Every claimed area must also resolve to a real, non-empty assignment."""
     if not result.ge_completion:
         return []
+    carveouts = _load_calgetc_carveouts()
+    college_l = college.strip().lower()
     errors = []
     course_to_areas: dict = {}
     for area, val in result.ge_completion.items():
@@ -131,10 +162,12 @@ def check_calgetc_no_double_count(result: PlanResult) -> list:
                 continue
             course_to_areas.setdefault(code, set()).add(area)
     for code, areas in course_to_areas.items():
-        # A course legitimately double-satisfying (e.g. a lab satisfying 5B+5C)
-        # is allowed ONLY when plan_engine itself labeled it that way via tags;
-        # a plain two-area claim with no such tag is a double-count bug.
-        if len(areas) > 1 and not any(a in {"5B", "5C"} for a in areas):
+        if len(areas) <= 1:
+            continue
+        parts = code.split(" ", 1)
+        prefix, number = (parts[0], parts[1]) if len(parts) == 2 else (code, "")
+        data_areas = carveouts.get((college_l, prefix, number), frozenset())
+        if not areas.issubset(data_areas):
             errors.append(f"Course {code!r} claimed for multiple Cal-GETC areas: {sorted(areas)}")
     return errors
 
@@ -223,7 +256,7 @@ def run_all_invariants(result: PlanResult, college: str, completed: set | None =
     errors += check_no_duplicates(result)
     errors += check_courses_exist_at_ccc(result, college, course_index or {})
     errors += check_or_group_exactly_one(result)
-    errors += check_calgetc_no_double_count(result)
+    errors += check_calgetc_no_double_count(result, college)
     errors += check_calgetc_six_areas(result)
     errors += check_unit_math(result)
     errors += check_termination_sane(result)

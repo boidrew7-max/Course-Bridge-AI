@@ -517,48 +517,13 @@ _CC_PREREQ_CHAINS: dict = {
     },
 }
 
-# UC requirement OR groups — within each frozenset only ONE needs to be
-# satisfied.  When multiple members appear in a shard we keep the cheapest
-# CC path (fewest total units) and mark the rest as "satisfied via <winner>".
-#
-# Tuple formats:
-#   (uc_normalized, frozenset)               — applies to all majors at this campus
-#   (uc_normalized, major_substr, frozenset) — applies only when major name contains major_substr
-_UC_REQ_OR_GROUPS: list = [
-    # Berkeley CS / EECS: "MATH 54 or EECS 16A or MATH 56"
-    ("berkeley", frozenset({("MATH", "54"), ("EECS", "16A"), ("MATH", "56")})),
-
-    # Berkeley Math 51/52 (4-unit) vs Math 16A/16B (3-unit business calc) tracks:
-    # ASSIST lists these as alternative sequences ("Math 51 or Math 16A", "Math 52
-    # or Math 16B") — applies to Econ, Business Admin, and any other Berkeley major
-    # that reuses this same articulation menu. Without this, both tracks get
-    # committed independently and both show as separate "MET" rows.
-    ("berkeley", frozenset({("MATH", "51"), ("MATH", "16A")})),
-    ("berkeley", frozenset({("MATH", "52"), ("MATH", "16B")})),
-
-    # Davis Sociology A.B. — breadth elective clusters ("pick one" per group).
-    # ASSIST lists the full GE elective menu as separate required entries, causing
-    # the engine to schedule all ~11 History, ~8 Ethnic Studies, etc. options.
-    # Each group below collapses to one representative course.
-    ("davis", "sociology", frozenset({
-        ("HIS","007A"), ("HIS","007B"), ("HIS","007C"),
-        ("HIS","009A"), ("HIS","009B"), ("HIS","010C"),
-        ("HIS","004A"), ("HIS","004B"), ("HIS","004C"),
-        ("HIS","017A"), ("HIS","017B"),
-    })),
-    ("davis", "sociology", frozenset({
-        ("NAS","001"), ("NAS","010"),
-        ("ASA","001"), ("ASA","002"), ("ASA","004"),
-        ("CHI","010"), ("CHI","050"), ("AAS","010"),
-    })),
-    ("davis", "sociology", frozenset({
-        ("PHI","005"), ("PHI","014"), ("PHI","024"),
-    })),
-    ("davis", "sociology", frozenset({
-        ("POL","001"), ("POL","002"), ("POL","003"), ("POL","004"),
-        ("PSC","001"), ("ECN","001B"), ("ANT","002"),
-    })),
-]
+# _UC_REQ_OR_GROUPS (hardcoded per-course OR-group name list) deleted —
+# was a symptom fix for build_articulation_index.py silently dropping
+# ASSIST's section-level "advisements" (the actual source of "complete 1 of
+# the following Sequences" alternatives). The parser now reads that field
+# directly and encodes it through the existing g/k RequirementGroup
+# mechanism, so every instance of this pattern is caught at parse time
+# instead of requiring a name match for each one discovered by hand.
 
 # Known bridge courses for "conditional" articulations — ASSIST marks the CC
 # course as satisfying the requirement only if a specific UC course is also
@@ -689,54 +654,23 @@ def _resolve_major_prep(
             uc_str = f"{uc_c.get('p','')} {uc_c.get('n','')}"
             stale_notes.append(f"ASSIST flags {uc_str} as subject to change: {note}")
 
-    # ── Legacy OR-group pre-pass (fallback for shards without g/k) ───────────
+    # ── OR-group resolution ───────────────────────────────────────────────────
+    # Previously backstopped by a hardcoded _UC_REQ_OR_GROUPS list of known
+    # course-name alternatives (deleted). That was a symptom fix: the real
+    # defect was build_articulation_index.py silently dropping ASSIST's
+    # section-level "advisements" (e.g. "complete 1 of the following
+    # Sequences"), which flattened true OR-alternatives into independent AND
+    # entries. The parser now reads that field and encodes it via the
+    # existing g/k RequirementGroup mechanism (see group_map below), so this
+    # pre-pass is no longer needed as a fallback. skip_uc_keys/
+    # winner_group_label/satisfied_alt_group_keys are kept as empty
+    # structures — anything still landing in and_arts as an independent
+    # duplicate at this point means the parse-time tree isn't catching that
+    # ASSIST pattern yet, which should surface as a fresh backtest finding
+    # to investigate, not be silently re-patched here.
     skip_uc_keys: dict = {}
-    winner_group_label: dict = {}   # winner_key -> combined "A / B / C" label
-    satisfied_alt_group_keys: set = set()  # every non-winning key in a resolved OR-group,
-                                            # including alternatives with zero CC articulation
-                                            # at all (e.g. MATH 56) — these aren't real gaps,
-                                            # they're just the alternative track not taken.
-    for group in _UC_REQ_OR_GROUPS:
-        if len(group) == 3:
-            group_uc, major_substr, or_group = group
-            if major_substr.lower() not in major_l:
-                continue
-        else:
-            group_uc, or_group = group
-        if group_uc != uc_normalized:
-            continue
-        members: list = []
-        for art in arts:
-            uc_c = art.get("uc", {})
-            key  = (uc_c.get("p","").upper(), uc_c.get("n","").upper())
-            if key not in or_group:
-                continue
-            valid = [g for g in art.get("cc", []) if g]
-            if not accept_honors:
-                nh = [g for g in valid if not all(
-                    c.get("n","").upper().endswith("H") for c in g
-                )]
-                if nh:
-                    valid = nh
-            cost = min(
-                (sum(float(c.get("u", 3) or 3) for c in g) for g in valid),
-                default=999.0,
-            )
-            members.append((key, cost))
-        if len(members) <= 1:
-            continue
-        winner = min(members, key=lambda x: x[1])[0]
-        winner_group_label[winner] = " / ".join(f"{k[0]} {k[1]}" for k, _ in members)
-        for key, _ in members:
-            if key != winner:
-                skip_uc_keys[key] = winner
-        satisfied_alt_group_keys.update(k for k in or_group if k != winner)
-
-    if satisfied_alt_group_keys:
-        not_articulated = [
-            entry for entry in not_articulated
-            if tuple(entry.split(" - ", 1)[0].split(" ", 1)) not in satisfied_alt_group_keys
-        ]
+    winner_group_label: dict = {}
+    satisfied_alt_group_keys: set = set()
 
     # ── Partition entries into NFromArea groups vs AND entries ────────────────
     # group_map: gid -> {"pick_n": int, "arts": list, "uc_codes": frozenset}
@@ -780,17 +714,47 @@ def _resolve_major_prep(
     loser_cc_codes: set = set()   # CC codes from alternatives NOT chosen in an OR-group —
                                    # excluded from elective-filling to avoid redundant re-scheduling
 
+    # ── Consumption ledger ──────────────────────────────────────────────────
+    # (prefix, number) -> uc_key of the requirement that first claimed it.
+    # A single scheduled course may only pay off one major-prep requirement
+    # slot; without this, two independent requirements that happen to share
+    # an eligible CC option (e.g. a college with several parallel Math
+    # sequences) could each independently mark themselves MET off the same
+    # unclaimed course. When every available option for a requirement is
+    # already claimed elsewhere (ASSIST genuinely offers no other path),
+    # reuse is allowed — that's a real "one course satisfies two
+    # requirements" case, not a bug — but an unclaimed alternative is always
+    # preferred when one exists.
+    ledger: dict = {}
+
     # ── Process NFromArea groups ───────────────────────────────────────────────
     seen_uc_sets: set = set()   # deduplicate groups with identical UC-code menus
 
-    def _pick_cc(valid_groups):
-        """Select the best CC option group from a list of alternatives."""
+    def _pick_cc(valid_groups, uc_key=None):
+        """Select the best CC option group from a list of alternatives.
+
+        Prefers a group with no course already claimed by a *different*
+        requirement in the ledger; falls back to the full candidate list
+        (allowing legitimate reuse) only if every option is claimed elsewhere.
+        """
         if not accept_honors:
             filtered = [g for g in valid_groups if not all(
                 c.get("n","").upper().endswith("H") for c in g
             )]
             if filtered:
                 valid_groups = filtered
+
+        if uc_key is not None:
+            unclaimed = [
+                g for g in valid_groups
+                if all(
+                    ledger.get((c.get("p",""), c.get("n","")), uc_key) == uc_key
+                    for c in g
+                )
+            ]
+            if unclaimed:
+                valid_groups = unclaimed
+
         def _overlap(grp):
             return sum(1 for c in grp if (c.get("p",""), c.get("n","")) in committed)
         def _honors_cnt(grp):
@@ -811,6 +775,8 @@ def _resolve_major_prep(
         conditional = any(c.get("cond") for c in chosen)
         for c in chosen:
             key = (c.get("p",""), c.get("n",""))
+            if uc_key is not None:
+                ledger.setdefault(key, uc_key)
             if key in completed:
                 cc_codes.append(f"{key[0]} {key[1]} (already completed)")
                 continue
@@ -881,7 +847,7 @@ def _resolve_major_prep(
                         rows_info.append((uc_str, uc_key, None, "post"))
                         continue
 
-                    chosen = _pick_cc(list(valid))
+                    chosen = _pick_cc(list(valid), uc_key=uc_key)
                     cost += _cc_cost(chosen)
                     rows_info.append((uc_str, uc_key, chosen, "cc"))
 
@@ -897,7 +863,7 @@ def _resolve_major_prep(
             for _cost, _sec_idx, rows_info in winners:
                 for uc_str, _uc_key, chosen, kind in rows_info:
                     if kind == "cc":
-                        _commit_chosen(chosen, uc_str)
+                        _commit_chosen(chosen, uc_str, uc_key=_uc_key)
                     elif kind == "post":
                         post_transfer.append(uc_str)
                         audit_rows.append((uc_str, "-", "POST-TRANSFER"))
@@ -933,7 +899,7 @@ def _resolve_major_prep(
             if not valid:
                 continue  # no CC articulation — post-transfer, skip from OR selection
 
-            chosen = _pick_cc(list(valid))
+            chosen = _pick_cc(list(valid), uc_key=uc_key)
             candidates.append((_cc_cost(chosen), uc_str, chosen, uc_key))
 
         if not candidates:
@@ -944,7 +910,7 @@ def _resolve_major_prep(
         losers  = candidates[pick_n:]
 
         for _cost, uc_str, chosen, _key in winners:
-            _commit_chosen(chosen, uc_str)
+            _commit_chosen(chosen, uc_str, uc_key=_key)
 
         # Record winner description for "satisfied via" on losers
         winner_cc_desc = (
@@ -977,7 +943,7 @@ def _resolve_major_prep(
             audit_rows.append((uc_str, "-", "POST-TRANSFER"))
             continue
 
-        chosen = _pick_cc(list(valid_groups))
+        chosen = _pick_cc(list(valid_groups), uc_key=uc_key)
         _commit_chosen(chosen, uc_str, uc_key=uc_key)
 
     # "Highly Recommended vs Required" reclassification — a course listed
@@ -1067,11 +1033,46 @@ def _select_calgetc(
     ge_tag_prefix = "Cal-GETC"
 
     required = _CALGETC_REQUIRED
+    _required_codes = {code for code, _, _ in required} | {"5C"}
+
+    # ── Multi-area carve-out lookup (data-driven, not hardcoded) ────────────
+    # A course appearing under more than one area in this school's own
+    # byArea data is a real ASSIST allowance (e.g. a combined lab satisfying
+    # both 5B and 5C, or a History course certified for both 3B Humanities
+    # and 4 Social Science) — pulled straight from the source, never a
+    # hand-maintained pair list. Consumption below claims ALL of a course's
+    # certified areas in one pass instead of letting each area independently
+    # "spend" it.
+    course_areas: dict = {}
+    for _area, _courses in by_area.items():
+        if _area not in _required_codes:
+            continue
+        for _c in _courses:
+            _k = (_c.get("prefix",""), _c.get("number",""))
+            course_areas.setdefault(_k, set()).add(_area)
 
     ge_courses: list[CourseSlot] = []
     area_assignments: dict = {}
     five_b_has_lab = False
-    placed_ge_keys: set = set()
+    placed_ge_keys: set = set()   # every (prefix, number) already spent on some area
+
+    def _claim(area_code: str, key: tuple, display: str) -> None:
+        """Record one area's assignment and, when the course carries a real
+        multi-area certification, claim its other certified areas in the
+        same pass rather than letting them independently re-spend it."""
+        nonlocal five_b_has_lab
+        area_assignments[area_code] = display
+        placed_ge_keys.add(key)
+        if area_code in ("5A", "5B") and key in lab_keys:
+            five_b_has_lab = True
+        for other in course_areas.get(key, ()):
+            if other == area_code or other in area_assignments:
+                continue
+            if other not in _required_codes:
+                continue
+            area_assignments[other] = display
+            if other in ("5A", "5B") and key in lab_keys:
+                five_b_has_lab = True
 
     def _ok(c):
         pfx = c.get("prefix","").upper()
@@ -1101,6 +1102,13 @@ def _select_calgetc(
 
     for area_code, area_name, _needed in required:
         tag = f"{ge_tag_prefix} Area {area_code}"
+
+        # Already resolved by an earlier area's multi-area carve-out claim
+        # (e.g. a 5A/5C or 3B/4 certified course processed under the other
+        # area already filled this one in the same pass) — skip entirely
+        # rather than independently re-spending a course on it.
+        if area_code in area_assignments:
+            continue
 
         # ── 5C: no separate slot — just record if 5B course is also a lab ──
         if area_code == "5C":
@@ -1172,10 +1180,13 @@ def _select_calgetc(
                     slot = _make_slot(c, tag)
                     ge_courses.append(slot)
                     codes.append(slot.code)
-                    placed_ge_keys.add(ck)
                 else:
                     suffix = " (already completed)" if ck in completed_set else ""
                     codes.append(f"{c.get('prefix','')} {c.get('number','')}{suffix}")
+                # Every Area-4 pick (new or double-labelled) spends that course —
+                # record it so no later area can independently re-spend it, same
+                # as the single-course path below.
+                placed_ge_keys.add(ck)
             area_assignments["4"] = ", ".join(codes)
             continue
 
@@ -1184,30 +1195,29 @@ def _select_calgetc(
         if not courses:
             continue
 
-        # Completed-course double-label
+        # Completed-course double-label — excludes courses already spent on
+        # another area (placed_ge_keys), since only a real carve-out (handled
+        # by _claim automatically claiming a course's OTHER certified areas)
+        # should let one course pay off more than one area.
         completed_matches = [c for c in courses
-                             if (c.get("prefix",""), c.get("number","")) in completed_set]
+                             if (c.get("prefix",""), c.get("number","")) in completed_set
+                             and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys]
         if completed_matches:
             m = completed_matches[0]
+            mk = (m.get("prefix",""), m.get("number",""))
             code = f"{m.get('prefix','')} {m.get('number','')}"
-            area_assignments[area_code] = f"{code} (already completed)"
-            if area_code in ("5A","5B"):
-                mk = (m.get("prefix",""), m.get("number",""))
-                if mk in lab_keys:
-                    five_b_has_lab = True
+            _claim(area_code, mk, f"{code} (already completed)")
             continue
 
-        # Major prep double-label
+        # Major prep double-label — same exclusion as above.
         matches = [c for c in courses
-                   if (c.get("prefix",""), c.get("number","")) in scheduled_keys]
+                   if (c.get("prefix",""), c.get("number","")) in scheduled_keys
+                   and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys]
         if matches:
             m = matches[0]
+            mk = (m.get("prefix",""), m.get("number",""))
             code = f"{m.get('prefix','')} {m.get('number','')}"
-            area_assignments[area_code] = code
-            if area_code in ("5A","5B"):
-                mk = (m.get("prefix",""), m.get("number",""))
-                if mk in lab_keys:
-                    five_b_has_lab = True
+            _claim(area_code, mk, code)
             continue
 
         # Build unique filtered list
@@ -1235,10 +1245,7 @@ def _select_calgetc(
         pk = (pick.get("prefix",""), pick.get("number",""))
         slot = _make_slot(pick, tag)
         ge_courses.append(slot)
-        area_assignments[area_code] = slot.code
-        placed_ge_keys.add(pk)
-        if area_code in ("5A","5B") and pk in lab_keys:
-            five_b_has_lab = True
+        _claim(area_code, pk, slot.code)
 
     return ge_courses, area_assignments
 

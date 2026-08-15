@@ -51,7 +51,10 @@ def load_course_index() -> dict:
         rows = json.load(f)
     for r in rows:
         school = (r.get("school") or "").strip().lower()
-        ident = (r.get("identifier") or "").strip().upper()
+        # Source scrape has inconsistent internal whitespace for some colleges
+        # (e.g. "ENGL  C1000" with a double space) — collapse runs of
+        # whitespace so this never causes a false "course not found".
+        ident = " ".join((r.get("identifier") or "").split()).upper()
         if school and ident:
             index[(school, ident)] = True
     return index

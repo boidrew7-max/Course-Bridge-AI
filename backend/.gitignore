@@ -45,3 +45,8 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# backtest_matrix.py run outputs — regenerated per run, not tracked
+backtest_results.db
+backtest_results.jsonl
+backtest_summary.md

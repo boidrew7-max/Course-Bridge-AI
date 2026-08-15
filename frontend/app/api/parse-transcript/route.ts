@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getDocumentProxy, extractText } from "unpdf";
 import { extractCourseCodes } from "../../../lib/transcriptParser.js";
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
@@ -11,6 +13,12 @@ export async function POST(req: Request) {
     }
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       return NextResponse.json({ error: "Please upload a PDF file." }, { status: 400 });
+    }
+
+    // A transcript is a handful of text pages; anything larger is either a
+    // mistake or someone trying to exhaust the server parsing a huge PDF.
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "That PDF is too large. Please upload a file under 10 MB." }, { status: 413 });
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());

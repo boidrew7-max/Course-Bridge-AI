@@ -3,7 +3,8 @@ import os
 import time
 from collections import defaultdict
 import requests
-from flask import Flask, request, Response, stream_with_context, jsonify, redirect
+import secrets
+from flask import Flask, request, Response, stream_with_context, jsonify, redirect, session
 from advisor import (
     ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream,
 )
@@ -99,26 +100,85 @@ _rate_log = defaultdict(list)  # ip -> [timestamps]
 
 
 def _get_ip():
-    # Respect proxy headers if behind nginx/reverse proxy
-    return request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+    # X-Forwarded-For is client-controlled: a caller can send any prefix they
+    # like, so the LEFTMOST entry is untrusted and taking it lets anyone
+    # sidestep every rate limit by rotating a fake header. Only the RIGHTMOST
+    # entry is written by our own proxy (Railway's edge), so trust that one.
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        return xff.split(",")[-1].strip()
+    return request.remote_addr or "unknown"
 
 
-def _check_rate(ip):
-    now    = time.time()
-    cutoff = now - RATE_WINDOW
-    recent = [t for t in _rate_log[ip] if t > cutoff]
-    if len(recent) >= RATE_LIMIT:
-        _rate_log[ip] = recent
-        return False
-    recent.append(now)
-    _rate_log[ip] = recent
-    # Every IP that has ever hit this process otherwise stays as a dict key
+def _bucket_full(key, limit, window):
+    """True if `key` has already used its budget. Read-only — does not count
+    this call, so a check can gate an action without consuming the budget."""
+    cutoff = time.time() - window
+    recent = [t for t in _rate_log[key] if t > cutoff]
+    _rate_log[key] = recent
+    return len(recent) >= limit
+
+
+def _bucket_record(key):
+    _rate_log[key].append(time.time())
+    # Every key that has ever hit this process otherwise stays as a dict key
     # forever (its list just goes empty) — a slow unbounded leak under real
     # traffic. Occasionally sweep out entries with nothing left in-window.
     if len(_rate_log) > 5000:
         for k in [k for k, v in _rate_log.items() if not v]:
             del _rate_log[k]
+
+
+def _check_bucket(key, limit, window):
+    """Sliding-window limiter: counts this call and reports whether it's
+    allowed. `key` namespaces the bucket so one endpoint's budget can't be
+    drained by traffic to another."""
+    if _bucket_full(key, limit, window):
+        return False
+    _bucket_record(key)
     return True
+
+
+def _check_rate(ip):
+    return _check_bucket(ip, RATE_LIMIT, RATE_WINDOW)
+
+
+# Auth endpoints get their own, much tighter budgets. Without these, the
+# public backend URL is an unlimited password-guessing / account-creation /
+# reset-email-flood oracle — the single biggest hole in the app.
+AUTH_LIMIT        = 10   # per IP per 15 min, per endpoint group
+AUTH_WINDOW       = 900
+AUTH_EMAIL_LIMIT  = 5    # per targeted account per 15 min
+
+
+def _auth_keys(group, email=""):
+    keys = [f"auth:{group}:{_get_ip()}"]
+    if email:
+        keys.append(f"auth:{group}:acct:{email}")
+    return keys
+
+
+def _auth_throttled(group, email=""):
+    """True if this auth attempt should be rejected. Limits by source IP and,
+    when an account is named, by that account too — so a distributed attack
+    still can't grind one victim's password. Checking does NOT consume budget;
+    callers spend it via _auth_failed() so that only failures count. Community
+    colleges put whole campuses behind one NAT IP, and charging successful
+    logins against a shared IP would lock out real students."""
+    ip_key, *acct = _auth_keys(group, email)
+    if _bucket_full(ip_key, AUTH_LIMIT, AUTH_WINDOW):
+        return True
+    return bool(acct) and _bucket_full(acct[0], AUTH_EMAIL_LIMIT, AUTH_WINDOW)
+
+
+def _auth_failed(group, email=""):
+    """Charge a failed attempt against both the IP and account buckets."""
+    for k in _auth_keys(group, email):
+        _bucket_record(k)
+
+
+def _too_many():
+    return jsonify({"error": "Too many attempts. Please wait a few minutes and try again."}), 429
 
 
 # ── Quick off-topic guard (no LLM tokens spent) ───────────────
@@ -659,6 +719,12 @@ def auth_register():
     password = data.get("password", "")
     username = (data.get("username") or "").strip()
 
+    if _auth_throttled("register"):
+        return _too_many()
+    # Unlike login, every attempt counts here: the abuse being stopped is bulk
+    # account creation, and a *successful* create is exactly the thing to cap.
+    _auth_failed("register")
+
     if not email or "@" not in email:
         return jsonify({"error": "Enter a valid email address."}), 400
     if len(password) < 6:
@@ -682,8 +748,12 @@ def auth_login():
     email    = (data.get("email") or "").strip().lower()
     password = data.get("password", "")
 
+    if _auth_throttled("login", email):
+        return _too_many()
+
     user = get_user_by_email(email)
     if not user or not verify_password(user, password):
+        _auth_failed("login", email)
         return jsonify({"error": "Incorrect email or password."}), 401
 
     token = create_session_token(user["id"])
@@ -722,12 +792,21 @@ def auth_google_start():
     if not (GOOGLE_CLIENT_ID and GOOGLE_REDIRECT_URI):
         return jsonify({"error": "Google sign-in is not configured on this server."}), 503
     from urllib.parse import urlencode
+    # CSRF guard: without `state`, an attacker can run the Google flow with
+    # their own account and feed the resulting ?code= to a victim's browser,
+    # silently signing the victim into the ATTACKER's account — everything the
+    # victim then saves (transcript, plans) lands in an account the attacker
+    # controls. The value lives in the Flask session cookie, which only this
+    # backend domain can set or read.
+    state = secrets.token_urlsafe(32)
+    session["oauth_state"] = state
     params = {
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": GOOGLE_REDIRECT_URI,
         "response_type": "code",
         "scope": "openid email profile",
         "prompt": "select_account",
+        "state": state,
     }
     return redirect("https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params))
 
@@ -738,6 +817,12 @@ def auth_google_callback():
         return jsonify({"error": "Google sign-in is not configured on this server."}), 503
     code = request.args.get("code", "")
     if not code:
+        return redirect(f"{FRONTEND_URL}/login?error=google_auth_failed")
+
+    # Single-use: pop it so a replayed callback can't reuse the same state.
+    expected = session.pop("oauth_state", None)
+    if not expected or not secrets.compare_digest(request.args.get("state", ""), expected):
+        app.logger.warning("google_oauth_state_mismatch ip=%s", _get_ip())
         return redirect(f"{FRONTEND_URL}/login?error=google_auth_failed")
 
     try:
@@ -776,6 +861,13 @@ def auth_forgot():
     email = ((request.json or {}).get("email") or "").strip().lower()
     if not email:
         return jsonify({"error": "Enter your email address."}), 400
+    if _auth_throttled("forgot", email):
+        # Same generic body as the success path — a 429 here still shouldn't
+        # confirm whether the address has an account.
+        return _too_many()
+    # Every attempt counts: sending the email IS the cost being abused, so a
+    # successful send is what needs capping (reset-email flooding a victim).
+    _auth_failed("forgot", email)
     token, user = create_reset_token(email)
     # Always return the same response — don't reveal whether the account exists
     if token:
@@ -805,9 +897,16 @@ def auth_reset():
     password = data.get("password", "")
     if not token:
         return jsonify({"error": "Reset token is required."}), 400
+    if _auth_throttled("reset"):
+        # Without this, the 43-char reset token is brute-forceable in principle
+        # and, more practically, freely enumerable.
+        return _too_many()
     if len(password) < 6:
         return jsonify({"error": "Password must be at least 6 characters."}), 400
     if not redeem_reset_token(token, password):
+        # Only bad tokens count, so a student following a real emailed link is
+        # never blocked by someone else's guessing.
+        _auth_failed("reset")
         return jsonify({"error": "Invalid or expired reset token."}), 400
     return jsonify({"ok": True})
 

@@ -396,6 +396,13 @@ def redeem_reset_token(token, new_password):
             f"UPDATE users SET password_hash={_p()} WHERE id={_p()}",
             (generate_password_hash(new_password), row["user_id"]),
         )
+        # A reset is how someone recovers a compromised account, so it has to
+        # log out everyone else too: any session token an attacker already
+        # minted stays valid for 30 days otherwise, and changing the password
+        # would do nothing to evict them.
+        cur.execute(
+            f"DELETE FROM session_tokens WHERE user_id={_p()}", (row["user_id"],)
+        )
     return True
 
 

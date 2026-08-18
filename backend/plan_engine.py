@@ -2259,9 +2259,20 @@ def render_plan_stream(
         {"role": "user",   "content": prompt},
     ]
 
+    # max_tokens counts against the model's tokens-per-minute cap along with
+    # the prompt, and 6000 was sized for the old llama-3.3-70b-versatile's
+    # much larger free-tier TPM budget. Both openai/gpt-oss models sit on a
+    # tighter TPM limit and were rejecting every plan render outright with a
+    # 413 "Request too large ... tokens per minute" error (production
+    # confirmed 2026-08-18) — a real plan's rendered markdown runs well
+    # under 3000 tokens, so this isn't a content-length tradeoff, just
+    # bringing the ceiling back in line with what these models can accept
+    # per request. The fallback attempt uses an even smaller cap so it has
+    # the best chance of succeeding if the primary's TPM budget is already
+    # partly spent in the same minute.
     models = [
-        ("openai/gpt-oss-120b", 6000),
-        ("openai/gpt-oss-20b", 6000),
+        ("openai/gpt-oss-120b", 3000),
+        ("openai/gpt-oss-20b", 2000),
     ]
     for i, (model, max_tok) in enumerate(models):
         try:

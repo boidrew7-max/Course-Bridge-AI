@@ -2145,7 +2145,9 @@ def render_plan_stream(
     """
     Stream markdown from LLM.  The LLM only formats —
     all scheduling decisions are already fixed in result.
-    Uses llama-3.3-70b as primary; falls back to llama-3.1-8b if needed.
+    Uses openai/gpt-oss-120b as primary; falls back to openai/gpt-oss-20b if
+    needed. (Migrated off llama-3.3-70b-versatile / llama-3.1-8b-instant,
+    which Groq decommissions August 16, 2026 — see console.groq.com/docs/deprecations.)
     """
     from advisor import _get_client
 
@@ -2157,8 +2159,8 @@ def render_plan_stream(
     ]
 
     models = [
-        ("llama-3.3-70b-versatile", 6000),
-        ("llama-3.1-8b-instant", 6000),
+        ("openai/gpt-oss-120b", 6000),
+        ("openai/gpt-oss-20b", 6000),
     ]
     for i, (model, max_tok) in enumerate(models):
         try:

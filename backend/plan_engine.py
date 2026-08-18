@@ -2259,20 +2259,33 @@ def render_plan_stream(
         {"role": "user",   "content": prompt},
     ]
 
-    # max_tokens counts against the model's tokens-per-minute cap along with
-    # the prompt, and 6000 was sized for the old llama-3.3-70b-versatile's
-    # much larger free-tier TPM budget. Both openai/gpt-oss models sit on a
-    # tighter TPM limit and were rejecting every plan render outright with a
-    # 413 "Request too large ... tokens per minute" error (production
-    # confirmed 2026-08-18) — a real plan's rendered markdown runs well
-    # under 3000 tokens, so this isn't a content-length tradeoff, just
-    # bringing the ceiling back in line with what these models can accept
-    # per request. The fallback attempt uses an even smaller cap so it has
-    # the best chance of succeeding if the primary's TPM budget is already
-    # partly spent in the same minute.
+    # max_tokens counts against the model's tokens-per-minute cap ALONG WITH
+    # the prompt+system tokens, and both are due to change per request: the
+    # system prompt alone (~2600 tokens, most of it the strict-format rules)
+    # plus the per-major data prompt (measured 1200-1900+ tokens depending on
+    # how many requirements the major has) can eat well over half of the
+    # free-tier 8000 TPM budget before the model writes a word.
+    #
+    # A flat max_tokens either 413s outright when the input is large (a fixed
+    # 6000 measured ~9900 total on a real request and was rejected before
+    # generating anything — confirmed in production 2026-08-18), or silently
+    # truncates the response when the input is smaller but the required
+    # output format is long (a fixed 3000/2000 avoided the 413 but cut the
+    # stream off before it reached the "## Term N" schedule section, which
+    # comes near the END of the required output order — so the plan
+    # "succeeded" with no error, just missing the part the UI actually
+    # renders as the schedule board).
+    #
+    # Scale the request to whatever's actually left in the budget instead:
+    approx_input_tokens = (len(system) + len(prompt)) // 4  # ~4 chars/token
+    TPM_BUDGET = 8000
+    SAFETY_MARGIN = 300  # token-count estimate is approximate, not exact
+    primary_cap = max(1500, min(6000, TPM_BUDGET - approx_input_tokens - SAFETY_MARGIN))
+    fallback_cap = max(1200, primary_cap - 800)
+
     models = [
-        ("openai/gpt-oss-120b", 3000),
-        ("openai/gpt-oss-20b", 2000),
+        ("openai/gpt-oss-120b", primary_cap),
+        ("openai/gpt-oss-20b", fallback_cap),
     ]
     for i, (model, max_tok) in enumerate(models):
         try:

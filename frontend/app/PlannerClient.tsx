@@ -1356,6 +1356,7 @@ function SimpleMarkdown({ text }: { text: string }) {
   let listBuf: string[] = [];
   let tableBuf: string[][] = [];
   let skippingTermSection = false;   // term schedule already shown by PlanTimeline
+  let skippingAuditSection = false;  // Requirement Audit table — not relevant to the student, hidden
   let inKeyNotes = false;
   let keyNotesBuf: string[] = [];
 
@@ -1403,6 +1404,24 @@ function SimpleMarkdown({ text }: { text: string }) {
       if (/^##\s/.test(line) && !/^##\s*Term\s+\d+\s*\(/.test(line)) {
         skippingTermSection = false;
         // fall through to normal handling of this (non-Term) header below
+      } else {
+        continue;
+      }
+    }
+
+    // Requirement Audit table isn't relevant to the student — skip the whole
+    // section (Major Preparation / GE Status tables + Overall Status line)
+    // up to the next "##" heading.
+    if (/^##\s*Requirement Audit/.test(line)) {
+      flush();
+      flushKeyNotes();
+      skippingAuditSection = true;
+      continue;
+    }
+    if (skippingAuditSection) {
+      if (/^##\s/.test(line) && !/^##\s*Requirement Audit/.test(line)) {
+        skippingAuditSection = false;
+        // fall through to normal handling of this (non-audit) header below
       } else {
         continue;
       }

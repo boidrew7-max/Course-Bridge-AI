@@ -343,6 +343,10 @@ class PlanResult:
     ge_strategy: str = "CERTIFY"     # "CERTIFY" (default) or "MAJOR_PREP_FIRST" — per campus/major
                                       # guidance on whether to complete full Cal-GETC as a priority.
     ge_strategy_note: str = ""       # human-readable rationale, surfaced in Key Notes.
+    ge_deferred_areas: list = field(default_factory=list)  # Cal-GETC area codes
+                                      # intentionally left for after transfer
+                                      # (e.g. "1C" under MAJOR_PREP_FIRST) —
+                                      # never a silent gap, always labeled.
 
     def all_courses(self) -> list:
         out = []
@@ -1077,10 +1081,24 @@ def _select_calgetc(
     scheduled_keys: set,
     accept_honors: bool,
     completed_keys: set | None = None,
-) -> tuple[list, dict]:
+    ge_strategy: str = "CERTIFY",
+) -> tuple[list, dict, list]:
+    """Returns (ge_courses, area_assignments, deferred_areas).
+
+    deferred_areas: area codes intentionally NOT scheduled because
+    ge_strategy == "MAJOR_PREP_FIRST" — a real, sourced UC allowance
+    ("Cal-GETC for STEM" / IGETC for STEM lets STEM-bound students defer
+    Area 1C until after transfer — see UC Admissions' IGETC page), not a
+    silent gap. Currently only 1C is deferred: that's the well-confirmed
+    part of the policy. A broader Area 3/4 partial-deferral has been
+    proposed (ASCCC resolution) but isn't implemented here since it wasn't
+    confirmed as settled, universal policy at the time this was written —
+    revisit if that changes.
+    """
+    deferred_areas: list = []
     data = _load_calgetc()
     if not data:
-        return [], {}
+        return [], {}, deferred_areas
 
     by_school = data.get("bySchool", {})
     # Some entries are empty stubs (0 courses) left over from a stale/
@@ -1107,7 +1125,7 @@ def _select_calgetc(
         if aliased and aliased in by_school and _has_courses(aliased):
             school_key = aliased
     if not school_key:
-        return [], {}
+        return [], {}, deferred_areas
 
     by_area = by_school[school_key].get("byArea", {})
     lab_keys = {(c.get("prefix",""), c.get("number","")) for c in by_area.get("5C", [])}
@@ -1190,6 +1208,13 @@ def _select_calgetc(
         # area already filled this one in the same pass) — skip entirely
         # rather than independently re-spending a course on it.
         if area_code in area_assignments:
+            continue
+
+        # Cal-GETC for STEM: UC lets STEM-bound students defer Area 1C
+        # (Oral Communication) until after transfer, freeing that unit for
+        # major prep instead of scheduling it pre-transfer as CERTIFY would.
+        if area_code == "1C" and ge_strategy == "MAJOR_PREP_FIRST":
+            deferred_areas.append(area_code)
             continue
 
         # ── 5C: no separate slot — just record if 5B course is also a lab ──
@@ -1329,7 +1354,7 @@ def _select_calgetc(
         ge_courses.append(slot)
         _claim(area_code, pk, slot.code)
 
-    return ge_courses, area_assignments
+    return ge_courses, area_assignments, deferred_areas
 
 
 # ── Term bin-packing ──────────────────────────────────────────────────────────
@@ -1789,9 +1814,12 @@ def build_plan(
     _inject_cc_prereqs(major_courses, matched_cc_name, completed_keys)
 
     scheduled_keys = {(s.prefix, s.number) for s in major_courses}
-    ge_courses, area_assignments = _select_calgetc(matched_cc_name, scheduled_keys, accept_honors,
-                                                     completed_keys=completed_keys)
+    ge_courses, area_assignments, ge_deferred_areas = _select_calgetc(
+        matched_cc_name, scheduled_keys, accept_honors,
+        completed_keys=completed_keys, ge_strategy=result.ge_strategy,
+    )
     result.ge_completion = area_assignments
+    result.ge_deferred_areas = ge_deferred_areas
 
     # Sanity check: if major prep was found but Cal-GETC is empty, the shard
     # match may have slipped past the threshold on a marginal score.
@@ -1996,6 +2024,9 @@ def repair_ge_completion_section(text: str, result: PlanResult) -> tuple:
             label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
             mark = "❌" if "NOT ASSIGNED" in str(course_code) else "✅"
             lines.append(f"- {label}: {mark} {course_code}")
+        for area_code in result.ge_deferred_areas:
+            label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+            lines.append(f"- {label}: ⏳ Deferred until after transfer (Cal-GETC for STEM)")
         return "\n".join(lines) + "\n"
 
     if len(headers) == 0:
@@ -2086,6 +2117,9 @@ def render_plan_text(
         if not_assigned:
             all_ge_met = False
         lines.append(f"| {label} | {course_code} | {'NOT MET' if not_assigned else 'MET'} |")
+    for area_code in result.ge_deferred_areas:
+        label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+        lines.append(f"| {label} | Deferred — complete after transfer (Cal-GETC for STEM) | DEFERRED |")
     lines.append("")
 
     # Overall status: computed the same way advisor._PLAN_SYSTEM_PROMPT's
@@ -2136,10 +2170,22 @@ def render_plan_text(
         label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
         mark = "❌" if "NOT ASSIGNED" in str(course_code) else "✅"
         lines.append(f"- {label}: {mark} {course_code}")
+    for area_code in result.ge_deferred_areas:
+        label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+        lines.append(f"- {label}: ⏳ Deferred until after transfer (Cal-GETC for STEM)")
     lines.append("")
 
     # ── Key Notes ────────────────────────────────────────────────────────────
     lines.append("## Key Notes")
+    if result.ge_deferred_areas:
+        deferred_labels = ", ".join(
+            _CALGETC_AREA_LABELS.get(a, f"Area {a}") for a in result.ge_deferred_areas
+        )
+        lines.append(
+            f"- {deferred_labels} deliberately deferred until after transfer, per this "
+            "campus's own guidance for STEM majors (\"Cal-GETC for STEM\") — this frees up "
+            "schedule capacity for required major prep instead. Not a gap in this plan."
+        )
     if result.multi_track:
         lines.append(
             "- This major has multiple emphasis tracks. This plan covers requirements across "

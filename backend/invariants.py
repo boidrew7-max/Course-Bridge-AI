@@ -61,12 +61,26 @@ def load_course_index() -> dict:
     return index
 
 
+_CALGETC_MAP_CACHE: dict | None = None
+
+
 def load_calgetc_map() -> dict:
+    # Was uncached — every call re-read and re-parsed a multi-MB gzip file
+    # from disk. Harmless at low call volume, but check_calgetc_no_double_count
+    # now calls this (directly, and again via _load_calgetc_carveouts) on
+    # nearly every one of 114,499 backtest triples, turning an unnoticed
+    # inefficiency into a real slowdown (30-45s runs stretching past 5+
+    # minutes). Memoize like every other data loader in this file already does.
+    global _CALGETC_MAP_CACHE
+    if _CALGETC_MAP_CACHE is not None:
+        return _CALGETC_MAP_CACHE
     path = os.path.join(_DATA_DIR, "calgetc_map.json.gz")
     if not os.path.exists(path):
-        return {}
+        _CALGETC_MAP_CACHE = {}
+        return _CALGETC_MAP_CACHE
     with gzip.open(path, "rt", encoding="utf-8") as f:
-        return json.load(f)
+        _CALGETC_MAP_CACHE = json.load(f)
+    return _CALGETC_MAP_CACHE
 
 
 # ── New matrix-scale invariants ────────────────────────────────────────────────

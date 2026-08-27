@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { STATE_COOKIE } from "../start/route";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
@@ -17,8 +18,22 @@ const SITE_URL = process.env.SITE_URL || "https://coursebridge.us";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
-  if (!code) {
-    return NextResponse.redirect(new URL("/login?error=google_auth_failed", SITE_URL));
+  const state = url.searchParams.get("state");
+  const cookieState = req.headers
+    .get("cookie")
+    ?.split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${STATE_COOKIE}=`))
+    ?.slice(STATE_COOKIE.length + 1);
+
+  // Reject if the code is missing, or if state doesn't match what we set
+  // before redirecting to Google — the CSRF check start/route.ts exists for.
+  // A missing cookie (expired, blocked, or never set) fails closed rather
+  // than being treated as "no check configured."
+  if (!code || !state || !cookieState || state !== cookieState) {
+    const res = NextResponse.redirect(new URL("/login?error=google_auth_failed", SITE_URL));
+    res.cookies.delete(STATE_COOKIE);
+    return res;
   }
 
   try {
@@ -54,8 +69,12 @@ export async function GET(req: Request) {
     if (!completeRes.ok) throw new Error("account creation failed");
     const { token } = await completeRes.json();
 
-    return NextResponse.redirect(new URL(`/auth/callback?token=${encodeURIComponent(token)}`, SITE_URL));
+    const res = NextResponse.redirect(new URL(`/auth/callback?token=${encodeURIComponent(token)}`, SITE_URL));
+    res.cookies.delete(STATE_COOKIE); // single-use — clear on success too
+    return res;
   } catch {
-    return NextResponse.redirect(new URL("/login?error=google_auth_failed", SITE_URL));
+    const res = NextResponse.redirect(new URL("/login?error=google_auth_failed", SITE_URL));
+    res.cookies.delete(STATE_COOKIE);
+    return res;
   }
 }

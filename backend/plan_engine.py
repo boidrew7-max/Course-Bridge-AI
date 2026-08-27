@@ -1107,6 +1107,39 @@ _CALGETC_COLLEGE_ALIASES = {
 }
 
 
+def resolve_calgetc_school_key(college: str, by_school: dict) -> str | None:
+    """Resolve a user/shard-provided college name to its actual key in
+    calgetc_map's bySchool dict, handling the same name-drift cases
+    _select_calgetc has always handled internally: stale/renamed entries
+    with 0 courses, colleges that dropped "Community" from their name, and
+    colleges renamed entirely (Kings River -> Reedley, etc.). Shared by
+    _select_calgetc and invariants.py's check_calgetc_no_double_count so
+    both resolve a college to the same school exactly the same way — a
+    naive exact-match lookup in the invariant previously judged every
+    legitimate multi-area claim for these colleges as "unexplained" simply
+    because it couldn't find their carve-out data under the raw name.
+    """
+    def _has_courses(key: str) -> bool:
+        return bool(by_school[key].get("byArea"))
+
+    candidates = [k for k in by_school if k.lower() == college.lower()]
+    candidates += [k for k in by_school if college.lower() in k.lower() and k not in candidates]
+    school_key = next((k for k in candidates if _has_courses(k)), None)
+    if not school_key:
+        # Many CA colleges dropped "Community" from their name over the
+        # years (e.g. "Compton Community College" -> "Compton College").
+        # Retry without it before giving up.
+        stripped = college.lower().replace(" community ", " ").strip()
+        if stripped != college.lower():
+            retry = [k for k in by_school if k.lower() == stripped or stripped in k.lower()]
+            school_key = next((k for k in retry if _has_courses(k)), None)
+    if not school_key:
+        aliased = _CALGETC_COLLEGE_ALIASES.get(college.lower())
+        if aliased and aliased in by_school and _has_courses(aliased):
+            school_key = aliased
+    return school_key
+
+
 # ── Cal-GETC selection ─────────────────────────────────────────────────────────
 
 def _select_calgetc(
@@ -1134,29 +1167,7 @@ def _select_calgetc(
         return [], {}, deferred_areas
 
     by_school = data.get("bySchool", {})
-    # Some entries are empty stubs (0 courses) left over from a stale/
-    # alternate college name in the source scrape — e.g. "Compton Community
-    # College" (0 courses) sits alongside the real "Compton College" (186
-    # courses) entry. Skip any match with no actual course data rather than
-    # silently returning an empty GE section.
-    def _has_courses(key: str) -> bool:
-        return bool(by_school[key].get("byArea"))
-
-    candidates = [k for k in by_school if k.lower() == college.lower()]
-    candidates += [k for k in by_school if college.lower() in k.lower() and k not in candidates]
-    school_key = next((k for k in candidates if _has_courses(k)), None)
-    if not school_key:
-        # Many CA colleges dropped "Community" from their name over the
-        # years (e.g. "Compton Community College" -> "Compton College").
-        # Retry without it before giving up.
-        stripped = college.lower().replace(" community ", " ").strip()
-        if stripped != college.lower():
-            retry = [k for k in by_school if k.lower() == stripped or stripped in k.lower()]
-            school_key = next((k for k in retry if _has_courses(k)), None)
-    if not school_key:
-        aliased = _CALGETC_COLLEGE_ALIASES.get(college.lower())
-        if aliased and aliased in by_school and _has_courses(aliased):
-            school_key = aliased
+    school_key = resolve_calgetc_school_key(college, by_school)
     if not school_key:
         return [], {}, deferred_areas
 

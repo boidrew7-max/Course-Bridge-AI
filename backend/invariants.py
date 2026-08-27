@@ -21,6 +21,7 @@ from plan_engine import (
     PlanResult,
     _MAX_TERMS_HARD,
     _DATA_DIR,
+    resolve_calgetc_school_key,
 )
 from test_plan_engine import (
     check_ghost_courses,
@@ -149,7 +150,17 @@ def check_calgetc_no_double_count(result: PlanResult, college: str = "") -> list
     if not result.ge_completion:
         return []
     carveouts = _load_calgetc_carveouts()
-    college_l = college.strip().lower()
+    calgetc_data = load_calgetc_map()
+    by_school = calgetc_data.get("bySchool", {})
+    school_key = resolve_calgetc_school_key(college, by_school)
+    # Resolve the same way _select_calgetc does internally (stale/renamed
+    # entries, dropped "Community", full renames) — a raw lowercase of the
+    # plan's own college field previously missed every one of these,
+    # making legitimate carve-out claims for those colleges look
+    # "unexplained." Falls back to the raw name if resolution fails, which
+    # will correctly still flag genuine violations at colleges without a
+    # naming quirk.
+    college_l = school_key.lower() if school_key else college.strip().lower()
     errors = []
     course_to_areas: dict = {}
     for area, val in result.ge_completion.items():

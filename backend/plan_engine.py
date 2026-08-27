@@ -97,7 +97,29 @@ _STEM_MAJOR_WORDS = (
     "computer science and engineering",
 )
 
-_GE_STRATEGY_MAJOR_PREP_FIRST_UCS = {"davis", "irvine", "santa cruz", "santa barbara"}
+_GE_STRATEGY_MAJOR_PREP_FIRST_UCS = {
+    "davis", "irvine", "santa cruz", "santa barbara",
+    # Confirmed via admission.universityofcalifornia.edu's campus-guidance
+    # page (2026): UCLA engineering applicants are "encouraged to focus on
+    # lower-division major preparation prior to transfer" rather than
+    # completing IGETC/Cal-GETC; Merced's own guidance "strongly discourages"
+    # it for engineering, urging students to "focus on lower-division major
+    # preparation" instead.
+    "los angeles", "merced",
+}
+
+# Berkeley is split by COLLEGE, not by campus-wide policy: College of
+# Letters & Science requires full Cal-GETC certification, but Berkeley's own
+# admissions FAQ (ls.berkeley.edu) states the College of Engineering and
+# Haas School of Business do NOT accept/recommend it at all — "IGETC/Cal-GETC
+# offered at California community colleges is not accepted" by Engineering.
+# Major names cleanly distinguish the colleges here (verified against the
+# actual Berkeley shard's major list): every College of Engineering major is
+# literally named "...Engineering..." (e.g. "Electrical Engineering &
+# Computer Sciences B.S.", distinct from L&S's own "Computer Science B.A."),
+# and Haas is "Business Administration B.S."
+_BERKELEY_NON_LS_WORDS = ("engineering", "business administration")
+
 
 def _ge_strategy(uc_normalized: str, major: str) -> tuple[str, str]:
     """Return (strategy, note) for how hard to push Cal-GETC certification.
@@ -117,10 +139,28 @@ def _ge_strategy(uc_normalized: str, major: str) -> tuple[str, str]:
             "completion at every UCSD college. Confirm your assigned "
             "college's specific GE requirements with a counselor.",
         )
+    if uc_normalized == "berkeley":
+        if any(w in major_l for w in _BERKELEY_NON_LS_WORDS):
+            college_label = "Haas School of Business" if "business" in major_l else "College of Engineering"
+            return (
+                "MAJOR_PREP_FIRST",
+                f"UC Berkeley's {college_label} does not accept or recommend Cal-GETC "
+                "certification — this differs from the rest of the campus (College of "
+                "Letters & Science requires it). Focus on required and recommended major "
+                "preparation; confirm your GE approach with a counselor before relying on "
+                "Cal-GETC for this specific major.",
+            )
+        return (
+            "CERTIFY",
+            "UC Berkeley College of Letters & Science requires full Cal-GETC "
+            "certification as a selection criterion for admission — completing "
+            "it is expected, not optional, for majors in this college.",
+        )
     if is_stem and uc_normalized in _GE_STRATEGY_MAJOR_PREP_FIRST_UCS:
         campus_label = {
             "davis": "UC Davis", "irvine": "UC Irvine",
             "santa cruz": "UC Santa Cruz", "santa barbara": "UC Santa Barbara",
+            "los angeles": "UCLA", "merced": "UC Merced",
         }.get(uc_normalized, uc_normalized.title())
         return (
             "MAJOR_PREP_FIRST",
@@ -128,13 +168,6 @@ def _ge_strategy(uc_normalized: str, major: str) -> tuple[str, str]:
             "engineering, math, and science majors — complete required and "
             "recommended major preparation first, and finish remaining Cal-GETC "
             "requirements after transfer or as schedule capacity allows.",
-        )
-    if uc_normalized == "berkeley":
-        return (
-            "CERTIFY",
-            "UC Berkeley L&S requires full Cal-GETC certification as a "
-            "selection criterion for admission — completing it is expected, "
-            "not optional, for this campus.",
         )
     return ("CERTIFY", "")
 
@@ -1397,6 +1430,29 @@ def _assign_terms(
         if role and role not in calc_assigned:
             calc_assigned[role] = slot
         else:
+            unassigned_major.append(slot)
+
+    # Consistency guard: some colleges give every course in a numeric
+    # sequence the SAME title (e.g. Gavilan's MATH 1A and 1B are both
+    # "Single-Variable Calculus and Analytic Geometry", only 1C reads
+    # "Multivariable Calculus"). _calc_role only matches by title text, so
+    # 1C alone gets caught as "calc3" and locked to term 1 as if it were
+    # the first course in the chain — while its real, unassigned numeric
+    # predecessors (1A, 1B, same prefix/sequence-base, lower ordinal) sit
+    # in unassigned_major with no awareness that a "successor" already
+    # claimed an early term. Demote any calc-role match that has such an
+    # unassigned predecessor back into unassigned_major, so the whole
+    # sequence is placed uniformly by Pass 2's topological/sequence sort
+    # instead of two passes disagreeing about order.
+    for role, slot in list(calc_assigned.items()):
+        has_unassigned_predecessor = any(
+            other.prefix == slot.prefix
+            and same_sequence_base(other.number, slot.number)
+            and 0 <= infer_sequence_order(other.number)[1] < infer_sequence_order(slot.number)[1]
+            for other in unassigned_major
+        )
+        if has_unassigned_predecessor:
+            del calc_assigned[role]
             unassigned_major.append(slot)
 
     role_order = ["calc1", "calc2", "calc3", "diffeq", "linalg"]

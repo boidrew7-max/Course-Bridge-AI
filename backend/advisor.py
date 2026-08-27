@@ -16,6 +16,30 @@ from search_static import search_static
 
 load_dotenv()
 
+
+def _sanitize_history(conversation_history):
+    """Strip any client-supplied message down to {role, content}, and force
+    role into {"user","assistant"} only.
+
+    conversation_history is fully client-controlled JSON, spliced directly
+    after the real system message. Without this, a request could include
+    {"role": "system", "content": "ignore previous instructions..."} (or any
+    other role string) as a history item, injecting an attacker-controlled
+    system-level message into the conversation the model sees. Every caller
+    that builds a messages array from this history must sanitize it first.
+    """
+    out = []
+    for m in conversation_history or []:
+        if not isinstance(m, dict):
+            continue
+        role = m.get("role")
+        content = m.get("content", "")
+        if role not in ("user", "assistant") or not isinstance(content, str):
+            continue
+        out.append({"role": role, "content": content})
+    return out
+
+
 _client = None
 
 def _get_client():
@@ -261,7 +285,8 @@ def _language_instruction(language):
 
 
 def _build_messages(conversation_history, user_profile=None, language="en"):
-    query = conversation_history[-1]["content"]
+    conversation_history = _sanitize_history(conversation_history)
+    query = conversation_history[-1]["content"] if conversation_history else ""
     context_blocks = []
 
     courses = search_courses(query)
@@ -344,7 +369,7 @@ Rules:
 
 
 def ask_advisor_onboarding_stream(conversation_history, language="en"):
-    messages = [{"role": "system", "content": ONBOARDING_PROMPT + _language_instruction(language)}] + list(conversation_history)
+    messages = [{"role": "system", "content": ONBOARDING_PROMPT + _language_instruction(language)}] + _sanitize_history(conversation_history)
     stream = _get_client().chat.completions.create(
         model="openai/gpt-oss-120b",
         messages=messages,

@@ -197,9 +197,14 @@ def _is_quarter(college: str) -> bool:
     return college in _QUARTER_SCHOOLS
 
 _ART_SHARDS: "OrderedDict" = OrderedDict()
-_ART_SHARDS_MAX = 2   # each shard is tens of MB decompressed; cap to avoid
-                       # OOM-killing the single gunicorn worker as different
-                       # UCs get requested over the worker's lifetime.
+# All 9 UC shards held at once cost ~1.75 GB of real Python heap (tracemalloc-
+# measured, not just raw JSON size — nested dict/list structures carry much
+# higher per-object overhead than the serialized bytes suggest). That's safely
+# inside Railway's Hobby-plan 8 GB/service ceiling, so cache every campus
+# permanently instead of evicting at 2 — a student switching between UCs (or
+# different students hitting different campuses) no longer pays the ~0.3-0.6s
+# cold-parse cost more than once per campus per deploy.
+_ART_SHARDS_MAX = 9
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 

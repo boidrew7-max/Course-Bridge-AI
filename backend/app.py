@@ -47,6 +47,20 @@ app.config.update(
 
 init_db()
 
+# Pre-warm every UC campus's articulation shard at startup rather than on
+# first request. All 9 held at once cost ~1.75 GB of real Python heap
+# (tracemalloc-measured) — safely inside Railway's Hobby-plan 8 GB/service
+# ceiling — so a real user should never be the one paying the ~0.3-0.6s
+# cold-parse cost; only a fresh deploy/restart does, once, before traffic
+# arrives (gunicorn's --preload runs this in the master process before
+# workers fork/serve).
+from plan_engine import _load_uc_shard as _prewarm_shard
+for _uc_canonical in _UC_SHARD_MAP:
+    try:
+        _prewarm_shard(_uc_canonical)
+    except Exception as _e:
+        app.logger.warning("shard_prewarm_failed uc=%s err=%.200s", _uc_canonical, str(_e))
+
 # ── Auth: opaque bearer tokens ──────────────────────────────────────────────
 # The frontend and backend live on different Railway domains, so a normal
 # Flask session cookie set by this server is never reliably sent back by the

@@ -40,3 +40,6 @@ scripts/scrape_ccsf_ucberkeley_working.js
 
 # Generated app data (do not commit large generated artifacts)
 app/data/
+
+# TypeScript incremental build cache — regenerated locally, not tracked
+tsconfig.tsbuildinfo

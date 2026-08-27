@@ -50,3 +50,5 @@ Thumbs.db
 backtest_results.db
 backtest_results.jsonl
 backtest_summary.md
+full_run_output.log
+honors_matrix_results.json

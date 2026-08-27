@@ -129,6 +129,7 @@ def check_or_group_exactly_one(result: PlanResult) -> list:
 
 
 _CALGETC_CARVEOUT_CACHE: dict | None = None
+_CALGETC_CODE_TO_KEY_CACHE: dict | None = None
 
 
 def _load_calgetc_carveouts() -> dict:
@@ -152,6 +153,36 @@ def _load_calgetc_carveouts() -> dict:
             if len(areas) > 1:
                 out[(school.lower(), k[0], k[1])] = frozenset(areas)
     _CALGETC_CARVEOUT_CACHE = out
+    return out
+
+
+def _load_calgetc_code_to_key() -> dict:
+    """(school_lower, "PREFIX NUMBER") -> (prefix, number), covering every
+    course in calgetc_map — not just multi-area ones. Splitting a displayed
+    code string on whitespace to recover (prefix, number) can't be guessed
+    correctly in general: some colleges have multi-word PREFIXES ("ETH ST 1"
+    -> prefix "ETH ST", number "1"), while others (North Orange County CCD's
+    shared cross-campus numbering) have multi-word NUMBERS ("ETHS 171 C" ->
+    prefix "ETHS", number "171 C", the trailing letter being a campus
+    suffix, not part of the prefix). Neither a left-split nor a right-split
+    heuristic handles both. Building this map from the source's own clean
+    prefix/number fields and looking the reconstructed code up directly
+    sidesteps guessing entirely."""
+    global _CALGETC_CODE_TO_KEY_CACHE
+    if _CALGETC_CODE_TO_KEY_CACHE is not None:
+        return _CALGETC_CODE_TO_KEY_CACHE
+    data = load_calgetc_map()
+    out: dict = {}
+    for school, sdata in data.get("bySchool", {}).items():
+        school_l = school.lower()
+        for courses in sdata.get("byArea", {}).values():
+            for c in courses:
+                prefix = c.get("prefix", "").strip().upper()
+                number = c.get("number", "").strip().upper()
+                if not prefix or not number:
+                    continue
+                out[(school_l, f"{prefix} {number}")] = (prefix, number)
+    _CALGETC_CODE_TO_KEY_CACHE = out
     return out
 
 
@@ -186,17 +217,21 @@ def check_calgetc_no_double_count(result: PlanResult, college: str = "") -> list
             if not code or "via" in code or "already completed" in code:
                 continue
             course_to_areas.setdefault(code, set()).add(area)
+    code_to_key = _load_calgetc_code_to_key()
     for code, areas in course_to_areas.items():
         if len(areas) <= 1:
             continue
-        # Split from the RIGHT, not the left: the course number is always
-        # the last token, but multi-word prefixes are common ("ETH ST 1",
-        # "POL SCI 1"). A left split broke "ETH ST 1" into prefix="ETH",
-        # number="ST 1", missing the real carve-out entry keyed by
-        # ("ETH ST", "1") and false-flagging every such course.
-        parts = code.rsplit(" ", 1)
-        prefix, number = (parts[0], parts[1]) if len(parts) == 2 else (code, "")
-        data_areas = carveouts.get((college_l, prefix, number), frozenset())
+        # Don't guess a prefix/number split from whitespace — some colleges
+        # have multi-word PREFIXES ("ETH ST 1"), others have multi-word
+        # NUMBERS (North Orange County CCD's cross-campus "ETHS 171 C", the
+        # trailing letter a campus suffix, not part of the prefix). Neither
+        # a left- nor right-split heuristic handles both. Look the exact
+        # displayed code up against the source's own reconstructed codes.
+        key = code_to_key.get((college_l, code.upper()))
+        if key is None:
+            parts = code.rsplit(" ", 1)
+            key = (parts[0], parts[1]) if len(parts) == 2 else (code, "")
+        data_areas = carveouts.get((college_l,) + key, frozenset())
         if not areas.issubset(data_areas):
             errors.append(f"Course {code!r} claimed for multiple Cal-GETC areas: {sorted(areas)}")
     return errors

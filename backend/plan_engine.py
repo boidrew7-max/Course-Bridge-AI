@@ -1,11 +1,11 @@
 """
 Deterministic UC transfer plan builder — plan_engine.py
 
-Replaces LLM-based schedule generation with Python for:
+Replaces LLM-based schedule generation AND rendering with Python for:
   1. Option resolution  (pick one option per multi-option UC requirement)
   2. Cal-GETC selection (rule-based, one course per area)
   3. Term bin-packing   (prereq-respecting greedy assignment, 20u/term hard cap)
-  4. Compact LLM call   (~600-1200 tokens vs ~12 000 for rendering only)
+  4. Rendering          (render_plan_text — plain string formatting, no LLM call)
 
 If all 4 standard terms fill up at 20u/term, courses overflow to terms 5-6
 and result.extended_plan is set True with a clear warning.
@@ -14,8 +14,7 @@ Entry points
 ------------
   result = build_plan(college, uc, major, accept_honors=False,
                       completed=None, ap_credits=None)
-  for chunk in render_plan_stream(result, tag_note, gpa_range, gpa_note):
-      ...
+  text = render_plan_text(result, tag_note, gpa_range, gpa_note)
 
 Self-contained — does NOT import from app.py (avoids circular imports
 when app.py adds the /plan_v2 route).
@@ -33,7 +32,6 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from course_sequence import infer_sequence_order, same_sequence_base
-from advisor import _PLAN_SYSTEM_PROMPT
 
 # ── Replicated data (originally in app.py) ────────────────────────────────────
 # Kept here so plan_engine is fully self-contained and importable from app.py
@@ -2033,219 +2031,21 @@ _CALGETC_AREA_LABELS = {
 }
 
 
-def build_render_prompt(
-    result: PlanResult,
-    tag_note: str,
-    gpa_range: str,
-    gpa_note: str,
-    mode: str = "competitive",
-) -> str:
-    lines = [
-        "Render this pre-computed UC transfer plan into the exact output format "
-        "from your system instructions. DO NOT change any course, term, unit count, "
-        "status, or Cal-GETC assignment. Copy all values verbatim.\n"
-        "CRITICAL — TERM HEADERS: Each '## Term N (LABEL)' section below has a "
-        "pre-assigned label. Copy the label VERBATIM, character for character. "
-        "Do NOT simplify, reorder, paraphrase, or drop the quarter suffix. "
-        "'Fall Q1', 'Winter Q1', 'Spring Q1', 'Fall Q2', 'Winter Q2', 'Spring Q2' "
-        "are distinct labels — do not shorten any to 'Fall', 'Winter', or 'Spring'.\n",
-        f"Student: {result.college} -> {result.uc} | {result.major}\n",
-    ]
-
-    if result.multi_track:
-        lines.append(
-            "NOTE: MULTI-TRACK MAJOR — The ASSIST agreement for this major lists requirements "
-            "for multiple emphasis tracks (e.g. General, Global, Law & Society, etc.) simultaneously. "
-            "This plan covers the union of requirements across all tracks, which may be more courses "
-            "than a student who selects one specific track needs. In Key Notes, add: "
-            "'This major has multiple emphasis tracks. This plan covers requirements across "
-            "all tracks — meeting with a counselor to choose a specific emphasis may reduce "
-            "the total course load.'\n"
-        )
-
-    if result.sparse_major_prep:
-        n_rows = len(result.requirement_audit)
-        if n_rows == 0:
-            lines.append(
-                "WARNING: ZERO ARTICULATED MAJOR REQUIREMENTS — ASSIST has no CC-articulated "
-                f"course requirements on file for {result.major} at {result.college} -> {result.uc}. "
-                "This is NOT necessarily an error — it can mean this major has no CC-completable "
-                "lower-division prep, or that this specific college/major pairing isn't fully "
-                "documented in ASSIST yet. In Key Notes, add a prominent note: "
-                "'No specific major-prep articulation was found for this major at this college. "
-                "This plan covers Cal-GETC general education only. Meet with a counselor or check "
-                "ASSIST.org directly to confirm major requirements before registering — this could "
-                "mean the major has no lower-division CC prep, or that this pairing needs manual "
-                "review.'\n"
-            )
-        else:
-            lines.append(
-                "NOTE: MINIMAL MAJOR PREP — Only a small number of CC-articulated major requirements "
-                "exist for this major/college pairing (this is often legitimate — many humanities and "
-                "social science majors have few lower-division prerequisites). The plan below is "
-                "correct, but will look mostly like GE + electives. In Key Notes, add: "
-                "'This major has minimal CC-articulated lower-division requirements at this college. "
-                "Most of this plan is general education and electives — that is expected for this "
-                "major, not a data gap. Confirm with a counselor that no additional department-level "
-                "recommendations apply.'\n"
-            )
-
-    if result.ge_strategy_note:
-        if result.ge_strategy == "MAJOR_PREP_FIRST":
-            lines.append(
-                "NOTE: GE STRATEGY — this campus/major does NOT recommend prioritizing full Cal-GETC "
-                "certification. The schedule below still includes Cal-GETC courses to fill unit "
-                "minimums, but in Key Notes, add this exact guidance so the student sequences "
-                "correctly: "
-                f"'{result.ge_strategy_note} If your schedule is tight, it is OK to leave some "
-                "Cal-GETC areas incomplete at transfer and finish them at the university — do not "
-                "sacrifice required or recommended major prep to finish GE early.'\n"
-            )
-        else:
-            lines.append(
-                f"NOTE: GE STRATEGY — In Key Notes, add this exact guidance: "
-                f"'{result.ge_strategy_note}'\n"
-            )
-
-    base_terms    = 6 if result.is_quarter else 4
-    overflow_term = base_terms + 1
-    term_names    = _TERMS_QUARTER if result.is_quarter else _TERMS_PER_YEAR
-    term_word     = "quarters" if result.is_quarter else "semesters"
-    std_timeline  = "6-quarter / 2-year" if result.is_quarter else "4-semester / 2-year"
-
-    if result.extended_plan and not result.summer_overflow:
-        extra = result.active_terms - base_terms
-        lines.append(
-            f"WARNING: This is an EXTENDED PLAN requiring {result.active_terms} {term_word} "
-            f"({extra} beyond the standard {std_timeline}). Terms {overflow_term}+ represent "
-            f"additional {term_word}. Include a prominent note in Key Notes that this program "
-            "requires more than the standard 2-year CC timeline and students should plan for "
-            "summer sessions or additional terms at CC.\n"
-        )
-    elif result.summer_overflow:
-        ov_slots = result.terms.get(overflow_term, [])
-        ov_units = sum(s.units for s in ov_slots)
-        courses_str = ", ".join(s.code for s in ov_slots)
-        if len(ov_slots) == 1:
-            summer_tail = (
-                "the summer course is optional-but-recommended and most students complete it "
-                "without extending their timeline."
-            )
-        else:
-            summer_tail = (
-                "the summer session courses are optional-but-recommended and most students "
-                "complete them without extending their timeline."
-            )
-        std_count = "6 regular quarters" if result.is_quarter else "4 regular semesters"
-        lines.append(
-            f"NOTE: Term {overflow_term} is a lightweight summer session ({courses_str}, {ov_units:.0f}u) — "
-            f"NOT a full extra {'quarter' if result.is_quarter else 'semester'}. "
-            f"Label Term {overflow_term} as 'Summer Session' in the schedule header. "
-            f"In Key Notes, reassure the student: this plan fits in {std_count}; "
-            f"{summer_tail}\n"
-        )
-
-    for t in range(1, result.active_terms + 1):
-        if result.summer_overflow and t == overflow_term:
-            season = "Summer Session"
-        else:
-            season = term_names.get(t, f"Term {t}")
-        t_units = sum(s.units for s in result.terms.get(t, []))
-        lines.append(f"## Term {t} ({season}) -- {_fmt_units(t_units)} units")
-        for slot in result.terms.get(t, []):
-            tag = f" [{slot.tag_str()}]" if slot.tags else ""
-            lines.append(f"- {slot.code} -- {slot.title} ({_fmt_units(slot.units)}u){tag}")
-        lines.append("")
-
-    lines.append("## Requirement Audit (copy verbatim into audit table)")
-    lines.append("Major Preparation:")
-    for uc_req, cc_code, status in result.requirement_audit:
-        lines.append(f"  {uc_req} | {cc_code} | {status}")
-    if result.post_transfer:
-        lines.append("Post-Transfer (no CC articulation):")
-        for pt in result.post_transfer:
-            lines.append(f"  {pt}")
-    if result.not_articulated:
-        lines.append("Not Articulated (required by the major, zero CC equivalent per ASSIST):")
-        for na in result.not_articulated:
-            lines.append(
-                f"  {na} | NOT ARTICULATED — no CC equivalent; take at {result.uc} "
-                f"or via {result.uc} Summer Session before transfer."
-            )
-    if result.recommended_optional:
-        lines.append("Recommended, Not Required (per the UC's own admissions guidance):")
-        for ro in result.recommended_optional:
-            lines.append(
-                f"  {ro} | RECOMMENDED — highly recommended for admission but not "
-                f"required; no CC equivalent, optional to take before or after transfer."
-            )
-    lines.append("")
-
-    lines.append("Cal-GETC Completion data (mark checkmark for every area listed here — "
-                 "this is input data, not the output header; your output's GE Completion "
-                 "section header is dictated separately by your system instructions):")
-    area_labels = {
-        "1A": "Area 1A English Composition",
-        "1B": "Area 1B Critical Thinking",
-        "1C": "Area 1C Oral Communication",
-        "2":  "Area 2 Mathematical Concepts and Quantitative Reasoning",
-        "3A": "Area 3A Arts",
-        "3B": "Area 3B Humanities",
-        "6":  "Area 6 Ethnic Studies",
-        "4":  "Area 4 Social & Behavioral Sciences (2 courses, 2 disciplines)",
-        "5A": "Area 5A Physical Sciences",
-        "5B": "Area 5B Biological Sciences",
-        "5C": "Area 5C Science Lab",
-    }
-    for area_code, label in area_labels.items():
-        course = result.ge_completion.get(area_code, "NOT ASSIGNED")
-        if area_code == "5C":
-            five_b = result.ge_completion.get("5B", "")
-            lines.append(f"  {label}: SATISFIED by {five_b} LAB -- no separate course needed")
-        elif "NOT ASSIGNED" in str(course):
-            lines.append(f"  {label}: {course}")
-        else:
-            lines.append(f"  {label}: {course}")
-    lines.append("")
-
-    lines.append("## Key Notes")
-    lines.append(f"- TAG: {tag_note}")
-    lines.append(f"- GPA target: {gpa_range} -- {gpa_note}")
-    if result.is_quarter:
-        sem_equiv = round(result.total_units * (2.0 / 3.0), 1)
-        if result.summer_overflow:
-            lines.append(
-                f"- Total units: {_fmt_units(result.total_units)} QU (approx. {_fmt_units(sem_equiv)} SU) "
-                f"across 6 quarters + 1 summer session"
-            )
-        else:
-            lines.append(
-                f"- Total units: {_fmt_units(result.total_units)} quarter units "
-                f"(approx. {_fmt_units(sem_equiv)} semester units) across {result.active_terms} quarters"
-            )
-    else:
-        if result.summer_overflow:
-            lines.append(f"- Total units: {_fmt_units(result.total_units)} across 4 semesters + 1 summer session")
-        else:
-            lines.append(f"- Total units: {_fmt_units(result.total_units)} across {result.active_terms} terms")
-    for w in result.warnings:
-        lines.append(f"- NOTE: {w}")
-
-    return "\n".join(lines)
-
-
 # ── Deterministic render (no LLM) ────────────────────────────────────────────
 #
-# render_plan_stream() below sent build_render_prompt()'s output to an LLM
-# purely to reformat it into the OUTPUT FORMAT block described in
-# advisor._PLAN_SYSTEM_PROMPT — every value (courses, units, statuses,
-# audit rows) was already fully computed in `result`; the model's only job
-# was transcription. That's exactly the failure mode app.py's
+# Plan rendering used to work by sending a prompt built from `result` to an
+# LLM (Groq) purely to reformat it into the OUTPUT FORMAT block described in
+# advisor._PLAN_SYSTEM_PROMPT — every value (courses, units, statuses, audit
+# rows) was already fully computed in `result`; the model's only job was
+# transcription. That was exactly the failure mode app.py's
 # repair_term_headers/repair_ge_completion_section exist to patch around
 # ("observed under real load" to scramble term labels or drop the GE
 # section) — patching a step that shouldn't exist rather than removing it.
-# render_plan_text() builds that same OUTPUT FORMAT directly from `result`,
-# with no model call, no transcription risk, and no repair step needed.
+# render_plan_text() below builds that same OUTPUT FORMAT directly from
+# `result`, with no model call, no transcription risk, and no repair step
+# needed. The old LLM-based render path (build_render_prompt/
+# render_plan_stream) has been removed entirely — see git history if it's
+# ever needed for reference.
 
 def render_plan_text(
     result: PlanResult,
@@ -2414,73 +2214,3 @@ def render_plan_text(
 
     return "\n".join(lines)
 
-
-# ── Streaming LLM render (superseded by render_plan_text — kept only for
-#    reference / potential rollback) ───────────────────────────────────────
-
-def render_plan_stream(
-    result: PlanResult,
-    tag_note: str,
-    gpa_range: str,
-    gpa_note: str,
-    mode: str = "competitive",
-):
-    """
-    Stream markdown from LLM.  The LLM only formats —
-    all scheduling decisions are already fixed in result.
-    Uses openai/gpt-oss-120b as primary; falls back to openai/gpt-oss-20b if
-    needed. (Migrated off llama-3.3-70b-versatile / llama-3.1-8b-instant,
-    which Groq decommissions August 16, 2026 — see console.groq.com/docs/deprecations.)
-    """
-    from advisor import _get_client
-
-    prompt  = build_render_prompt(result, tag_note, gpa_range, gpa_note, mode)
-    system  = _PLAN_SYSTEM_PROMPT
-    messages = [
-        {"role": "system", "content": system},
-        {"role": "user",   "content": prompt},
-    ]
-
-    # max_tokens counts against the model's tokens-per-minute cap ALONG WITH
-    # the prompt+system tokens, and both are due to change per request: the
-    # system prompt alone (~2600 tokens, most of it the strict-format rules)
-    # plus the per-major data prompt (measured 1200-1900+ tokens depending on
-    # how many requirements the major has) can eat well over half of the
-    # free-tier 8000 TPM budget before the model writes a word.
-    #
-    # A flat max_tokens either 413s outright when the input is large (a fixed
-    # 6000 measured ~9900 total on a real request and was rejected before
-    # generating anything — confirmed in production 2026-08-18), or silently
-    # truncates the response when the input is smaller but the required
-    # output format is long (a fixed 3000/2000 avoided the 413 but cut the
-    # stream off before it reached the "## Term N" schedule section, which
-    # comes near the END of the required output order — so the plan
-    # "succeeded" with no error, just missing the part the UI actually
-    # renders as the schedule board).
-    #
-    # Scale the request to whatever's actually left in the budget instead:
-    approx_input_tokens = (len(system) + len(prompt)) // 4  # ~4 chars/token
-    TPM_BUDGET = 8000
-    SAFETY_MARGIN = 300  # token-count estimate is approximate, not exact
-    primary_cap = max(1500, min(6000, TPM_BUDGET - approx_input_tokens - SAFETY_MARGIN))
-    fallback_cap = max(1200, primary_cap - 800)
-
-    models = [
-        ("openai/gpt-oss-120b", primary_cap),
-        ("openai/gpt-oss-20b", fallback_cap),
-    ]
-    for i, (model, max_tok) in enumerate(models):
-        try:
-            stream = _get_client().chat.completions.create(
-                model=model, messages=messages,
-                max_tokens=max_tok, temperature=0.05, stream=True,
-            )
-            for chunk in stream:
-                delta = chunk.choices[0].delta.content
-                if delta:
-                    yield delta
-            return
-        except Exception as e:
-            if i < len(models) - 1:
-                continue  # any error -- try the next model, not just rate limits
-            raise

@@ -51,7 +51,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from plan_engine import (
     build_plan,
-    build_render_prompt,
     repair_term_headers,
     PlanResult,
     _MAX_UNITS_PER_TERM,
@@ -218,29 +217,6 @@ CASES = [
           "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
 ]
 
-TAG_NOTES = {
-    "berkeley":     "UC Berkeley does NOT offer TAG.",
-    "san diego":    "UC San Diego does NOT offer TAG.",
-    "merced":       "UC Merced DOES offer TAG (min 3.0 GPA for most STEM majors).",
-    "davis":        "UC Davis DOES offer TAG (min 3.2 GPA for Psych).",
-    "los angeles":  "UC Los Angeles does NOT offer TAG.",
-    "irvine":       "UC Irvine DOES offer TAG (min 3.4 GPA for some majors).",
-    "santa barbara":"UC Santa Barbara DOES offer TAG (min 3.2 GPA).",
-    "santa cruz":   "UC Santa Cruz DOES offer TAG (min 3.0 GPA).",
-    "riverside":    "UC Riverside DOES offer TAG (min 3.0 GPA).",
-}
-GPA_NOTES = {
-    "berkeley":     ("3.7-3.9", "UC Berkeley CS is extremely competitive. Aim for 3.9."),
-    "san diego":    ("3.7-3.9", "UCSD CS is highly competitive. Aim for 3.7+."),
-    "merced":       ("3.2-3.4", "UC Merced is accessible. Target 3.2+ for CS."),
-    "davis":        ("3.5-3.7", "UC Davis Psychology is moderately competitive."),
-    "los angeles":  ("3.7-4.0", "UCLA is extremely competitive across all majors."),
-    "irvine":       ("3.5-3.7", "UCI is moderately competitive."),
-    "santa barbara":("3.5-3.7", "UCSB is moderately competitive."),
-    "santa cruz":   ("3.3-3.5", "UCSC is accessible."),
-    "riverside":    ("3.0-3.5", "UCR is accessible."),
-}
-
 # ── Checkers ─────────────────────────────────────────────────────────────────
 
 def check_ghost_courses(result: PlanResult) -> list:
@@ -305,13 +281,6 @@ def check_unit_overload(result: PlanResult) -> list:
                 f"Term {t} has {units:.1f}u -- exceeds {cap}u hard cap"
             )
     return errors
-
-
-def check_token_size(prompt: str, threshold: int = 3000) -> list:
-    est = len(prompt) // 4
-    if est > threshold:
-        return [f"Render prompt is ~{est} tokens (threshold {threshold})"]
-    return []
 
 
 def check_completed_excluded(result: PlanResult, completed: set) -> list:
@@ -485,12 +454,6 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
     if min_total is not None:
         errors += check_min_units(result, min_total)
 
-    uc_l    = _UC_NAME_MAP_LOCAL.get(uc.lower().strip(), uc.lower())
-    tag     = TAG_NOTES.get(uc_l, "Check UC TAG page for eligibility.")
-    gpa_r, gpa_n = GPA_NOTES.get(uc_l, ("3.0-4.0", "See UC admissions stats."))
-    prompt  = build_render_prompt(result, tag, gpa_r, gpa_n)
-    errors += check_token_size(prompt)
-
     # Print schedule summary
     ext_flag = " [EXTENDED]" if result.extended_plan else ""
     print(f"  {result.active_terms} terms{ext_flag}, {len(result.all_courses())} courses, {result.total_units:.0f}u total")
@@ -500,7 +463,6 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
         print(f"    Term {t}: {t_units:.0f}u  [{names}]")
     print(f"  Cal-GETC: {sorted(result.ge_completion.keys())}")
     print(f"  Post-transfer: {len(result.post_transfer)}")
-    print(f"  Render prompt: ~{len(prompt) // 4} tokens")
 
     # Print soft observations (not failures)
     soft = [w for w in result.warnings if not w.startswith("Ghost:")]
@@ -516,15 +478,11 @@ def run_case(case_id, desc, college, uc, major, accept_honors, extra=None) -> di
     elif known_issue_flag:
         print(f"  KNOWN_ISSUE")
         return {"id": case_id, "desc": desc, "status": "KNOWN_ISSUE", "errors": [],
-                "result": result, "prompt": prompt}
+                "result": result}
     else:
         print(f"  PASS")
         return {"id": case_id, "desc": desc, "status": "PASS", "errors": [],
-                "result": result, "prompt": prompt}
-
-
-# Needed locally in test (not importing from plan_engine to avoid pollution)
-from plan_engine import _UC_NAME_MAP as _UC_NAME_MAP_LOCAL
+                "result": result}
 
 
 # ── Term header repair test ────────────────────────────────────────────────────

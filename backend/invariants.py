@@ -189,7 +189,12 @@ def check_calgetc_no_double_count(result: PlanResult, college: str = "") -> list
     for code, areas in course_to_areas.items():
         if len(areas) <= 1:
             continue
-        parts = code.split(" ", 1)
+        # Split from the RIGHT, not the left: the course number is always
+        # the last token, but multi-word prefixes are common ("ETH ST 1",
+        # "POL SCI 1"). A left split broke "ETH ST 1" into prefix="ETH",
+        # number="ST 1", missing the real carve-out entry keyed by
+        # ("ETH ST", "1") and false-flagging every such course.
+        parts = code.rsplit(" ", 1)
         prefix, number = (parts[0], parts[1]) if len(parts) == 2 else (code, "")
         data_areas = carveouts.get((college_l, prefix, number), frozenset())
         if not areas.issubset(data_areas):

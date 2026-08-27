@@ -62,12 +62,12 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
         role="dialog"
         aria-modal="true"
         aria-label={t("settings.title")}
-        className={`relative flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl transition-all duration-200 dark:bg-[#16171c] sm:h-[min(680px,88vh)] sm:w-auto sm:max-w-5xl sm:min-w-[900px] sm:flex-row sm:rounded-3xl sm:border sm:border-[#e5e0d5] sm:dark:border-gray-700 ${
+        className={`relative flex h-full w-full flex-col overflow-hidden bg-[var(--cb-card)] shadow-2xl transition-all duration-200 sm:h-[min(680px,88vh)] sm:w-auto sm:max-w-5xl sm:min-w-[900px] sm:flex-row sm:rounded-3xl sm:border sm:border-[var(--cb-border)] ${
           visible ? "translate-y-0 opacity-100 scale-100" : "translate-y-2 opacity-0 scale-95"
         }`}
       >
-        <nav className="flex shrink-0 gap-1 overflow-x-auto overscroll-contain border-b border-[#e5e0d5] p-4 dark:border-gray-700 sm:w-60 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-5">
-          <p className="hidden px-3 pb-4 text-xl font-bold text-[#303236] dark:text-gray-100 sm:block">
+        <nav className="flex shrink-0 gap-1 overflow-x-auto overscroll-contain border-b border-[var(--cb-border)] p-4 sm:w-60 sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:p-5">
+          <p className="hidden px-3 pb-4 text-xl font-bold text-[var(--cb-text)] sm:block">
             {t("settings.title")}
           </p>
           {SETTINGS_SECTIONS.map(({ id, labelKey, icon: Icon }) => (
@@ -77,8 +77,8 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
               onClick={() => setActiveId(id)}
               className={`flex shrink-0 items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition ${
                 activeId === id
-                  ? "bg-[#0b7f46]/10 text-[#0b7f46]"
-                  : "text-[#4d535c] hover:bg-[#faf8f3] dark:text-gray-400 dark:hover:bg-white/5"
+                  ? "bg-[var(--cb-accent)]/10 text-[var(--cb-link)]"
+                  : "text-[var(--cb-body)] hover:bg-[var(--cb-surface-alt)]"
               }`}
             >
               <Icon />
@@ -89,10 +89,10 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
 
         <div className="flex-1 overflow-y-auto overscroll-contain p-6 sm:p-10">
           <div className="mb-6 sm:hidden">
-            <p className="text-lg font-bold text-[#303236] dark:text-gray-100">{t("settings.title")}</p>
+            <p className="text-lg font-bold text-[var(--cb-text)]">{t("settings.title")}</p>
           </div>
           <div className="mx-auto max-w-xl">
-            <h2 className="mb-6 text-2xl font-bold text-[#303236] dark:text-gray-100">{t(Active.labelKey)}</h2>
+            <h2 className="mb-6 text-2xl font-bold text-[var(--cb-text)]">{t(Active.labelKey)}</h2>
             <Active.Component user={user} setUser={setUser} onClose={onClose} />
           </div>
         </div>
@@ -101,7 +101,7 @@ export default function SettingsPanel({ open, onClose }: { open: boolean; onClos
           type="button"
           onClick={onClose}
           aria-label={t("settings.close")}
-          className="absolute right-4 top-4 rounded-full p-2 text-[#8a8f98] transition hover:bg-[#faf8f3] hover:text-[#303236] dark:hover:bg-white/10 dark:hover:text-gray-100 sm:right-6 sm:top-6"
+          className="absolute right-4 top-4 rounded-full p-2 text-[var(--cb-muted)] transition hover:bg-[var(--cb-surface-alt)] hover:text-[var(--cb-text)] sm:right-6 sm:top-6"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />

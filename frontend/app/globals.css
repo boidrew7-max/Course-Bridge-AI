@@ -23,6 +23,18 @@
   /* Lightened accent for use on dark neutrals, where #0b7f46 fails AA. */
   --cb-accent-on-dark: #4cbd82;
 
+  /* Status colours. Every value below was measured against the surface it sits
+     on, so both palettes clear AA without per-component overrides. */
+  /* Selected/active tint for accent-coloured rows and chips. */
+  --cb-accent-tint: #eef6f1;
+  --cb-danger: #9b1c1c;
+  --cb-danger-bg: #fff0f0;
+  --cb-danger-border: #f3c6c6;
+  --cb-warning: #8a5300;
+  --cb-warning-bg: #fffaf0;
+  --cb-warning-border: #f0d99b;
+  --cb-info: #2f5f9e;
+
   /* Surfaces and text, remapped wholesale by the dark theme below. */
   --cb-surface: var(--cb-light);
   --cb-surface-alt: var(--cb-light-raised);
@@ -83,6 +95,14 @@ html.dark {
   --cb-border: #2c2f37;
   --cb-link: var(--cb-accent-on-dark);
   --cb-link-hover: #6fd3a0;
+  --cb-accent-tint: #16241d;
+  --cb-danger: #f08a80;
+  --cb-danger-bg: #2a1a1a;
+  --cb-danger-border: #4d2b2b;
+  --cb-warning: #e6b45c;
+  --cb-warning-bg: #26200f;
+  --cb-warning-border: #4a3d1c;
+  --cb-info: #8fb6e8;
   --cb-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
   color-scheme: dark;
   background: var(--cb-dark);

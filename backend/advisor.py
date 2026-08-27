@@ -346,7 +346,7 @@ Rules:
 def ask_advisor_onboarding_stream(conversation_history, language="en"):
     messages = [{"role": "system", "content": ONBOARDING_PROMPT + _language_instruction(language)}] + list(conversation_history)
     stream = _get_client().chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=messages,
         max_tokens=512,
         temperature=0.3,
@@ -361,7 +361,7 @@ def ask_advisor_onboarding_stream(conversation_history, language="en"):
 def ask_advisor(conversation_history, user_profile=None, language="en"):
     messages = _build_messages(conversation_history, user_profile, language)
     response = _get_client().chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=messages,
         max_tokens=1024,
         temperature=0.1,
@@ -372,7 +372,7 @@ def ask_advisor(conversation_history, user_profile=None, language="en"):
 def ask_advisor_stream(conversation_history, user_profile=None, language="en"):
     messages = _build_messages(conversation_history, user_profile, language)
     stream = _get_client().chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=messages,
         max_tokens=1024,
         temperature=0.1,
@@ -388,7 +388,7 @@ def ask_advisor_stream_fallback(conversation_history, user_profile=None, languag
     """Fallback to a faster/smaller model when the primary is rate-limited."""
     messages = _build_messages(conversation_history, user_profile, language)
     stream = _get_client().chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         messages=messages,
         max_tokens=1024,
         temperature=0.1,

@@ -2234,7 +2234,189 @@ def build_render_prompt(
     return "\n".join(lines)
 
 
-# ── Streaming LLM render ──────────────────────────────────────────────────────
+# ── Deterministic render (no LLM) ────────────────────────────────────────────
+#
+# render_plan_stream() below sent build_render_prompt()'s output to an LLM
+# purely to reformat it into the OUTPUT FORMAT block described in
+# advisor._PLAN_SYSTEM_PROMPT — every value (courses, units, statuses,
+# audit rows) was already fully computed in `result`; the model's only job
+# was transcription. That's exactly the failure mode app.py's
+# repair_term_headers/repair_ge_completion_section exist to patch around
+# ("observed under real load" to scramble term labels or drop the GE
+# section) — patching a step that shouldn't exist rather than removing it.
+# render_plan_text() builds that same OUTPUT FORMAT directly from `result`,
+# with no model call, no transcription risk, and no repair step needed.
+
+def render_plan_text(
+    result: PlanResult,
+    tag_note: str,
+    gpa_range: str,
+    gpa_note: str,
+    mode: str = "competitive",
+) -> str:
+    """Deterministic replacement for render_plan_stream(). Produces the exact
+    markdown structure documented in advisor._PLAN_SYSTEM_PROMPT's OUTPUT
+    FORMAT section, directly from `result` — no LLM involved."""
+    lines: list = []
+
+    # ── Requirement Audit ────────────────────────────────────────────────────
+    lines.append("## Requirement Audit")
+    lines.append("")
+    lines.append("**Major Preparation**")
+    lines.append("| UC Requirement | CC Course | Status |")
+    lines.append("|---|---|---|")
+    for uc_req, cc_code, status in result.requirement_audit:
+        lines.append(f"| {uc_req} | {cc_code} | {status} |")
+    for pt in result.post_transfer:
+        lines.append(f"| {pt} | No CC articulation | POST-TRANSFER |")
+    for na in result.not_articulated:
+        lines.append(f"| {na} | No CC articulation | NOT ARTICULATED |")
+    for ro in result.recommended_optional:
+        lines.append(f"| {ro} | No CC articulation | RECOMMENDED |")
+    lines.append("")
+
+    # ── GE Status ────────────────────────────────────────────────────────────
+    lines.append("**GE Status**")
+    lines.append("| Area | CC Course | Status |")
+    lines.append("|---|---|---|")
+    all_ge_met = True
+    for area_code, course_code in result.ge_completion.items():
+        label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+        not_assigned = "NOT ASSIGNED" in str(course_code)
+        if not_assigned:
+            all_ge_met = False
+        lines.append(f"| {label} | {course_code} | {'NOT MET' if not_assigned else 'MET'} |")
+    lines.append("")
+
+    # Overall status: computed the same way advisor._PLAN_SYSTEM_PROMPT's
+    # PASS/FAIL HARD RULE described it — every major-prep row MET (or MET
+    # (CONDITIONAL)) and every Cal-GETC area assigned. Deterministic, not an
+    # LLM judgment call.
+    major_prep_complete = all(
+        status in ("MET", "MET (CONDITIONAL)")
+        for _, _, status in result.requirement_audit
+    )
+    overall_pass = major_prep_complete and all_ge_met and not result.not_articulated
+    lines.append(f"**Overall Status:** {'PASS' if overall_pass else 'NOT COMPLETE'}")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # ── Post-Transfer Requirements ───────────────────────────────────────────
+    lines.append("## Post-Transfer Requirements")
+    if result.post_transfer:
+        for pt in result.post_transfer:
+            lines.append(f"- {pt} — No CC articulation. Take at {result.uc} after transfer.")
+    else:
+        lines.append("None — all UC requirements have CC articulation.")
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+
+    # ── Term schedule ────────────────────────────────────────────────────────
+    base_terms    = 6 if result.is_quarter else 4
+    overflow_term = base_terms + 1
+    term_names    = _TERMS_QUARTER if result.is_quarter else _TERMS_PER_YEAR
+
+    for t in range(1, result.active_terms + 1):
+        if result.summer_overflow and t == overflow_term:
+            season = "Summer Session"
+        else:
+            season = term_names.get(t, f"Term {t}")
+        t_units = sum(s.units for s in result.terms.get(t, []))
+        lines.append(f"## Term {t} ({season}) -- {_fmt_units(t_units)} units")
+        for slot in result.terms.get(t, []):
+            tag = f" [{slot.tag_str()}]" if slot.tags else ""
+            lines.append(f"- {slot.code} -- {slot.title} ({_fmt_units(slot.units)}u){tag}")
+        lines.append("")
+
+    # ── Cal-GETC Completion ──────────────────────────────────────────────────
+    lines.append("## Cal-GETC Completion")
+    for area_code, course_code in result.ge_completion.items():
+        label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+        mark = "❌" if "NOT ASSIGNED" in str(course_code) else "✅"
+        lines.append(f"- {label}: {mark} {course_code}")
+    lines.append("")
+
+    # ── Key Notes ────────────────────────────────────────────────────────────
+    lines.append("## Key Notes")
+    if result.multi_track:
+        lines.append(
+            "- This major has multiple emphasis tracks. This plan covers requirements across "
+            "all tracks — meeting with a counselor to choose a specific emphasis may reduce "
+            "the total course load."
+        )
+    if result.sparse_major_prep:
+        if not result.requirement_audit:
+            lines.append(
+                "- No specific major-prep articulation was found for this major at this college. "
+                "This plan covers Cal-GETC general education only. Meet with a counselor or check "
+                "ASSIST.org directly to confirm major requirements before registering — this could "
+                "mean the major has no lower-division CC prep, or that this pairing needs manual "
+                "review."
+            )
+        else:
+            lines.append(
+                "- This major has minimal CC-articulated lower-division requirements at this "
+                "college. Most of this plan is general education and electives — that is expected "
+                "for this major, not a data gap. Confirm with a counselor that no additional "
+                "department-level recommendations apply."
+            )
+    if result.ge_strategy_note:
+        lines.append(f"- {result.ge_strategy_note}")
+        if result.ge_strategy == "MAJOR_PREP_FIRST":
+            lines.append(
+                "- If your schedule is tight, it is OK to leave some Cal-GETC areas incomplete at "
+                "transfer and finish them at the university — do not sacrifice required or "
+                "recommended major prep to finish GE early."
+            )
+    if result.extended_plan and not result.summer_overflow:
+        term_word = "quarters" if result.is_quarter else "semesters"
+        std_timeline = "6-quarter / 2-year" if result.is_quarter else "4-semester / 2-year"
+        extra = result.active_terms - base_terms
+        lines.append(
+            f"- EXTENDED PLAN: this program requires {result.active_terms} {term_word} "
+            f"({extra} beyond the standard {std_timeline}). Plan for summer sessions or "
+            "additional terms at your CC."
+        )
+    elif result.summer_overflow:
+        ov_slots = result.terms.get(overflow_term, [])
+        std_count = "6 regular quarters" if result.is_quarter else "4 regular semesters"
+        tail = (
+            "the summer course is optional-but-recommended and most students complete it "
+            "without extending their timeline." if len(ov_slots) == 1 else
+            "the summer session courses are optional-but-recommended and most students "
+            "complete them without extending their timeline."
+        )
+        lines.append(f"- This plan fits in {std_count}; {tail}")
+
+    lines.append(f"- TAG: {tag_note}")
+    lines.append(f"- GPA target: {gpa_range} -- {gpa_note}")
+    if result.is_quarter:
+        sem_equiv = round(result.total_units * (2.0 / 3.0), 1)
+        if result.summer_overflow:
+            lines.append(
+                f"- Total units: {_fmt_units(result.total_units)} QU (approx. {_fmt_units(sem_equiv)} SU) "
+                f"across 6 quarters + 1 summer session"
+            )
+        else:
+            lines.append(
+                f"- Total units: {_fmt_units(result.total_units)} quarter units "
+                f"(approx. {_fmt_units(sem_equiv)} semester units) across {result.active_terms} quarters"
+            )
+    else:
+        if result.summer_overflow:
+            lines.append(f"- Total units: {_fmt_units(result.total_units)} across 4 semesters + 1 summer session")
+        else:
+            lines.append(f"- Total units: {_fmt_units(result.total_units)} across {result.active_terms} terms")
+    for w in result.warnings:
+        lines.append(f"- NOTE: {w}")
+
+    return "\n".join(lines)
+
+
+# ── Streaming LLM render (superseded by render_plan_text — kept only for
+#    reference / potential rollback) ───────────────────────────────────────
 
 def render_plan_stream(
     result: PlanResult,

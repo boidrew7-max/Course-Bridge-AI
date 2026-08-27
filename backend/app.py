@@ -9,7 +9,7 @@ from advisor import (
 )
 from search_professors import recommend_professor
 from plan_engine import (build_plan as _engine_build_plan,
-                         render_plan_stream as _engine_render_stream,
+                         render_plan_text as _engine_render_text,
                          repair_term_headers as _engine_repair_term_headers,
                          repair_ge_completion_section as _engine_repair_ge_section,
                          _UC_SHARD_MAP)
@@ -535,13 +535,15 @@ def plan_v2():
 
     est_tokens = len(result.__repr__()) // 2   # rough size proxy for logging
 
-    # ── Stream LLM render ─────────────────────────────────────────────────────
+    # ── Deterministic render — no LLM ─────────────────────────────────────────
+    # render_plan_text() builds the final markdown directly from `result`, the
+    # same fully-computed data that used to be sent to an LLM purely to be
+    # transcribed. No transcription step means no transcription risk — the
+    # repair functions below are kept as a defensive no-op belt-and-suspenders
+    # check, not because deterministic output is expected to need them.
     def generate():
-        buf = []
         try:
-            for chunk in _engine_render_stream(result, tag_note, gpa_range, gpa_note, mode):
-                buf.append(chunk)
-            # Collect full text before yielding — repair must run first
+            full_text = _engine_render_text(result, tag_note, gpa_range, gpa_note, mode)
         except Exception as e:
             app.logger.error(
                 "plan_v2_render_fail college=%r school=%r major=%r err=%.200s",
@@ -551,9 +553,6 @@ def plan_v2():
             yield "data: [DONE]\n\n"
             return
 
-        full_text = "".join(buf)
-
-        # Deterministic term-header repair: fix any LLM-scrambled season labels
         full_text, n_repairs = _engine_repair_term_headers(full_text, result)
         if n_repairs:
             app.logger.warning(
@@ -561,9 +560,6 @@ def plan_v2():
                 college, school, major, n_repairs,
             )
 
-        # GE Completion section is 100% deterministic data — don't leave its
-        # presence/uniqueness to LLM instruction-following, which has been
-        # observed to drop or duplicate it under real load. Repair directly.
         full_text, ge_repair = _engine_repair_ge_section(full_text, result)
         if ge_repair:
             app.logger.warning(

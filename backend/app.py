@@ -97,10 +97,32 @@ MAX_MSG_LEN  = 4000  # characters — enough for full course lists, essay drafts
 
 _rate_log = defaultdict(list)  # ip -> [timestamps]
 
+# Separate, stricter limiter for auth endpoints (login/register/forgot-
+# password): the general 100/hr limit above exists for LLM-cost control on
+# the chat/plan routes, but was never applied to auth at all -- these had
+# ZERO rate limiting, making password brute-forcing, registration spam, and
+# reset-email-bombing all unthrottled. A dedicated, tighter limit is more
+# appropriate here than reusing the cost-control one.
+AUTH_RATE_LIMIT  = 10
+AUTH_RATE_WINDOW = 3600
+_auth_rate_log = defaultdict(list)  # ip -> [timestamps]
+
 
 def _get_ip():
     # Respect proxy headers if behind nginx/reverse proxy
     return request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
+
+
+def _check_auth_rate(ip):
+    now    = time.time()
+    cutoff = now - AUTH_RATE_WINDOW
+    recent = [t for t in _auth_rate_log[ip] if t > cutoff]
+    if len(recent) >= AUTH_RATE_LIMIT:
+        _auth_rate_log[ip] = recent
+        return False
+    recent.append(now)
+    _auth_rate_log[ip] = recent
+    return True
 
 
 def _check_rate(ip):
@@ -650,6 +672,8 @@ def _public(user):
 
 @app.route("/auth/register", methods=["POST"])
 def auth_register():
+    if not _check_auth_rate(_get_ip()):
+        return jsonify({"error": "Too many attempts. Please wait a while and try again."}), 429
     data     = request.json or {}
     email    = (data.get("email") or "").strip().lower()
     password = data.get("password", "")
@@ -674,6 +698,8 @@ def auth_register():
 
 @app.route("/auth/login", methods=["POST"])
 def auth_login():
+    if not _check_auth_rate(_get_ip()):
+        return jsonify({"error": "Too many attempts. Please wait a while and try again."}), 429
     data     = request.json or {}
     email    = (data.get("email") or "").strip().lower()
     password = data.get("password", "")
@@ -769,6 +795,8 @@ def auth_google_callback():
 
 @app.route("/auth/forgot-password", methods=["POST"])
 def auth_forgot():
+    if not _check_auth_rate(_get_ip()):
+        return jsonify({"error": "Too many attempts. Please wait a while and try again."}), 429
     email = ((request.json or {}).get("email") or "").strip().lower()
     if not email:
         return jsonify({"error": "Enter your email address."}), 400

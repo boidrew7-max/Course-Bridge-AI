@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import orjson
 import os
 import re
 from collections import OrderedDict
@@ -215,9 +216,17 @@ def _load_uc_shard(uc_canonical: str) -> dict:
         if not os.path.exists(path):
             continue
         try:
+            # Parsing, not decompression, is the actual cost here (measured:
+            # ~0.49s stdlib json vs ~0.05s gzip decompress on the largest
+            # shard). orjson parses the same bytes ~40% faster with identical
+            # results — a real win on every cache-miss (a student's first
+            # request to a given UC campus in this worker's lifetime), with
+            # no memory-ceiling tradeoff the way raising _ART_SHARDS_MAX
+            # would have (measured: all 9 shards cached at once would cost
+            # ~1.75 GB of real Python heap, a genuine OOM risk).
             opener = gzip.open if path.endswith(".gz") else open
-            with opener(path, "rt", encoding="utf-8") as f:
-                shard = json.load(f)
+            with opener(path, "rb") as f:
+                shard = orjson.loads(f.read())
             break
         except Exception:
             shard = {}

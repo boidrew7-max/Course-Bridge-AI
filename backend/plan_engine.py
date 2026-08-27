@@ -1632,7 +1632,7 @@ def _apply_double_labels(result: PlanResult):
 # ── Elective filling ──────────────────────────────────────────────────────────
 
 def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None = None,
-                     accept_honors: bool = False) -> None:
+                     accept_honors: bool = False, completed_keys: set | None = None) -> None:
     """
     Fill unit shortfall with UC-transferable courses from the school's Cal-GETC pool.
 
@@ -1644,6 +1644,14 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
     exclude_codes: CC (prefix, number) pairs to skip — e.g. alternatives that LOST
     an OR-group pick in major prep. Scheduling them as "electives" would silently
     re-add a redundant course satisfying the same requirement the winner already met.
+
+    completed_keys: CC (prefix, number) pairs the student has already taken. A
+    completed course was never actually excluded here (this parameter didn't
+    exist) — usually masked because the fill loop hit its unit target from
+    other candidates first, but a completed course's own subject prefix
+    getting prioritized (e.g. by the major-relevance ordering below) could
+    reach it before that happened, re-scheduling a course the student already
+    took as a "new" elective.
     """
     min_units = 90.0 if result.is_quarter else 60.0
     if result.total_units >= min_units:
@@ -1656,6 +1664,7 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
 
     placed_codes = {s.code for s in result.all_courses()}
     excluded = exclude_codes or set()
+    completed = completed_keys or set()
 
     # Aggregate deduplicated pool from byArea
     seen_keys: set = set()
@@ -1669,6 +1678,8 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
             if code in placed_codes:
                 continue
             if ck in excluded:
+                continue
+            if ck in completed:
                 continue
             if not accept_honors and ck[1].upper().endswith("H"):
                 continue
@@ -1689,13 +1700,25 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
     for pfx in by_prefix:
         by_prefix[pfx].sort(key=lambda c: infer_sequence_order(c.get("number", "")))
 
-    # Round-robin across prefixes for discipline variety
-    sorted_prefixes = sorted(by_prefix.keys())
+    # Prefer electives in subjects the student is ALREADY taking for major
+    # prep (e.g. an extra MATH/STAT/COMPSCI course for a CS major) over
+    # arbitrary unrelated filler — round-robin within each tier separately so
+    # relevant subjects are exhausted first, but still varied within that
+    # tier, before falling back to the fully generic pool. Cheap, uses data
+    # already on hand (no external major<->subject mapping needed) and never
+    # changes WHICH courses are eligible, only the fill order.
+    major_prefixes = {
+        s.prefix for s in result.all_courses() if "Required Major Prep" in s.tags
+    }
+    relevant_prefixes = sorted(p for p in by_prefix if p in major_prefixes)
+    other_prefixes    = sorted(p for p in by_prefix if p not in major_prefixes)
+
     candidates: list = []
-    while any(by_prefix[p] for p in sorted_prefixes):
-        for p in sorted_prefixes:
-            if by_prefix[p]:
-                candidates.append(by_prefix[p].pop(0))
+    for tier_prefixes in (relevant_prefixes, other_prefixes):
+        while any(by_prefix[p] for p in tier_prefixes):
+            for p in tier_prefixes:
+                if by_prefix[p]:
+                    candidates.append(by_prefix[p].pop(0))
 
     cap        = _MAX_QUARTER_UNITS_PER_TERM if result.is_quarter else _MAX_UNITS_PER_TERM
     base_terms = 6 if result.is_quarter else 4
@@ -1903,7 +1926,8 @@ def build_plan(
     _apply_double_labels(result)
 
     result.total_units = sum(s.units for s in result.all_courses())
-    _fill_electives(result, college, exclude_codes=loser_cc_codes, accept_honors=accept_honors)
+    _fill_electives(result, college, exclude_codes=loser_cc_codes, accept_honors=accept_honors,
+                     completed_keys=completed_keys)
 
     # Recompute metadata after elective filling (new terms may have been added)
     base_terms = 6 if result.is_quarter else 4

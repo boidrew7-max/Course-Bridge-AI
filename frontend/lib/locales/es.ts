@@ -236,8 +236,8 @@ const es: Dictionary = {
   "onboarding.step5.buildMyPlan": "Crear mi plan →",
 
   // Floating AI widget (chrome only: replies come from the backend and stay in the language it responds in)
-  "widget.askButton": "Pregúntale a CourseBridge AI",
-  "widget.title": "CourseBridge AI",
+  "widget.askButton": "Pregúntale a CourseBridge",
+  "widget.title": "CourseBridge",
   "widget.subtitle": "Pregúntame lo que quieras sobre la transferencia a la UC",
   "widget.closeAria": "Cerrar chat",
   "widget.emptyState": "Pregunta sobre los requisitos de transferencia, educación general, TAG o cómo funciona CourseBridge.",

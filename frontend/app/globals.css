@@ -72,7 +72,7 @@
   --cb-space-5: 3rem;
   --cb-space-6: 4rem;
   --cb-section-y: clamp(3.5rem, 8vw, 8rem);       /* 56px mobile, 128px desktop */
-  --cb-gutter: clamp(1.25rem, 4vw, 2rem);
+  --cb-gutter: clamp(1.5rem, 5vw, 3rem);
   --cb-maxw: 78rem;
 
   /* Shape */

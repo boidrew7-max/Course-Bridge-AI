@@ -22,6 +22,19 @@ export async function POST(req: Request) {
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer());
+
+    // The checks above only look at the filename/MIME type the browser
+    // reported, both of which the client fully controls and can lie about —
+    // renaming any file to "transcript.pdf" would sail through. Check the
+    // actual file signature instead: every real PDF starts with "%PDF-"
+    // somewhere in its first kilobyte (some tools prefix a little junk).
+    // This is the same defense-in-depth reason we never trust a browser-sent
+    // Content-Type for anything that gets processed server-side.
+    const header = new TextDecoder("latin1").decode(bytes.slice(0, 1024));
+    if (!header.includes("%PDF-")) {
+      return NextResponse.json({ error: "That doesn't look like a valid PDF file." }, { status: 400 });
+    }
+
     const pdf = await getDocumentProxy(bytes);
     const { text } = await extractText(pdf, { mergePages: true });
 

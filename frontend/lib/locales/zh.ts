@@ -236,8 +236,8 @@ const zh: Dictionary = {
   "onboarding.step5.buildMyPlan": "制定我的计划 →",
 
   // Floating AI widget (chrome only: replies come from the backend and stay in the language it responds in)
-  "widget.askButton": "咨询 CourseBridge AI",
-  "widget.title": "CourseBridge AI",
+  "widget.askButton": "咨询 CourseBridge",
+  "widget.title": "CourseBridge",
   "widget.subtitle": "有关 UC 转学的问题都可以问我",
   "widget.closeAria": "关闭聊天",
   "widget.emptyState": "可以询问转学要求、通识教育、TAG，或 CourseBridge 的使用方法。",

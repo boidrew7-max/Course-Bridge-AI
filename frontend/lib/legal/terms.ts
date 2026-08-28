@@ -11,7 +11,6 @@ import type { LegalDocSet } from "./types";
  * Deliberately no arbitration clause: it buys little at this size and California
  * courts scrutinise it in consumer contracts.
  *
- * [OPERATOR NAMES] must be replaced with the real operators before publishing.
  */
 const terms: LegalDocSet = {
   en: {
@@ -31,7 +30,7 @@ const terms: LegalDocSet = {
       {
         heading: "We are independent",
         body: [
-          "CourseBridge is operated by [OPERATOR NAMES] and is not affiliated with, endorsed by, or connected to ASSIST, the University of California, the California State University, or any community college.",
+          "CourseBridge is operated by the CourseBridge team and is not affiliated with, endorsed by, or connected to ASSIST, the University of California, the California State University, or any community college.",
         ],
       },
       {
@@ -130,7 +129,7 @@ const terms: LegalDocSet = {
       {
         heading: "Somos independientes",
         body: [
-          "CourseBridge es operado por [OPERATOR NAMES] y no está afiliado, respaldado ni vinculado a ASSIST, la Universidad de California, la Universidad Estatal de California ni ningún community college.",
+          "CourseBridge es operado por el equipo de CourseBridge y no está afiliado, respaldado ni vinculado a ASSIST, la Universidad de California, la Universidad Estatal de California ni ningún community college.",
         ],
       },
       {
@@ -229,7 +228,7 @@ const terms: LegalDocSet = {
       {
         heading: "我们是独立的",
         body: [
-          "CourseBridge 由 [OPERATOR NAMES] 运营，与 ASSIST、加州大学、加州州立大学或任何社区学院均无隶属、认可或关联关系。",
+          "CourseBridge 由 CourseBridge 团队运营，与 ASSIST、加州大学、加州州立大学或任何社区学院均无隶属、认可或关联关系。",
         ],
       },
       {

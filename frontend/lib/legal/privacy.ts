@@ -12,7 +12,6 @@ import type { LegalDocSet } from "./types";
  *   - stored fields: see the users, saved_plans and feedback tables in
  *     backend/db.py
  *
- * [OPERATOR NAMES] must be replaced with the real operators before publishing.
  */
 const privacy: LegalDocSet = {
   en: {
@@ -24,7 +23,7 @@ const privacy: LegalDocSet = {
       {
         heading: "Who we are",
         body: [
-          "CourseBridge is operated by [OPERATOR NAMES]. We are an independent project and are not affiliated with ASSIST, the University of California, the California State University, or any community college.",
+          "CourseBridge is operated by the CourseBridge team. We are an independent project and are not affiliated with ASSIST, the University of California, the California State University, or any community college.",
           "You can reach us about anything in this policy at privacy@coursebridge.us.",
         ],
       },
@@ -127,7 +126,7 @@ const privacy: LegalDocSet = {
       {
         heading: "Quiénes somos",
         body: [
-          "CourseBridge es operado por [OPERATOR NAMES]. Somos un proyecto independiente y no estamos afiliados a ASSIST, a la Universidad de California, a la Universidad Estatal de California ni a ningún community college.",
+          "CourseBridge es operado por el equipo de CourseBridge. Somos un proyecto independiente y no estamos afiliados a ASSIST, a la Universidad de California, a la Universidad Estatal de California ni a ningún community college.",
           "Puedes escribirnos sobre cualquier punto de esta política a privacy@coursebridge.us.",
         ],
       },
@@ -233,7 +232,7 @@ const privacy: LegalDocSet = {
       {
         heading: "我们是谁",
         body: [
-          "CourseBridge 由 [OPERATOR NAMES] 运营。我们是独立项目，与 ASSIST、加州大学、加州州立大学或任何社区学院均无隶属关系。",
+          "CourseBridge 由 CourseBridge 团队运营。我们是独立项目，与 ASSIST、加州大学、加州州立大学或任何社区学院均无隶属关系。",
           "有关本政策的任何问题，可发送邮件至 privacy@coursebridge.us。",
         ],
       },

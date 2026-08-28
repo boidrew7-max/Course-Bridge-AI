@@ -234,8 +234,8 @@ const en = {
   "onboarding.step5.buildMyPlan": "Build My Plan →",
 
   // Floating AI widget (chrome only: replies come from the backend and stay in the language it responds in)
-  "widget.askButton": "Ask CourseBridge AI",
-  "widget.title": "CourseBridge AI",
+  "widget.askButton": "Ask CourseBridge",
+  "widget.title": "CourseBridge",
   "widget.subtitle": "Ask me anything about UC transfer",
   "widget.closeAria": "Close chat",
   "widget.emptyState": "Ask about transfer requirements, GE, TAG, or how CourseBridge works.",

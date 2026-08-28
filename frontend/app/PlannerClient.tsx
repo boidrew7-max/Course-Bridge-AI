@@ -2705,7 +2705,7 @@ export default function PlannerClient() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              CourseBridge AI
+              CourseBridge
             </button>
           )}
 
@@ -2713,7 +2713,7 @@ export default function PlannerClient() {
             <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[#e5e0d5] dark:border-gray-800 bg-white dark:bg-[#1c1e24] shadow-2xl print:hidden">
               <div className="flex items-center justify-between bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4 shrink-0">
                 <div className="min-w-0">
-                  <p className="text-base font-bold text-white">CourseBridge AI</p>
+                  <p className="text-base font-bold text-white">CourseBridge</p>
                   {communityCollege && targetSchool
                     ? <p className="text-xs text-white/80 mt-0.5 truncate">{communityCollege} → {targetSchool}{targetMajor ? ` · ${targetMajor}` : ""}</p>
                     : <p className="text-xs text-white/80 mt-0.5">Ask me anything about your transfer</p>
@@ -2728,7 +2728,7 @@ export default function PlannerClient() {
                 {chatMessages.length === 0 && chatLoading && (
                   <div className="flex justify-start">
                     <div className="rounded-2xl border border-[#d8d0c3] dark:border-gray-700 bg-[#faf8f3] dark:bg-[#1c1e24] px-4 py-3 text-sm text-[#7b818b] dark:text-gray-500">
-                      <span className="animate-pulse">CourseBridge AI is thinking…</span>
+                      <span className="animate-pulse">CourseBridge is thinking…</span>
                     </div>
                   </div>
                 )}

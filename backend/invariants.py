@@ -21,6 +21,7 @@ from plan_engine import (
     PlanResult,
     _MAX_TERMS_HARD,
     _DATA_DIR,
+    _UC_SHARD_MAP,
     resolve_calgetc_school_key,
 )
 from test_plan_engine import (
@@ -37,27 +38,79 @@ _CALGETC_AREAS = {"1A", "1B", "1C", "2", "3A", "3B", "4", "5A", "5B", "5C", "6"}
 # ── Shared data loaders (matrix-scale: load once, pass down to workers) ───────
 
 def load_course_index() -> dict:
-    """(school_lower, 'PREFIX NUM') -> True, built from all_transferable_courses.
+    """(school_lower, 'PREFIX NUM') -> True, built from all_transferable_courses
+    plus calgetc_map.
 
     Course numbers in this index and in plan_engine's CourseSlot are compared
     after normalizing whitespace/case only — no fuzzy matching, since this is
     meant to catch genuine "course doesn't exist at this CCC" ghosts, not
     penalize display formatting differences.
+
+    all_transferable_courses alone under-covers pure-GE courses: it's built
+    from major-articulation agreements, so a course used only to satisfy
+    Cal-GETC (never a major requirement anywhere) can be entirely absent from
+    it even though ASSIST's own Cal-GETC/TCA data lists it as real and
+    UC-transferable at that college (verified: e.g. Allan Hancock's "CDEV
+    C1000" is in calgetc_map but not here — 1,171 of 29,459 calgetc_map course
+    entries were missing before this merge, all false "course not found"
+    positives in the backtest). calgetc_map is folded in too so real GE-only
+    courses stop being flagged as ghosts.
+
+    Same gap the other direction: a course only ever used as major-prep CC
+    articulation (e.g. Antelope Valley's "HIST 101", verified present in
+    ASSIST's own Berkeley articulation shard for that exact college/major)
+    can be missing from all_transferable_courses too — that scrape and the
+    per-UC articulation shards were built from different ASSIST scrapes at
+    different times. Every UC articulation shard is folded in as well, since
+    together with all_transferable_courses and calgetc_map that covers every
+    source build_plan can ever actually draw a course from — a course truly
+    absent from all three is a real ghost, not a scrape-coverage artifact.
     """
     path = os.path.join(_DATA_DIR, "all_transferable_courses.json.gz")
     index: dict = {}
-    if not os.path.exists(path):
-        return index
-    with gzip.open(path, "rt", encoding="utf-8") as f:
-        rows = json.load(f)
-    for r in rows:
-        school = (r.get("school") or "").strip().lower()
-        # Source scrape has inconsistent internal whitespace for some colleges
-        # (e.g. "ENGL  C1000" with a double space) — collapse runs of
-        # whitespace so this never causes a false "course not found".
-        ident = " ".join((r.get("identifier") or "").split()).upper()
-        if school and ident:
-            index[(school, ident)] = True
+    if os.path.exists(path):
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            rows = json.load(f)
+        for r in rows:
+            school = (r.get("school") or "").strip().lower()
+            # Source scrape has inconsistent internal whitespace for some
+            # colleges (e.g. "ENGL  C1000" with a double space) — collapse
+            # runs of whitespace so this never causes a false "course not
+            # found".
+            ident = " ".join((r.get("identifier") or "").split()).upper()
+            if school and ident:
+                index[(school, ident)] = True
+
+    for school, data in load_calgetc_map().get("bySchool", {}).items():
+        school_l = school.strip().lower()
+        for c in data.get("allCourses", []):
+            ident = f"{c.get('prefix', '').strip()} {c.get('number', '').strip()}".upper()
+            if school_l and ident.strip():
+                index[(school_l, ident)] = True
+
+    for shard_name in set(_UC_SHARD_MAP.values()):
+        base = os.path.join(_DATA_DIR, f"articulations_{shard_name}.json")
+        shard_path = base + ".gz" if os.path.exists(base + ".gz") else base
+        if not os.path.exists(shard_path):
+            continue
+        opener = gzip.open if shard_path.endswith(".gz") else open
+        with opener(shard_path, "rt", encoding="utf-8") as f:
+            shard = json.load(f)
+        for key, entries in shard.items():
+            if key.startswith("_"):
+                continue
+            # Same key format as backtest_matrix.enumerate_triples():
+            # "College_With_Underscores__Campus__Major".
+            college = key.split("__", 1)[0].replace("_", " ").strip().lower()
+            if not college:
+                continue
+            for entry in entries:
+                for and_group in entry.get("cc", []):
+                    for c in and_group:
+                        ident = f"{c.get('p', '').strip()} {c.get('n', '').strip()}".upper()
+                        if ident.strip():
+                            index[(college, ident)] = True
+
     return index
 
 

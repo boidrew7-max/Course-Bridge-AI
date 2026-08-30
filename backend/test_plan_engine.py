@@ -245,6 +245,14 @@ def check_prereq_violations(result: PlanResult) -> list:
                 continue
             if not same_sequence_base(a.number, b.number):
                 continue
+            # Same-lettered courses that jointly satisfy the identical UC
+            # requirement (e.g. Alameda's MATH 3E + 3F both articulating to
+            # "MATH 54 - Linear Algebra and Differential Equations") are a
+            # bundled pair, not a prerequisite chain of each other — the
+            # letter order doesn't imply which must come first. Flagging
+            # these was a false positive, not a real scheduling bug.
+            if a.uc_reqs and a.uc_reqs == b.uc_reqs:
+                continue
             ord_a = infer_sequence_order(a.number)[1]
             ord_b = infer_sequence_order(b.number)[1]
             # a should precede b (ord_a < ord_b) meaning a.term <= b.term

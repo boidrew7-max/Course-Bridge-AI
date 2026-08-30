@@ -65,9 +65,27 @@ def _row_units(rows: list) -> list:
     Assign each row in a section a unit index. Rows whose first course shares
     (subject prefix, numeric_base, letter_prefix) with another row's are
     merged into the same unit (they form one lettered sequence, e.g. MATH
-    1A/1B/1C). All other rows get their own standalone unit.
+    1A/1B/1C). All other rows get their own standalone unit — EXCEPT a plain
+    (unlettered) course number that is exactly one more than another row's
+    plain number in the same prefix, seen earlier in this same section: that
+    chains into the same unit too (e.g. Berkeley MATH 51/52, or a language
+    sequence like SPAN 1/2/3).
+
+    Verified via econ.berkeley.edu's own transfer requirements page and
+    ASSIST's raw templateAssets ("amountUnitType": "Sequence" advisement,
+    meaning "complete 1 whole track" — this function is only ever called for
+    such sections, never for flat "amountUnitType": "Course" pick-one-course
+    sections): before this, MATH 51 and MATH 52 were both required by
+    Berkeley's Economics major but got assigned separate units, so the
+    engine treated completing 51 alone as satisfying the *entire* calculus
+    requirement — a required course (MATH 52) silently never had to be
+    taken. A full-shard scan across all 9 UC campuses found the same plain-
+    integer-sequence shape recurring heavily for foreign language sequences
+    (French/Spanish/Chinese/German/... 1/2/3, etc.) in addition to Berkeley
+    math, confirming this is a general ASSIST data pattern, not a one-off.
     """
     unit_map: dict = {}
+    plain_chain: dict = {}   # prefix -> (last_plain_number:int, unit_id)
     unit_ids = []
     next_id = 0
     for r in rows:
@@ -87,16 +105,31 @@ def _row_units(rows: list) -> list:
             next_id += 1
             continue
         prefix, number = courses[0]
+        prefix_u = prefix.upper()
         seq = _sequence_key(number)
-        if seq is None:
-            unit_ids.append(next_id)
-            next_id += 1
+        if seq is not None:
+            key = (prefix_u, seq[0], seq[1])
+            if key not in unit_map:
+                unit_map[key] = next_id
+                next_id += 1
+            unit_ids.append(unit_map[key])
             continue
-        key = (prefix.upper(), seq[0], seq[1])
-        if key not in unit_map:
-            unit_map[key] = next_id
+
+        # Plain (unlettered) number: chain onto the previous row's unit if
+        # this prefix's last plain number was exactly one less than this one.
+        plain_num = None
+        if re.match(r"^\d+$", number.strip()):
+            plain_num = int(number.strip())
+
+        prev = plain_chain.get(prefix_u)
+        if plain_num is not None and prev is not None and plain_num == prev[0] + 1:
+            unit_id = prev[1]
+        else:
+            unit_id = next_id
             next_id += 1
-        unit_ids.append(unit_map[key])
+        unit_ids.append(unit_id)
+        if plain_num is not None:
+            plain_chain[prefix_u] = (plain_num, unit_id)
     return unit_ids
 
 # instruction.type values the parser actively handles

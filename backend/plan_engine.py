@@ -1016,6 +1016,7 @@ def _resolve_major_prep(
             continue
 
         candidates = []   # (cost, uc_str, chosen_cc_group, uc_key)
+        no_cc_arts = []   # (uc_str, uc_key) — alternatives with no CC articulation at all
 
         for art in gdata["arts"]:
             uc_c   = art.get("uc", {})
@@ -1029,12 +1030,33 @@ def _resolve_major_prep(
 
             valid = [g for g in art.get("cc", []) if g]
             if not valid:
-                continue  # no CC articulation — post-transfer, skip from OR selection
+                # No CC articulation for this specific alternative. It still
+                # needs a row so it doesn't just vanish — if every alternative
+                # in the OR-group turns out to have no CC articulation either
+                # (the `if not candidates` case below), this requirement must
+                # still surface as something the student completes after
+                # transfer, the same way the AND-path (below) already handles
+                # an unarticulated requirement. Bug found via manual
+                # verification against econ.berkeley.edu's own transfer
+                # requirements page: a required Statistics course was
+                # disappearing from the audit entirely instead of showing as
+                # POST-TRANSFER, because every OR-group member with no CC
+                # match was silently `continue`d out with nothing recorded.
+                no_cc_arts.append((uc_str, uc_key))
+                continue
 
             chosen = _pick_cc(list(valid), uc_key=uc_key)
             candidates.append((_cc_cost(chosen), uc_str, chosen, uc_key))
 
         if not candidates:
+            # Every alternative in this OR-group has no CC articulation at
+            # this college — surface each as POST-TRANSFER instead of
+            # dropping the whole requirement silently.
+            for uc_str, uc_key in no_cc_arts:
+                if uc_key in skip_uc_keys:
+                    continue
+                post_transfer.append(uc_str)
+                audit_rows.append((uc_str, "-", "POST-TRANSFER"))
             continue
 
         candidates.sort(key=lambda x: x[0])

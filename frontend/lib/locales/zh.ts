@@ -5,7 +5,6 @@ const zh: Dictionary = {
   "settings.close": "关闭",
 
   "settings.nav.profile": "个人资料",
-  "settings.nav.appearance": "外观",
   "settings.nav.language": "语言",
 
   "settings.profile.name": "姓名",
@@ -25,10 +24,6 @@ const zh: Dictionary = {
   "settings.profile.dropPhoto": "拖放图片，或点击上传",
   "settings.profile.photoError": "请选择小于 5MB 的图片。",
 
-  "settings.appearance.title": "主题",
-  "settings.appearance.description": "选择 CourseBridge 在此设备上的外观。",
-  "settings.appearance.light": "浅色",
-  "settings.appearance.dark": "深色",
 
   "settings.language.title": "首选语言",
   "settings.language.description": "选择 CourseBridge 设置中使用的语言。",

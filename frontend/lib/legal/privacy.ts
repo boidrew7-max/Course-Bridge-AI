@@ -35,7 +35,7 @@ const privacy: LegalDocSet = {
           "- Your name, and a profile photo if you upload one.",
           "- Your Google account identifier, if you sign in with Google.",
           "- Your community college, intended major, and the campuses you are targeting.",
-          "- Your theme and language preferences.",
+          "- Your language preference.",
           "When you build a plan, we store the plan itself, along with the college, campus, major and the list of completed courses it was built from, so it is waiting for you next time.",
           "If you send us feedback on a plan or a reply, we store that feedback and, if you are signed in, which account it came from.",
           "We hold your IP address briefly in memory to enforce rate limits and prevent abuse. It is not written to our database.",
@@ -55,7 +55,7 @@ const privacy: LegalDocSet = {
         heading: "Cookies and browser storage",
         body: [
           "We use one cookie: a session token that keeps you signed in. It is strictly necessary for the site to work, so we do not ask for cookie consent.",
-          "Your browser also stores your draft profile, theme and language locally so the site works before you create an account. That data stays on your device and you can clear it at any time through your browser settings.",
+          "Your browser also stores your draft profile and language locally so the site works before you create an account. That data stays on your device and you can clear it at any time through your browser settings.",
         ],
       },
       {
@@ -79,7 +79,7 @@ const privacy: LegalDocSet = {
       {
         heading: "Your choices",
         body: [
-          "You can see and change your name, college, target campus, photo, theme and language at any time in Settings.",
+          "You can see and change your name, college, target campus, photo and language at any time in Settings.",
           "To get a copy of your data, correct it, or have it deleted, email privacy@coursebridge.us from the address on your account. We will action deletion requests within 30 days, and that removes your account, your saved plans and your feedback.",
           "We do not currently have a self-serve delete button. Until we build one, email is the way, and we will honour it.",
         ],
@@ -138,7 +138,7 @@ const privacy: LegalDocSet = {
           "- Tu nombre y una foto de perfil, si subes una.",
           "- Tu identificador de cuenta de Google, si inicias sesión con Google.",
           "- Tu community college, tu especialidad prevista y los campus a los que aspiras.",
-          "- Tus preferencias de tema e idioma.",
+          "- Tu preferencia de idioma.",
           "Cuando creas un plan, guardamos el plan junto con la universidad, el campus, la especialidad y la lista de cursos completados con los que se creó, para que te espere la próxima vez.",
           "Si nos envías comentarios sobre un plan o una respuesta, guardamos esos comentarios y, si has iniciado sesión, desde qué cuenta se enviaron.",
           "Conservamos tu dirección IP brevemente en memoria para aplicar límites de uso y prevenir abusos. No se guarda en nuestra base de datos.",
@@ -158,7 +158,7 @@ const privacy: LegalDocSet = {
         heading: "Cookies y almacenamiento del navegador",
         body: [
           "Usamos una sola cookie: un token de sesión que mantiene tu sesión iniciada. Es estrictamente necesaria para que el sitio funcione, por lo que no solicitamos consentimiento de cookies.",
-          "Tu navegador también guarda localmente tu perfil provisional, tu tema y tu idioma para que el sitio funcione antes de crear una cuenta. Esos datos permanecen en tu dispositivo y puedes borrarlos cuando quieras desde la configuración de tu navegador.",
+          "Tu navegador también guarda localmente tu perfil provisional y tu idioma para que el sitio funcione antes de crear una cuenta. Esos datos permanecen en tu dispositivo y puedes borrarlos cuando quieras desde la configuración de tu navegador.",
         ],
       },
       {
@@ -182,7 +182,7 @@ const privacy: LegalDocSet = {
       {
         heading: "Tus opciones",
         body: [
-          "Puedes ver y cambiar tu nombre, universidad, campus objetivo, foto, tema e idioma en cualquier momento desde Configuración.",
+          "Puedes ver y cambiar tu nombre, universidad, campus objetivo, foto e idioma en cualquier momento desde Configuración.",
           "Para obtener una copia de tus datos, corregirlos o eliminarlos, escribe a privacy@coursebridge.us desde la dirección de tu cuenta. Atenderemos las solicitudes de eliminación en un plazo de 30 días, lo que borra tu cuenta, tus planes guardados y tus comentarios.",
           "Por ahora no tenemos un botón de eliminación automática. Hasta que lo creemos, el correo es la vía, y la respetaremos.",
         ],
@@ -244,7 +244,7 @@ const privacy: LegalDocSet = {
           "- 你的姓名，以及你上传的头像（如有）。",
           "- 如果你使用 Google 登录，会保存你的 Google 账号标识。",
           "- 你所在的社区学院、意向专业以及目标校区。",
-          "- 你的主题和语言偏好。",
+          "- 你的语言偏好。",
           "当你生成计划时，我们会保存该计划，以及生成它所依据的学院、校区、专业和已修课程列表，方便你下次继续使用。",
           "如果你就某个计划或回复向我们提交反馈，我们会保存该反馈；如果你已登录，还会记录反馈来自哪个账号。",
           "我们会在内存中短暂保留你的 IP 地址，用于限制请求频率和防止滥用。该信息不会写入数据库。",
@@ -264,7 +264,7 @@ const privacy: LegalDocSet = {
         heading: "Cookie 与浏览器存储",
         body: [
           "我们只使用一个 Cookie：用于保持登录状态的会话令牌。它是网站运行所必需的，因此我们不请求 Cookie 同意。",
-          "你的浏览器还会在本地保存草稿资料、主题和语言设置，以便在注册账号前也能正常使用网站。这些数据保留在你的设备上，你可以随时通过浏览器设置清除。",
+          "你的浏览器还会在本地保存草稿资料和语言设置，以便在注册账号前也能正常使用网站。这些数据保留在你的设备上，你可以随时通过浏览器设置清除。",
         ],
       },
       {
@@ -288,7 +288,7 @@ const privacy: LegalDocSet = {
       {
         heading: "你的选择",
         body: [
-          "你可以随时在“设置”中查看和修改姓名、学院、目标校区、头像、主题和语言。",
+          "你可以随时在“设置”中查看和修改姓名、学院、目标校区、头像和语言。",
           "如需获取数据副本、更正数据或删除数据，请使用账号邮箱发送邮件至 privacy@coursebridge.us。我们将在 30 天内处理删除请求，删除内容包括你的账号、已保存的计划和反馈。",
           "目前我们还没有自助删除按钮。在我们做出该功能之前，请通过邮件联系，我们一定会处理。",
         ],

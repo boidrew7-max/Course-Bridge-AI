@@ -3,7 +3,6 @@ const en = {
   "settings.close": "Close",
 
   "settings.nav.profile": "Profile",
-  "settings.nav.appearance": "Appearance",
   "settings.nav.language": "Language",
 
   "settings.profile.name": "Name",
@@ -23,10 +22,6 @@ const en = {
   "settings.profile.dropPhoto": "Drop an image, or click to upload",
   "settings.profile.photoError": "Please choose an image under 5MB.",
 
-  "settings.appearance.title": "Theme",
-  "settings.appearance.description": "Choose how CourseBridge looks on this device.",
-  "settings.appearance.light": "Light",
-  "settings.appearance.dark": "Dark",
 
   "settings.language.title": "Preferred language",
   "settings.language.description": "Choose the language used across CourseBridge's settings.",

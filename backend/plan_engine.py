@@ -1406,6 +1406,8 @@ def _select_calgetc(
         completed_matches = [c for c in courses
                              if (c.get("prefix",""), c.get("number","")) in completed_set
                              and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys]
+        if area_code in ("5A", "5B"):
+            completed_matches.sort(key=lambda c: (0 if (c.get("prefix",""), c.get("number","")) in lab_keys else 1))
         if completed_matches:
             m = completed_matches[0]
             mk = (m.get("prefix",""), m.get("number",""))
@@ -1417,6 +1419,8 @@ def _select_calgetc(
         matches = [c for c in courses
                    if (c.get("prefix",""), c.get("number","")) in scheduled_keys
                    and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys]
+        if area_code in ("5A", "5B"):
+            matches.sort(key=lambda c: (0 if (c.get("prefix",""), c.get("number","")) in lab_keys else 1))
         if matches:
             m = matches[0]
             mk = (m.get("prefix",""), m.get("number",""))
@@ -1441,7 +1445,14 @@ def _select_calgetc(
 
         if area_code == "1B":
             unique.sort(key=lambda c: (0 if c.get("prefix","").upper().startswith("ENGL") else 1))
-        if area_code == "5B":
+        if area_code in ("5A", "5B"):
+            # Prefer a course that also satisfies 5C (Laboratory Science) so
+            # the lab requirement gets covered for free via the existing
+            # five_b_has_lab/"5C: no separate slot" mechanism. 5A alone was
+            # missing this (5B already had it) - verified real gap: colleges
+            # with a genuine lab-qualifying 5A option (e.g. PHYS 162) still
+            # ended up with Area 5C completely unassigned because 5A picked
+            # a non-lab course (PHYS 110) first and nothing was left to try.
             unique.sort(key=lambda c: (0 if (c.get("prefix",""), c.get("number","")) in lab_keys else 1))
 
         # ── Single-course areas ────────────────────────────────────────────
@@ -1450,6 +1461,35 @@ def _select_calgetc(
         slot = _make_slot(pick, tag)
         ge_courses.append(slot)
         _claim(area_code, pk, slot.code)
+
+    # ── 5C fallback: guarantee real completion, not just an opportunistic
+    # freebie ────────────────────────────────────────────────────────────────
+    # 5A/5B now prefer a lab-qualifying course when picking a FRESH course,
+    # but double-labelling an already-required major-prep or completed
+    # course for 5A/5B (above) never checks for a lab option — reusing a
+    # non-lab major course saves the student a unit, but Cal-GETC actually
+    # requires 5C certification; it is not optional just because reuse was
+    # cheaper. Verified real gap: Palomar -> Berkeley Environmental Sciences
+    # double-labelled the required CHEM 115 (no lab) for 5A while a genuine
+    # lab option (CHEM 105) sat unused, leaving 5C silently uncertified. If
+    # nothing so far satisfied 5C, schedule one dedicated lab course now
+    # rather than leave a real requirement unmet.
+    if "5C" not in area_assignments and "5C" in _required_codes:
+        lab_candidates = [
+            c for c in by_area.get("5C", [])
+            if _ok(c) and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys
+        ]
+        seen_lab: set = set()
+        lab_candidates = [c for c in lab_candidates
+                           if (c.get("prefix",""), c.get("number","")) not in seen_lab
+                           and not seen_lab.add((c.get("prefix",""), c.get("number","")))]
+        if lab_candidates:
+            pick = lab_candidates[0]
+            pk = (pick.get("prefix",""), pick.get("number",""))
+            slot = _make_slot(pick, f"{ge_tag_prefix} Area 5C")
+            ge_courses.append(slot)
+            area_assignments["5C"] = slot.code
+            placed_ge_keys.add(pk)
 
     return ge_courses, area_assignments, deferred_areas
 

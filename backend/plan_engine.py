@@ -1215,14 +1215,29 @@ def _select_calgetc(
     required = _CALGETC_REQUIRED
     _required_codes = {code for code, _, _ in required} | {"5C"}
 
-    # ── Multi-area carve-out lookup (data-driven, not hardcoded) ────────────
-    # A course appearing under more than one area in this school's own
-    # byArea data is a real ASSIST allowance (e.g. a combined lab satisfying
-    # both 5B and 5C, or a History course certified for both 3B Humanities
-    # and 4 Social Science) — pulled straight from the source, never a
-    # hand-maintained pair list. Consumption below claims ALL of a course's
-    # certified areas in one pass instead of letting each area independently
-    # "spend" it.
+    # ── Multi-area carve-out lookup ──────────────────────────────────────────
+    # A course listed under more than one area in this school's own byArea
+    # data is NOT generally a "satisfies both" allowance — UC's own guidance
+    # is explicit that "a community college course can satisfy only one
+    # IGETC or Cal-GETC subject area even if it is listed... in more than one
+    # area." The two named exceptions: a lab-science course satisfying both
+    # its content area (5A/5B) and the separate Laboratory Science area (5C)
+    # — most colleges' own source data lists such a course under both areas
+    # directly, so this generic lookup (not just the five_b_has_lab flag
+    # below, which is narrower bookkeeping for a different case) is what
+    # actually resolves 5C for the large majority of colleges — and History/
+    # Political Science courses counted toward both 3B (Humanities) and 4
+    # (Social & Behavioral Sciences). Every other multi-listing (e.g. an
+    # Ethnic Studies course appearing under both Area 6 and Area 4) means
+    # "eligible for either — pick one," not "counts for both": treating it as
+    # an automatic double-count was a real bug (verified: it let a single
+    # Ethnic Studies course silently satisfy Area 4 too, leaving Area 4 with
+    # zero real courses and Area 6 falsely marked resolved).
+    _DOUBLE_COUNT_AREA_PAIRS = {
+        frozenset({"3B", "4"}),
+        frozenset({"5A", "5C"}),
+        frozenset({"5B", "5C"}),
+    }
     course_areas: dict = {}
     for _area, _courses in by_area.items():
         if _area not in _required_codes:
@@ -1249,6 +1264,8 @@ def _select_calgetc(
             if other == area_code or other in area_assignments:
                 continue
             if other not in _required_codes:
+                continue
+            if frozenset({area_code, other}) not in _DOUBLE_COUNT_AREA_PAIRS:
                 continue
             area_assignments[other] = display
             if other in ("5A", "5B") and key in lab_keys:

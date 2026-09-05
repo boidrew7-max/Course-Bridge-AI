@@ -3,6 +3,12 @@ import { cookies } from "next/headers";
 
 const TRANSFER_AI_URL = process.env.TRANSFER_AI_URL || "https://course-bridge-ai-production.up.railway.app";
 
+// Auth state is per-user and changes (login, logout, password reset
+// invalidating sessions) - Next.js caches server-side fetch() by default,
+// which can serve a stale authenticated/unauthenticated response regardless
+// of the actual current session. Never cache this.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get("cb_token")?.value;
@@ -11,6 +17,7 @@ export async function GET() {
   try {
     const res = await fetch(`${TRANSFER_AI_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
     });
     const data = await res.json();
     if (!res.ok) {

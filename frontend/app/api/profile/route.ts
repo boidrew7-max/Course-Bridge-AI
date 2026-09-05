@@ -3,6 +3,10 @@ import { cookies } from "next/headers";
 
 const TRANSFER_AI_URL = process.env.TRANSFER_AI_URL || "https://course-bridge-ai-production.up.railway.app";
 
+// Per-user, frequently-changing data - see app/api/plans/route.ts for why
+// this must never be cached by Next.js's default server-side fetch caching.
+export const dynamic = "force-dynamic";
+
 async function authHeader() {
   const cookieStore = await cookies();
   const token = cookieStore.get("cb_token")?.value;
@@ -13,7 +17,7 @@ export async function GET() {
   const headers = await authHeader();
   if (!headers) return NextResponse.json({ error: "not authenticated" }, { status: 401 });
   try {
-    const res = await fetch(`${TRANSFER_AI_URL}/api/profile`, { headers });
+    const res = await fetch(`${TRANSFER_AI_URL}/api/profile`, { headers, cache: "no-store" });
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch {

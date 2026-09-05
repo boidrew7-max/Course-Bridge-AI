@@ -33,6 +33,13 @@ export const metadata: Metadata = {
     url: SITE_URL,
     type: "website",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
+  },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,

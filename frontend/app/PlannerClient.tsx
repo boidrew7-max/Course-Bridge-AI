@@ -1757,6 +1757,7 @@ export default function PlannerClient() {
  const plans = await plansRes.json();
  if (Array.isArray(plans) && plans.length > 0) {
  const latest = plans[0]; // API returns most-recently-updated first
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, minDuration: 2300 });
  setFirstName(user.username ?? "");
  setCommunityCollege(latest.college ?? "");
  setTargetSchool(latest.uc ?? "");
@@ -1781,6 +1782,7 @@ export default function PlannerClient() {
  planText: latest.plan_text ?? "",
  }));
  } catch {}
+ void cbOverlay()?.hideLoader();
  return;
  }
  }
@@ -1990,6 +1992,10 @@ export default function PlannerClient() {
  }
 
  async function loadOrGeneratePlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
+ // Branded overlay plays on every plan open — saved plans get a short
+ // branded moment (minDuration), fresh generations keep it up until the
+ // plan starts streaming (generateAIPlan takes over the same overlay).
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 2600, minDuration: 2300 });
  try {
  const meRes = await fetch("/api/auth/me");
  if (meRes.ok) {
@@ -2005,6 +2011,7 @@ export default function PlannerClient() {
  if (existing?.plan_text) {
  setAiPlan(existing.plan_text);
  cachePlanText(existing.plan_text);
+ void cbOverlay()?.hideLoader();
  return;
  }
  }

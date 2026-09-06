@@ -16,6 +16,29 @@ const commonCompletedCourseAliases: Record<string, string[]> = {
  "STAT C1000": ["statistics", "stats", "intro stats"],
 };
 
+// Branded full-screen loading overlay, loaded site-wide from
+// public/coursebridge-loader.js (see <Script> in app/layout.tsx).
+// Shown while a plan is generating; hidden as soon as the first
+// chunk of the plan streams in so the user watches it build live.
+type CourseBridgeOverlay = {
+ showLoader: (opts?: { messages?: string[]; interval?: number; minDuration?: number }) => void;
+ hideLoader: () => Promise<void> | void;
+ setMessage?: (text: string) => void;
+};
+
+function cbOverlay(): CourseBridgeOverlay | undefined {
+ if (typeof window === "undefined") return undefined;
+ return (window as unknown as { CourseBridge?: CourseBridgeOverlay }).CourseBridge;
+}
+
+const PLAN_LOADER_MESSAGES = [
+ "Reading your courses",
+ "Matching ASSIST articulation",
+ "Checking Cal-GETC coverage",
+ "Sequencing prerequisites",
+ "Mapping your terms",
+];
+
 function normalize(value: string) {
  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -1908,6 +1931,14 @@ export default function PlannerClient() {
  setAiPlanLoading(true);
  setAiPlan("");
  let accumulated = "";
+ // Branded overlay covers the wait until the plan starts streaming in.
+ let overlayUp = true;
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 2600 });
+ const dropOverlay = () => {
+ if (!overlayUp) return;
+ overlayUp = false;
+ void cbOverlay()?.hideLoader();
+ };
  try {
  const res = await fetch("/api/plan", {
  method: "POST",
@@ -1929,6 +1960,7 @@ export default function PlannerClient() {
  const chunk = JSON.parse(payload);
  accumulated += chunk;
  setAiPlan(accumulated);
+ if (accumulated) dropOverlay();
  } catch {}
  }
  }
@@ -1939,6 +1971,7 @@ export default function PlannerClient() {
  } catch {
  setAiPlan("Something went wrong generating your plan. Please try again in a moment.");
  } finally {
+ dropOverlay();
  setAiPlanLoading(false);
  }
  }

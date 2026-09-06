@@ -6,6 +6,7 @@ import { interpretCompletedCourses } from "../lib/courseInterpreter.js";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useTranslation } from "../lib/i18n";
+import { useReveal } from "../lib/useReveal";
 
 const commonCompletedCourseAliases: Record<string, string[]> = {
  // Keep this client-side fallback in sync with lib/courseInterpreter.js.
@@ -1208,7 +1209,7 @@ function PlanTimeline({ text, completedRaw, college }: { text: string; school: s
  const totalUnits = terms.reduce((sum, t) => sum + t.units, 0);
 
  return (
- <div className="rounded-2xl border border-[var(--cb-border)] bg-white p-4">
+ <div className="cb-pop-in rounded-2xl border border-[var(--cb-border)] bg-white p-4">
  <div className="flex items-baseline justify-between">
  <h2 className="text-lg font-bold text-[var(--cb-text)]">Your Schedule</h2>
  <p className="text-xs font-medium text-[var(--cb-muted)]">
@@ -1221,10 +1222,10 @@ function PlanTimeline({ text, completedRaw, college }: { text: string; school: s
  </div>
 
  <div className="cb-scroll-x mt-4 -mx-4 px-4 pb-2">
- <div className="flex w-max items-start">
+ <div className="cb-stagger flex w-max items-start">
  {terms.map((term, ti) => (
  <div key={ti} className="flex items-start">
- <div className="w-[230px] shrink-0 rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4 shadow-sm">
+ <div className="cb-lift w-[230px] shrink-0 rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4 shadow-sm">
  <div className="flex items-center gap-2.5">
  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--cb-accent)] text-[11px] font-bold text-white">{ti + 1}</span>
  <div>
@@ -1585,6 +1586,10 @@ export default function PlannerClient() {
  const [onboardingDone, setOnboardingDone] = useState(true);
  const [aiPlan, setAiPlan] = useState("");
  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+
+ // Scroll reveals for checker cards and the hero stat rail; rescans once a
+ // plan is showing so content that mounted with it gets observed too.
+ useReveal(aiPlan ? "with-plan" : "no-plan");
  const chatEndRef = useRef<HTMLDivElement>(null);
 
  // ── Account (email/password or Google sign-in) ────────────────
@@ -2322,7 +2327,7 @@ export default function PlannerClient() {
  </div>
  </div>
 
- <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-[var(--cb-border)] pt-6">
+ <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-[var(--cb-border)] pt-6" data-reveal-group>
  <div>
  <p className="text-base font-bold text-[var(--cb-text)]">{heroTerms.length > 0 ? `~${heroTerms.length} term${heroTerms.length > 1 ? "s" : ""}` : "Not set"}</p>
  <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--cb-muted)]">Estimated</p>
@@ -2383,7 +2388,7 @@ export default function PlannerClient() {
  <div className="flex flex-col gap-4">
  <PlanTimeline text={aiPlan} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} college={communityCollege} />
 
- <div className="rounded-2xl border border-[var(--cb-border)] bg-white p-4 text-sm text-[var(--cb-text)]">
+ <div className="cb-pop-in rounded-2xl border border-[var(--cb-border)] bg-white p-4 text-sm text-[var(--cb-text)]">
  <SimpleMarkdown text={aiPlan} />
  </div>
 
@@ -2445,13 +2450,14 @@ export default function PlannerClient() {
 
  {/* ── Extra tools (visible after onboarding) ────────────── */}
  {onboardingDone && (
- <div className="mt-10 space-y-3 print:hidden">
+ <div className="mt-10 space-y-3 print:hidden" data-reveal-group>
  <h2 className="mb-1 text-lg font-bold text-[var(--cb-text)]">Checkers</h2>
 
  {/* TAG Eligibility Checker */}
  <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowTagChecker(v => !v)}
+ aria-expanded={showTagChecker}
  className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
@@ -2461,7 +2467,7 @@ export default function PlannerClient() {
  <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showTagChecker ? "−" : "+"}</span>
  </button>
  {showTagChecker && (
- <div className="px-5 pb-5 space-y-4">
+ <div className="cb-step-in px-5 pb-5 space-y-4">
  <p className="text-xs text-[var(--cb-muted)] leading-5">
  TAG guarantees admission if you meet requirements.{" "}
  <strong>UCLA, UC Berkeley, and UCSD do NOT offer TAG.</strong>
@@ -2564,6 +2570,7 @@ export default function PlannerClient() {
  <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowCalgetc(v => !v)}
+ aria-expanded={showCalgetc}
  className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
@@ -2575,7 +2582,7 @@ export default function PlannerClient() {
  <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showCalgetc ? "−" : "+"}</span>
  </button>
  {showCalgetc && (
- <div className="px-5 pb-5 space-y-2">
+ <div className="cb-step-in px-5 pb-5 space-y-2">
  <p className="text-xs text-[var(--cb-muted)] mb-3">Check off each Cal-GETC area as you complete it. Progress is saved in your browser.</p>
  {CALGETC_AREAS.map(area => (
  <label key={area.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${calgetcChecked[area.id] ? "border-[var(--cb-accent-muted)] bg-[var(--cb-accent-tint)]" : "border-[var(--cb-border)] bg-[var(--cb-surface-alt)] hover:border-[var(--cb-accent)]/40"}`}>
@@ -2605,6 +2612,7 @@ export default function PlannerClient() {
  <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowTracker(v => !v)}
+ aria-expanded={showTracker}
  className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
@@ -2616,7 +2624,7 @@ export default function PlannerClient() {
  <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showTracker ? "−" : "+"}</span>
  </button>
  {showTracker && (
- <div className="px-5 pb-5 space-y-3">
+ <div className="cb-step-in px-5 pb-5 space-y-3">
  <div className="flex gap-2">
  <input
  value={trackerInput}
@@ -2671,6 +2679,7 @@ export default function PlannerClient() {
  <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowDeadlines(v => !v)}
+ aria-expanded={showDeadlines}
  className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
@@ -2680,7 +2689,7 @@ export default function PlannerClient() {
  <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showDeadlines ? "−" : "+"}</span>
  </button>
  {showDeadlines && (
- <div className="px-5 pb-5">
+ <div className="cb-step-in px-5 pb-5">
  <div className="space-y-3">
  {DEADLINES.map(d => (
  <div key={d.label} className="flex items-start gap-4 rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] px-4 py-3">
@@ -2703,6 +2712,7 @@ export default function PlannerClient() {
  <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowKeyNotes(v => !v)}
+ aria-expanded={showKeyNotes}
  className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div className="flex flex-wrap items-baseline gap-2">
@@ -2712,7 +2722,7 @@ export default function PlannerClient() {
  <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showKeyNotes ? "−" : "+"}</span>
  </button>
  {showKeyNotes && (
- <div className="px-6 pb-6 space-y-3">
+ <div className="cb-step-in px-6 pb-6 space-y-3">
  {schoolForStats
  ? <UCStatsPanel school={schoolForStats} />
  : <p className="text-xs text-[var(--cb-muted)]">Pick a target school to see admissions context here.</p>
@@ -2740,7 +2750,7 @@ export default function PlannerClient() {
  {!chatOpen && (
  <button
  onClick={() => setChatOpen(true)}
- className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[var(--cb-accent)] px-5 py-4 text-sm font-semibold text-white shadow-xl transition hover:bg-[var(--cb-accent-hover)] active:scale-95 print:hidden"
+ className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[var(--cb-accent)] px-5 py-4 text-sm font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[var(--cb-accent-hover)] active:scale-95 print:hidden"
  >
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -2750,7 +2760,7 @@ export default function PlannerClient() {
  )}
 
  {chatOpen && (
- <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[var(--cb-border)] bg-white shadow-2xl print:hidden">
+ <div className="cb-chat-in fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[var(--cb-border)] bg-white shadow-2xl print:hidden">
  <div className="flex items-center justify-between bg-[var(--cb-accent)] px-5 py-4 shrink-0">
  <div className="min-w-0">
  <p className="text-base font-bold text-white">CourseBridge</p>

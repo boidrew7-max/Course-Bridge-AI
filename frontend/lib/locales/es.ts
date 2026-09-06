@@ -120,6 +120,13 @@ const es: Dictionary = {
   // Home: pricing
   "home.pricing.title": "Gratis durante la beta",
   "home.pricing.body": "CourseBridge es actualmente gratuito para todos los estudiantes de community college de California mientras seguimos desarrollándolo.",
+  "home.pricing.cardTitle": "Gratis durante la beta",
+  "home.pricing.cardPeriod": "para cada estudiante de community college de California",
+  "home.pricing.feature1": "Planes de transferencia ilimitados",
+  "home.pricing.feature2": "Las 116 community colleges",
+  "home.pricing.feature3": "Todos los campus y carreras de la UC",
+  "home.pricing.feature4": "Verificadores de Cal-GETC, TAG y fechas límite",
+  "home.pricing.cardNote": "Sin tarjeta de crédito. Sin muro de pago.",
 
   // Home: FAQ
   "home.faq.title": "Preguntas frecuentes",
@@ -134,6 +141,9 @@ const es: Dictionary = {
   "home.faq.a4": "Nada. CourseBridge es gratuito para todos los estudiantes de community colleges de California mientras está en beta.",
   "home.faq.q5": "¿Puedo subir mi historial académico en vez de escribir los cursos?",
   "home.faq.a5": "Sí. Sube un historial académico en PDF durante el registro y CourseBridge extrae tus cursos completados para que los revises.",
+  "home.faq.q6": "¿Mis datos son privados?",
+  "home.faq.a6": "Sí. Tus cursos y planes solo se usan para crear tu plan de transferencia, y puedes eliminar tu cuenta en cualquier momento.",
+  "home.faq.a6Link": "Lee la política de privacidad",
 
   // Home: final CTA
   "home.cta.title": "Descubre qué clases te faltan",

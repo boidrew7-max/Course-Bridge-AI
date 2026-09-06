@@ -118,6 +118,13 @@ const en = {
   // Home: pricing
   "home.pricing.title": "Free while in beta",
   "home.pricing.body": "CourseBridge is currently free to use for all California community college students while we build it out.",
+  "home.pricing.cardTitle": "Free during beta",
+  "home.pricing.cardPeriod": "for every California community college student",
+  "home.pricing.feature1": "Unlimited transfer plans",
+  "home.pricing.feature2": "All 116 community colleges",
+  "home.pricing.feature3": "Every UC campus and major",
+  "home.pricing.feature4": "Cal-GETC, TAG, and deadline checkers",
+  "home.pricing.cardNote": "No credit card. No paywall.",
 
   // Home: FAQ
   "home.faq.title": "Common questions",
@@ -132,6 +139,9 @@ const en = {
   "home.faq.a4": "Nothing. CourseBridge is free for all California community college students while it is in beta.",
   "home.faq.q5": "Can I upload my transcript instead of typing courses?",
   "home.faq.a5": "Yes. Upload a PDF transcript during onboarding and CourseBridge pulls your completed courses out of it for you to review.",
+  "home.faq.q6": "Is my data private?",
+  "home.faq.a6": "Yes. Your courses and plans are only used to build your transfer plan, and you can delete your account at any time.",
+  "home.faq.a6Link": "Read the privacy policy",
 
   // Home: final CTA
   "home.cta.title": "See the classes you still need",

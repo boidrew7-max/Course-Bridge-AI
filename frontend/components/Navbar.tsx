@@ -87,7 +87,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="cb-link"
+                className="cb-link cb-navlink"
                 style={{ fontSize: "var(--cb-fs-body-sm)", fontWeight: 500 }}
               >
                 {t(link.key)}
@@ -187,6 +187,26 @@ export default function Navbar() {
                     }}
                   >
                     {t(link.key)}
+                  </Link>
+                </li>
+              ))}
+              {[
+                { href: "/privacy", label: t("footer.privacy") },
+                { href: "/terms", label: t("footer.terms") },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="cb-link flex items-center"
+                    style={{
+                      minHeight: 44,
+                      fontSize: "var(--cb-fs-body-sm)",
+                      fontWeight: 500,
+                      color: "var(--cb-muted)",
+                    }}
+                  >
+                    {link.label}
                   </Link>
                 </li>
               ))}

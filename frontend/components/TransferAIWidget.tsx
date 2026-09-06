@@ -82,7 +82,7 @@ export default function TransferAIWidget() {
         <div
           role="dialog"
           aria-label={t("widget.title")}
-          className="fixed z-50 flex flex-col overflow-hidden"
+          className="cb-chat-in fixed z-50 flex flex-col overflow-hidden"
           style={{
             right: "var(--cb-gutter)",
             bottom: `calc(var(--cb-gutter) + env(safe-area-inset-bottom))`,

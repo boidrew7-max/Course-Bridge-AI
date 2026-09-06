@@ -221,7 +221,7 @@ export default function OnboardingPage() {
                     : "bg-[var(--cb-border)] text-[var(--cb-muted)]"
                 }`}
               >
-                {i < step - 1 ? "✓" : i + 1}
+                {i < step - 1 ? <span className="cb-pop-scale">✓</span> : i + 1}
               </div>
               <span
                 className={`hidden text-xs font-semibold sm:block ${
@@ -231,13 +231,21 @@ export default function OnboardingPage() {
                 {label}
               </span>
               {i < STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 rounded-full ${i < step - 1 ? "bg-[var(--cb-accent)]" : "bg-[var(--cb-border)]"}`} />
+                <div className="relative h-0.5 flex-1 overflow-hidden rounded-full bg-[var(--cb-border)]">
+                  <span
+                    className={`absolute inset-0 origin-left rounded-full bg-[var(--cb-accent)] transition-transform duration-500 ${
+                      i < step - 1 ? "scale-x-100" : "scale-x-0"
+                    }`}
+                  />
+                </div>
               )}
             </div>
           ))}
         </div>
 
-        <div className="rounded-3xl border border-[var(--cb-border)] bg-[var(--cb-card)] p-8 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
+        <div className="cb-pop-in rounded-3xl border border-[var(--cb-border)] bg-[var(--cb-card)] p-8 shadow-[0_20px_50px_rgba(20,30,25,0.06)]">
+          {/* Remounting on step change replays the entrance animation. */}
+          <div key={step} className="cb-step-in">
           {/* Step 1: Name */}
           {step === 1 && (
             <div className="flex flex-col gap-5">
@@ -469,11 +477,11 @@ export default function OnboardingPage() {
                   }`}
                 >
                   {transcriptParsing ? (
-                    <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b7f46" strokeWidth="2.5" strokeLinecap="round">
+                    <svg className="animate-spin text-[var(--cb-accent)]" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                       <path d="M21 12a9 9 0 1 1-6.2-8.6" />
                     </svg>
                   ) : (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0b7f46" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg className="text-[var(--cb-accent)]" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                       <path d="M14 2v6h6" />
                     </svg>
@@ -500,8 +508,8 @@ export default function OnboardingPage() {
                     transcriptTone === "success"
                       ? "border-[var(--cb-accent)]/25 bg-[var(--cb-accent-tint)] text-[var(--cb-link)]"
                       : transcriptTone === "warning"
-                        ? "border-amber-500/25 bg-amber-50 text-amber-800"
-                        : "border-red-500/25 bg-red-50 text-red-800"
+                        ? "border-[var(--cb-warning-border)] bg-[var(--cb-warning-bg)] text-[var(--cb-warning)]"
+                        : "border-[var(--cb-danger-border)] bg-[var(--cb-danger-bg)] text-[var(--cb-danger)]"
                   }`}
                 >
                   <svg className="mt-px shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -594,6 +602,7 @@ export default function OnboardingPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
       <TransferAIWidget />

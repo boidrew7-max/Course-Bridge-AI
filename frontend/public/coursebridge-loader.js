@@ -154,19 +154,23 @@
     msg.style.cssText =
       'position:absolute;left:0;right:0;top:calc(50% + min(11vw,96px) + 108px);text-align:center;' +
       'font:500 15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
-      'color:' + T.msg + ';letter-spacing:.04em;opacity:0;transition:opacity .35s ease;' +
+      'color:' + T.msg + ';letter-spacing:.04em;opacity:0;transition:opacity .2s ease;' +
       'padding:0 24px;';
     var msgText = doc.createElement('span');
     var msgDots = doc.createElement('span');
     msgDots.style.cssText = 'display:inline-block;width:1.2em;text-align:left;';
     msg.appendChild(msgText); msg.appendChild(msgDots);
 
-    overlay.appendChild(svg);
-    overlay.appendChild(cableWrap);
-    overlay.appendChild(msg);
+    var content = doc.createElement('div');
+    content.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
+      'opacity:0;transform:translateY(10px);transition:opacity .5s cubic-bezier(.25,.6,.35,1),transform .6s cubic-bezier(.25,.6,.35,1);';
+    content.appendChild(svg);
+    content.appendChild(cableWrap);
+    content.appendChild(msg);
+    overlay.appendChild(content);
 
     return {
-      overlay: overlay, el: el, letters: letters, markGroup: markGroup, glow: glow, T: T,
+      overlay: overlay, content: content, el: el, letters: letters, markGroup: markGroup, glow: glow, T: T,
       mSolid: defs.querySelector('#cbMSolid'), mEdge: defs.querySelector('#cbMEdge'),
       cableWrap: cableWrap, cablePath: cablePath, pulse: pulse, dots: dots,
       msg: msg, msgText: msgText, msgDots: msgDots
@@ -225,11 +229,11 @@
 
   // fast entrance for the loader
   var T_LOADER = {
-    arch: [0.05, 0.62], pier: [0.52, 0.70], C: [0.30, 0.72], B: [0.42, 0.86],
-    bloom: [0.5, 0.9, 1.6], grow: [0.1, 0.9], slide: [0.78, 1.18],
-    let0: 0.88, letStep: 0.030, letDur: 0.32, cable: [0.15, 1.05]
+    arch: [0.05, 0.50], pier: [0.42, 0.58], C: [0.24, 0.62], B: [0.34, 0.74],
+    bloom: [0.40, 0.75, 1.35], grow: [0.08, 0.75], slide: [0.62, 1.00],
+    let0: 0.70, letStep: 0.026, letDur: 0.28, cable: [0.12, 0.88]
   };
-  var LOADER_ENTR_END = 1.65, LOOP_PERIOD = 2.8;
+  var LOADER_ENTR_END = 1.35, LOOP_PERIOD = 2.8;
 
   // slower, cinematic pacing for the splash (mirrors the video)
   var T_SPLASH = {
@@ -281,7 +285,7 @@
       if (mode === 'loader') {
         var nd = 1 + Math.floor(t / 0.45) % 3;
         o.msgDots.textContent = '...'.slice(0, nd);
-        if (msgs && msgs.length > 1 && now - lastMsgSwap > (opts.interval || 3000)) {
+        if (msgs && msgs.length > 1 && now - lastMsgSwap > (opts.interval || 1500)) {
           lastMsgSwap = now;
           msgIdx = (msgIdx + 1) % msgs.length;
           var span = o.msgText;
@@ -289,7 +293,7 @@
           setTimeout(function () {
             span.textContent = msgs[msgIdx];
             o.msg.style.opacity = '1';
-          }, 360);
+          }, 210);
         }
       }
 
@@ -330,7 +334,9 @@
       // fade in + reveal message shortly after
       root.requestAnimationFrame(function () {
         o.overlay.style.opacity = '1';
-        if (mode === 'loader') setTimeout(function () { o.msg.style.opacity = '1'; }, reduceMotion ? 50 : 900);
+        o.content.style.opacity = '1';
+        o.content.style.transform = 'translateY(0)';
+        if (mode === 'loader') setTimeout(function () { o.msg.style.opacity = '1'; }, reduceMotion ? 50 : 600);
       });
       startTicker(o, mode, opts);
     },
@@ -343,14 +349,17 @@
         setTimeout(function () {
           if (st !== s) { resolve(); return; }
           var o = s.o;
-          o.overlay.style.opacity = '0';
+          o.content.style.transition = 'opacity .28s ease, transform .34s cubic-bezier(.4,0,.7,1)';
+          o.content.style.opacity = '0';
+          o.content.style.transform = 'translateY(-8px)';
+          setTimeout(function () { o.overlay.style.opacity = '0'; }, 220);
           setTimeout(function () {
             if (o.raf) root.cancelAnimationFrame(o.raf);
             if (o.overlay.parentNode) o.overlay.parentNode.removeChild(o.overlay);
             root.document.body.style.overflow = s.prevOverflow;
             if (st === s) st = null;
             resolve();
-          }, 560);
+          }, 740);
         }, wait);
       });
     },

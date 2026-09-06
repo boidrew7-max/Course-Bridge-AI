@@ -1935,7 +1935,7 @@ export default function PlannerClient() {
  let accumulated = "";
  // Branded overlay covers the wait until the plan starts streaming in.
  let overlayUp = true;
- cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 2600 });
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500 });
  const dropOverlay = () => {
  if (!overlayUp) return;
  overlayUp = false;
@@ -1995,7 +1995,7 @@ export default function PlannerClient() {
  // Branded overlay plays on every plan open — saved plans get a short
  // branded moment (minDuration), fresh generations keep it up until the
  // plan starts streaming (generateAIPlan takes over the same overlay).
- cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 2600, minDuration: 2300 });
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500, minDuration: 2300 });
  try {
  const meRes = await fetch("/api/auth/me");
  if (meRes.ok) {

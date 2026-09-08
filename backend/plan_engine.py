@@ -1532,10 +1532,33 @@ def _select_calgetc(
     # nothing so far satisfied 5C, schedule one dedicated lab course now
     # rather than leave a real requirement unmet.
     if "5C" not in area_assignments and "5C" in _required_codes:
-        lab_candidates = [
-            c for c in by_area.get("5C", [])
-            if _ok(c) and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys
-        ]
+        # A course ALREADY in the plan (major prep) or already completed that
+        # appears in this school's own 5C list satisfies the lab area by
+        # double-label — scheduling a fresh copy of it produced a literal
+        # duplicate (verified: Skyline → Irvine Environmental Engineering
+        # scheduled required-major-prep CHEM 237 in term 1 AND a second
+        # "Cal-GETC Area 5C" CHEM 237 in term 4, because this fallback only
+        # ever checked placed_ge_keys).
+        _reuse_done = False
+        for c in by_area.get("5C", []):
+            ck = (c.get("prefix",""), c.get("number",""))
+            if ck in placed_ge_keys:
+                continue
+            if _norm_completed_key(*ck) in completed_set:
+                _claim("5C", ck, f"{ck[0]} {ck[1]} (already completed)")
+                _reuse_done = True
+                break
+            if ck in scheduled_keys:
+                _claim("5C", ck, f"{ck[0]} {ck[1]}")
+                _reuse_done = True
+                break
+        if _reuse_done:
+            lab_candidates = []
+        else:
+            lab_candidates = [
+                c for c in by_area.get("5C", [])
+                if _ok(c) and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys
+            ]
         seen_lab: set = set()
         lab_candidates = [c for c in lab_candidates
                            if (c.get("prefix",""), c.get("number","")) not in seen_lab

@@ -347,6 +347,24 @@ def _find_recommended_courses(uc_normalized: str, college: str, major: str) -> l
     return best_codes if best_score >= 0.55 else []
 
 
+# ── Completed-course key normalization ────────────────────────────────────────
+
+def _norm_completed_key(prefix: str, number: str) -> tuple:
+    """Canonical (PREFIX, NUMBER) for completed-course membership tests.
+
+    The completed set is USER input ("math 1a", "Math  1A", "MATH 1A") being
+    compared against data-side keys — raw case-sensitive tuple comparison
+    silently ignored any completed course that didn't exactly match the
+    scraped casing, so the engine re-scheduled courses the student said they
+    had already taken. Uppercase + collapse internal whitespace on BOTH
+    sides of every membership test.
+    """
+    return (
+        " ".join(str(prefix).split()).upper(),
+        " ".join(str(number).split()).upper(),
+    )
+
+
 # ── Data structures ───────────────────────────────────────────────────────────
 
 @dataclass
@@ -643,7 +661,7 @@ def _inject_cc_prereqs(
 
         for prefix, number, title, units, slot_explicit_prereqs in chain_data["inject"]:
             k = (prefix.upper(), number.upper())
-            if k in existing or (prefix, number) in completed_keys:
+            if k in existing or _norm_completed_key(prefix, number) in completed_keys:
                 continue
             prereq_slot = CourseSlot(
                 prefix=prefix, number=number, title=title, units=units,
@@ -902,7 +920,7 @@ def _resolve_major_prep(
         return sum(
             float(c.get("u", 3) or 3)
             for c in chosen
-            if (c.get("p",""), c.get("n","")) not in completed
+            if _norm_completed_key(c.get("p",""), c.get("n","")) not in completed
         )
 
     def _commit_chosen(chosen, uc_str, uc_key=None):
@@ -924,7 +942,7 @@ def _resolve_major_prep(
             key = (c.get("p","").strip(), c.get("n","").strip())
             if uc_key is not None:
                 ledger.setdefault(key, uc_key)
-            if key in completed:
+            if _norm_completed_key(*key) in completed:
                 cc_codes.append(f"{key[0]} {key[1]} (already completed)")
                 continue
             if key not in committed:
@@ -1373,7 +1391,7 @@ def _select_calgetc(
                 if ck in seen_4 or ck in placed_ge_keys:
                     continue
                 seen_4.add(ck)
-                if ck in completed_set or ck in scheduled_keys:
+                if _norm_completed_key(*ck) in completed_set or ck in scheduled_keys:
                     existing.append(c)
                 else:
                     fresh.append(c)
@@ -1419,7 +1437,7 @@ def _select_calgetc(
                     ge_courses.append(slot)
                     codes.append(slot.code)
                 else:
-                    suffix = " (already completed)" if ck in completed_set else ""
+                    suffix = " (already completed)" if _norm_completed_key(*ck) in completed_set else ""
                     codes.append(f"{c.get('prefix','')} {c.get('number','')}{suffix}")
                 # Every Area-4 pick (new or double-labelled) spends that course —
                 # record it so no later area can independently re-spend it, same
@@ -1438,7 +1456,7 @@ def _select_calgetc(
         # by _claim automatically claiming a course's OTHER certified areas)
         # should let one course pay off more than one area.
         completed_matches = [c for c in courses
-                             if (c.get("prefix",""), c.get("number","")) in completed_set
+                             if _norm_completed_key(c.get("prefix",""), c.get("number","")) in completed_set
                              and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys]
         if area_code in ("5A", "5B"):
             completed_matches.sort(key=lambda c: (0 if (c.get("prefix",""), c.get("number","")) in lab_keys else 1))
@@ -1469,7 +1487,7 @@ def _select_calgetc(
             if not _ok(c):
                 continue
             k = (c.get("prefix",""), c.get("number",""))
-            if k in completed_set or k in placed_ge_keys:
+            if _norm_completed_key(*k) in completed_set or k in placed_ge_keys:
                 continue
             if k not in seen:
                 seen.add(k)
@@ -1914,7 +1932,7 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
                 continue
             if ck in excluded:
                 continue
-            if ck in completed:
+            if _norm_completed_key(*ck) in completed:
                 continue
             if not accept_honors and ck[1].upper().endswith("H"):
                 continue
@@ -2034,11 +2052,11 @@ def build_plan(
     completed_keys: set = set()
     for item in completed:
         if isinstance(item, (list, tuple)) and len(item) == 2:
-            completed_keys.add((str(item[0]).strip(), str(item[1]).strip()))
+            completed_keys.add(_norm_completed_key(item[0], item[1]))
         elif isinstance(item, str):
             parts = item.strip().split()
             if len(parts) >= 2:
-                completed_keys.add((parts[0], parts[1]))
+                completed_keys.add(_norm_completed_key(parts[0], parts[1]))
 
     uc_l  = _UC_NAME_MAP.get(uc.lower().strip(), uc.lower())
     shard = _load_uc_shard(uc_l)

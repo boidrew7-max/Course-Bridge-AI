@@ -1723,6 +1723,23 @@ def _assign_terms(
     for slot in topo_major:
         preds = _find_predecessors(slot, all_slots_for_pred)
         t     = _earliest_valid_term(slot, preds, term_units, max_units, max_terms)
+        # Open new terms (up to the hard ceiling) instead of overloading an
+        # existing one or placing a course at/before its own prerequisite —
+        # the old least-loaded fallback did both (21 cap breaches in the
+        # full backtest, all at quarter schools with packed base terms).
+        while t > max_terms and max_terms < _MAX_TERMS_HARD:
+            max_terms += 1
+            terms[max_terms] = []
+            term_units[max_terms] = 0.0
+        if t > max_terms:
+            # Hard ceiling reached — least-loaded prereq-legal term; the
+            # overload surfaces via _sanity_check + the request self-check.
+            floor_t = 1
+            for p in preds:
+                if p.term > 0:
+                    floor_t = max(floor_t, p.term + 1)
+            floor_t = min(floor_t, max_terms)
+            t = min(range(floor_t, max_terms + 1), key=lambda x: term_units[x])
         _place(slot, t)
 
     # Pass 3: Cal-GETC courses — prefer standard terms (1-4) first, then extended.
@@ -1871,17 +1888,23 @@ def _earliest_valid_term(
     max_units: float,
     max_terms: int,
 ) -> int:
+    """Earliest prereq-legal term with spare capacity.
+
+    May return a term BEYOND max_terms — that's the signal for the caller to
+    open a new term rather than breach a cap or (when the prerequisite sits
+    in the last term) drop a course into the same term as its own prereq,
+    both of which the old clamp-and-least-loaded fallback silently did.
+    """
     min_term = 1
     for pred in predecessors:
         if pred.term > 0:
             min_term = max(min_term, pred.term + 1)
-    min_term = min(min_term, max_terms)
 
     for t in range(min_term, max_terms + 1):
         if term_units[t] + slot.units <= max_units:
             return t
-    # All terms overflow — put in least-loaded term >= min_term
-    return min(range(min_term, max_terms + 1), key=lambda t: term_units[t])
+    # Nothing fits within the prereq-legal window — request a new term.
+    return max(min_term, max_terms + 1)
 
 
 # ── Double-label ──────────────────────────────────────────────────────────────
@@ -2325,6 +2348,19 @@ def _sanity_check(result: PlanResult):
         if units > 0 and units < 9.0:
             result.warnings.append(
                 f"Term {t} has only {units:.0f} units — likely needs additional GE electives."
+            )
+
+    # Overloaded term check — only reachable when the 8-term hard ceiling
+    # forced a cap breach; never silent.
+    cap = _MAX_QUARTER_UNITS_PER_TERM if result.is_quarter else _MAX_UNITS_PER_TERM
+    for t in range(1, result.active_terms + 1):
+        units = sum(s.units for s in result.terms.get(t, []))
+        if units > cap + 0.5:
+            result.warnings.append(
+                f"OVERLOADED TERM: Term {t} carries {_fmt_units(units)} units, above the "
+                f"{_fmt_units(cap)}-unit cap — this program could not fit within the "
+                f"8-term ceiling. Work with a counselor to move some of these courses "
+                f"into summer sessions."
             )
 
 

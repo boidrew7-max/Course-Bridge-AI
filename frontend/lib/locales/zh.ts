@@ -56,7 +56,7 @@ const zh: Dictionary = {
   "footer.terms": "服务条款",
   "footer.login": "登录",
   "footer.buildMyPlan": "制定我的计划",
-  "footer.disclaimer": "CourseBridge 为独立产品，与 ASSIST、UC、CSU 或 CCSF 均无关联。请务必通过 ASSIST.org、官方院校目录以及顾问核实相关要求。",
+  "footer.disclaimer": "CourseBridge 为独立产品，与 ASSIST、UC 或 CSU 均无关联。请务必通过 ASSIST.org、官方院校目录以及顾问核实相关要求。",
   "footer.copyright": "© {year} CourseBridge 保留所有权利。",
 
   // Home: hero

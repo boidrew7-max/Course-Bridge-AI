@@ -54,7 +54,7 @@ const en = {
   "footer.terms": "Terms of service",
   "footer.login": "Log in",
   "footer.buildMyPlan": "Build my plan",
-  "footer.disclaimer": "CourseBridge is independent and not affiliated with ASSIST, UC, CSU, or CCSF. Always verify requirements through ASSIST.org, official college catalogs, and a counselor.",
+  "footer.disclaimer": "CourseBridge is independent and not affiliated with ASSIST, UC, or CSU. Always verify requirements through ASSIST.org, official college catalogs, and a counselor.",
   "footer.copyright": "© {year} CourseBridge. All rights reserved.",
 
   // Home: hero

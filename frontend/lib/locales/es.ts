@@ -56,7 +56,7 @@ const es: Dictionary = {
   "footer.terms": "Términos del servicio",
   "footer.login": "Iniciar sesión",
   "footer.buildMyPlan": "Crear mi plan",
-  "footer.disclaimer": "CourseBridge es independiente y no está afiliado con ASSIST, UC, CSU ni CCSF. Verifica siempre los requisitos en ASSIST.org, los catálogos oficiales de la universidad y con un consejero.",
+  "footer.disclaimer": "CourseBridge es independiente y no está afiliado con ASSIST, UC ni CSU. Verifica siempre los requisitos en ASSIST.org, los catálogos oficiales de la universidad y con un consejero.",
   "footer.copyright": "© {year} CourseBridge. Todos los derechos reservados.",
 
   // Home: hero

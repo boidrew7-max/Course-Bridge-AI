@@ -194,7 +194,22 @@ _CALGETC_REQUIRED = [
 _QUARTER_SCHOOLS = {"De Anza College", "Foothill College", "Lake Tahoe Community College"}
 
 def _is_quarter(college: str) -> bool:
-    return college in _QUARTER_SCHOOLS
+    """Case-insensitive, prefix-tolerant quarter-school check.
+
+    build_plan passes the CANONICAL shard-matched name here, but tolerate a
+    shortened form anyway ("De Anza" ⊂ "De Anza College") — an exact-only
+    match let a user-typed short name silently flip a quarter school into
+    semester mode: wrong term names, 20u caps instead of 18u, and the
+    60-semester-unit floor applied to what are actually quarter units.
+    """
+    cl = " ".join(college.lower().split())
+    if not cl:
+        return False
+    for q in _QUARTER_SCHOOLS:
+        ql = q.lower()
+        if cl == ql or (len(cl) >= 6 and (cl in ql or ql in cl)):
+            return True
+    return False
 
 _ART_SHARDS: "OrderedDict" = OrderedDict()
 # All 9 UC shards held at once cost ~1.75 GB of real Python heap (tracemalloc-
@@ -1871,7 +1886,14 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
         return
 
     calgetc = _load_calgetc()
-    school_data = calgetc.get("bySchool", {}).get(college, {})
+    by_school = calgetc.get("bySchool", {})
+    # Resolve the college the same way _select_calgetc does (case drift,
+    # dropped "Community", renamed colleges) instead of an exact dict.get —
+    # the exact lookup silently returned {} for any name variation, so the
+    # plan skipped elective filling entirely and shipped under the 60/90-unit
+    # transfer floor with nothing but a shortfall warning.
+    school_key = resolve_calgetc_school_key(college, by_school)
+    school_data = by_school.get(school_key, {}) if school_key else {}
     if not school_data:
         return
 
@@ -2123,7 +2145,9 @@ def build_plan(
             r.warnings.append(f"No articulation data found for {college} -> {uc} | {major}")
             return r
 
-    result.is_quarter = _is_quarter(college)
+    # Canonical (shard-matched) name, not the raw user string — "De Anza"
+    # must detect quarter-system exactly like "De Anza College" does.
+    result.is_quarter = _is_quarter(matched_cc_name)
     result.terms, _ = _assign_terms(major_courses, ge_courses, major, is_quarter=result.is_quarter)
 
     # Compute how many terms have courses
@@ -2139,8 +2163,10 @@ def build_plan(
     _apply_double_labels(result)
 
     result.total_units = sum(s.units for s in result.all_courses())
-    _fill_electives(result, college, exclude_codes=loser_cc_codes, accept_honors=accept_honors,
-                     completed_keys=completed_keys)
+    # Canonical name here too — the raw user string previously had to
+    # exact-match calgetc_map's own school key for ANY elective to fill.
+    _fill_electives(result, matched_cc_name, exclude_codes=loser_cc_codes,
+                     accept_honors=accept_honors, completed_keys=completed_keys)
 
     # Recompute metadata after elective filling (new terms may have been added)
     base_terms = 6 if result.is_quarter else 4

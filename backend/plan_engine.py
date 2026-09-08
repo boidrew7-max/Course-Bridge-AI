@@ -1280,6 +1280,23 @@ def _select_calgetc(
             return False
         return True
 
+    def _is_pred_of_scheduled(c) -> bool:
+        """True when this candidate is a sequence PREDECESSOR of a course
+        already scheduled for major prep (e.g. picking MATH 50A for Area 2
+        when major prep already schedules MATH 50B). Such a pick forces an
+        ordering the schedule may not be able to honor — the successor can
+        already sit in term 1 — so fresh-candidate lists sort these last and
+        only fall back to them when no clean alternative exists at all."""
+        n = c.get("number", "")
+        p = c.get("prefix", "")
+        c_ord = infer_sequence_order(n)[1]
+        if c_ord < 0:
+            return False
+        for sp, sn in scheduled_keys:
+            if sp == p and same_sequence_base(sn, n) and infer_sequence_order(sn)[1] > c_ord:
+                return True
+        return False
+
     def _data_courses(area_code: str) -> list:
         """Return raw course list from by_area for the given area code."""
         return by_area.get(area_code, [])
@@ -1365,7 +1382,9 @@ def _select_calgetc(
             # Prefer double-labelling existing courses (no extra unit cost)
             for c in existing:
                 _try_add(c, False)
-            # Supplement with new courses as needed
+            # Supplement with new courses as needed — sequence-predecessors
+            # of already-scheduled major courses last (see _is_pred_of_scheduled)
+            fresh.sort(key=_is_pred_of_scheduled)
             for c in fresh:
                 _try_add(c, True)
             # If still short (e.g. discipline conflict) fill regardless of discipline
@@ -1443,6 +1462,11 @@ def _select_calgetc(
         if not unique:
             continue
 
+        # Demote sequence-predecessors of already-scheduled major courses to
+        # the back of the candidate list (stable — every other preference
+        # below still applies within each bucket). Applied FIRST so the
+        # area-specific sorts stay dominant among the clean candidates.
+        unique.sort(key=_is_pred_of_scheduled)
         if area_code == "1B":
             unique.sort(key=lambda c: (0 if c.get("prefix","").upper().startswith("ENGL") else 1))
         if area_code in ("5A", "5B"):
@@ -1483,6 +1507,7 @@ def _select_calgetc(
         lab_candidates = [c for c in lab_candidates
                            if (c.get("prefix",""), c.get("number","")) not in seen_lab
                            and not seen_lab.add((c.get("prefix",""), c.get("number","")))]
+        lab_candidates.sort(key=_is_pred_of_scheduled)
         if lab_candidates:
             pick = lab_candidates[0]
             pk = (pick.get("prefix",""), pick.get("number",""))
@@ -1559,7 +1584,29 @@ def _assign_terms(
             del calc_assigned[role]
             unassigned_major.append(slot)
 
+    # Second consistency guard: role order vs the courses' OWN sequence order.
+    # role_order places diffeq before linalg, but some colleges number linear
+    # algebra BEFORE differential equations inside one lettered sequence
+    # (e.g. Alameda's MATH 3E = linear algebra, MATH 3F = diffeq — 81
+    # backtest plans scheduled 3F ahead of 3E). If two calc-chain picks share
+    # a lettered sequence and the fixed role ordering contradicts that
+    # sequence, demote both to Pass 2's topological sort, which orders by the
+    # sequence itself.
     role_order = ["calc1", "calc2", "calc3", "diffeq", "linalg"]
+    _role_rank = {r: i for i, r in enumerate(role_order)}
+    _demote: set = set()
+    _ordered_items = sorted(calc_assigned.items(), key=lambda kv: _role_rank[kv[0]])
+    for _i, (_r1, _s1) in enumerate(_ordered_items):
+        for _r2, _s2 in _ordered_items[_i + 1:]:
+            if _s1.prefix == _s2.prefix and same_sequence_base(_s1.number, _s2.number):
+                _o1 = infer_sequence_order(_s1.number)[1]
+                _o2 = infer_sequence_order(_s2.number)[1]
+                if 0 <= _o2 < _o1:   # later role, earlier sequence position
+                    _demote.add(_r1)
+                    _demote.add(_r2)
+    for _r in _demote:
+        unassigned_major.append(calc_assigned.pop(_r))
+
     present_roles = [r for r in role_order if r in calc_assigned]
     for i, role in enumerate(present_roles):
         term = min(i + 1, 4)   # calc chain stays in terms 1-4
@@ -1623,56 +1670,118 @@ def _assign_terms(
         _place(slot, t)
 
     # Pass 3: Cal-GETC courses — prefer standard terms (1-4) first, then extended.
-    # Track placed Cal-GETC area terms to enforce 1A-before-1B ordering.
-    ge_area_term: dict = {}   # area_code -> term where it was placed
+    #
+    # Placement must respect course-sequence order GENERALLY, not just the
+    # old 1A-before-1B special case: two GE picks can come from the same
+    # lettered sequence (e.g. Bakersfield's HIST B30A for Area 3B and HIST
+    # B30B for Area 4 — 469 backtest plans had B30A land in a LATER term
+    # than B30B because load-balancing was the only placement criterion),
+    # and a GE pick can be the sequence predecessor or successor of a
+    # major-prep course already placed in Pass 1/2.
 
-    def _ge_min_term(slot: CourseSlot) -> int:
-        """Return earliest allowed term for this GE slot."""
+    # Place same-sequence GE picks in ordinal order (stable for everything
+    # else) — area-processing order is arbitrary relative to sequence order.
+    _ge_first_idx: dict = {}
+
+    def _ge_seq_group(slot: CourseSlot):
+        num, _ordv, lpfx = infer_sequence_order(slot.number)
+        return (slot.prefix, lpfx, num)
+
+    for _i, _s in enumerate(ge_courses):
+        _ge_first_idx.setdefault(_ge_seq_group(_s), _i)
+    ge_courses = sorted(
+        ge_courses,
+        key=lambda s: (_ge_first_idx[_ge_seq_group(s)], infer_sequence_order(s.number)),
+    )
+
+    ge_area_term: dict = {}   # area_code -> term where it was placed
+    # 1B must follow 1A only when 1A is itself being scheduled here — when
+    # 1A is already completed (or double-labelled onto major prep), forcing
+    # 1B out of term 1 was pure lost capacity.
+    _has_1a_slot = any(any("Area 1A" in tag for tag in s.tags) for s in ge_courses)
+    # Everything already placed (calc chain + topo major), growing as GE
+    # slots land — the predecessor/successor scan below reads .term off it.
+    _placed_for_seq: list = list(calc_assigned.values()) + topo_major
+
+    def _ge_term_bounds(slot: CourseSlot) -> tuple:
+        """(min_term, max_term) allowed for this GE slot.
+
+        min: strictly after any placed same-sequence predecessor (and after
+        Area 1A for the 1B slot). max: strictly before any placed
+        same-sequence successor — e.g. an Area-2 pick MATH 002B must land
+        before major-prep MATH 002C, not merely in the least-loaded term.
+        """
+        min_t, max_t = 1, _MAX_TERMS_HARD
         for tag in slot.tags:
             if "Area 1B" in tag:
-                return ge_area_term.get("1A", 1) + 1  # 1B must come strictly after 1A
-        return 1
+                min_t = max(min_t, ge_area_term.get("1A", 1 if _has_1a_slot else 0) + 1)
+        s_ord = infer_sequence_order(slot.number)[1]
+        if s_ord >= 0:
+            for other in _placed_for_seq:
+                if other.term <= 0 or other.prefix != slot.prefix:
+                    continue
+                if not same_sequence_base(other.number, slot.number):
+                    continue
+                o_ord = infer_sequence_order(other.number)[1]
+                if 0 <= o_ord < s_ord:
+                    min_t = max(min_t, other.term + 1)
+                elif 0 <= s_ord < o_ord:
+                    max_t = min(max_t, other.term - 1)
+        if max_t < min_t:
+            # Contradictory constraints (a successor already sits at/below
+            # the earliest legal term) — honor the predecessor side; the
+            # request-time self-check surfaces whatever remains.
+            max_t = _MAX_TERMS_HARD
+        return min_t, max_t
 
-    def _record_ge_area(slot: CourseSlot, t: int):
+    def _record_ge_placed(slot: CourseSlot, t: int):
         for tag in slot.tags:
             if "Area " in tag:
                 ge_area_term[tag.split("Area ")[1]] = t
+        _placed_for_seq.append(slot)
 
     for slot in ge_courses:
         placed = False
-        min_t  = _ge_min_term(slot)
-        # Try standard terms in load order, respecting min_t
+        min_t, max_allow = _ge_term_bounds(slot)
+        # Try standard terms in load order, respecting bounds
         for t in sorted(range(1, 5), key=lambda t: term_units[t]):
-            if t < min_t:
+            if t < min_t or t > max_allow:
                 continue
             if term_units[t] + slot.units <= max_units:
                 _place(slot, t)
-                _record_ge_area(slot, t)
+                _record_ge_placed(slot, t)
                 placed = True
                 break
         if not placed and max_terms > 4:
             # Try extended terms with cap
             for t in sorted(range(5, max_terms + 1), key=lambda t: term_units[t]):
-                if t < min_t:
+                if t < min_t or t > max_allow:
                     continue
                 if term_units[t] + slot.units <= max_units:
                     _place(slot, t)
-                    _record_ge_area(slot, t)
+                    _record_ge_placed(slot, t)
                     placed = True
                     break
         if not placed:
-            # Prefer adding a new term over overloading an existing one
-            if max_terms < _MAX_TERMS_HARD:
+            # Prefer adding a new term over overloading an existing one —
+            # but only when a new term is actually legal for this slot
+            # (a placed same-sequence successor caps how late it may go).
+            if max_terms < _MAX_TERMS_HARD and max_terms < max_allow:
                 max_terms += 1
                 terms[max_terms] = []
                 term_units[max_terms] = 0.0
                 _place(slot, max_terms)
-                _record_ge_area(slot, max_terms)
+                _record_ge_placed(slot, max_terms)
             else:
-                # At hard ceiling — put in least-loaded term (cap breached by ≤1 course)
-                t = min(range(1, max_terms + 1), key=lambda t: term_units[t])
+                # At hard ceiling — least-loaded term within legal bounds
+                # (cap breached by ≤1 course)
+                lo = min(min_t, max_terms)
+                hi = min(max_allow, max_terms)
+                if hi < lo:
+                    hi = max_terms
+                t = min(range(lo, hi + 1), key=lambda t: term_units[t])
                 _place(slot, t)
-                _record_ge_area(slot, t)
+                _record_ge_placed(slot, t)
 
     return terms, term_units
 

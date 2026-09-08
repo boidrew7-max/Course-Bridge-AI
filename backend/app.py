@@ -14,6 +14,7 @@ from plan_engine import (build_plan as _engine_build_plan,
                          repair_term_headers as _engine_repair_term_headers,
                          repair_ge_completion_section as _engine_repair_ge_section,
                          _UC_SHARD_MAP)
+from plan_checks import validate_plan as _validate_plan
 from db import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     verify_password, email_exists, update_profile,
@@ -589,6 +590,30 @@ def plan_v2():
             yield "data: [DONE]\n\n"
         return Response(stream_with_context(_nodata()), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache"})
+
+    # ── Request-time self-check ──────────────────────────────────────────────
+    # The same answer-free battery the offline backtest runs (ghost courses,
+    # sequence order, AND-group completeness, term caps, duplicates,
+    # completed-course exclusion) — run on EVERY served plan, so a plan that
+    # violates the engine's own rules is logged and flagged to the student
+    # instead of shipping silently. Microseconds per plan; never fatal.
+    try:
+        _violations = _validate_plan(result, completed=completed_set)
+    except Exception as e:  # a self-check crash must never take down serving
+        _violations = []
+        app.logger.error("plan_v2_selfcheck_crash college=%r school=%r major=%r err=%.200s",
+                         college, school, major, str(e))
+    if _violations:
+        app.logger.error(
+            "plan_v2_selfcheck_fail college=%r school=%r major=%r n=%d first=%.300s",
+            college, school, major, len(_violations), _violations[0],
+        )
+        result.warnings.append(
+            f"SELF-CHECK: this plan failed {len(_violations)} internal consistency "
+            f"check(s) (first: {_violations[0]}). The plan is still shown, but "
+            "please verify this combination with a counselor and report it so we "
+            "can fix the data."
+        )
 
     # ── TAG / GPA metadata ────────────────────────────────────────────────────
     uc_l_for_meta = _UC_NAME_MAP.get(school.lower().strip(), school.lower())

@@ -1,10 +1,11 @@
 """
 Invariant checks for full-matrix backtesting.
 
-Reuses the existing per-case checkers from test_plan_engine.py (they take a
-built PlanResult and need no expected answer) and adds the invariants that
-only make sense at matrix scale: course-exists-at-CCC, OR-group exactly-one,
-Cal-GETC coverage/double-count, unit-math floor, termination sanity.
+Reuses the shared per-case checkers from plan_checks.py (they take a built
+PlanResult and need no expected answer — the same battery /plan_v2 runs on
+every served plan) and adds the invariants that only make sense at matrix
+scale: course-exists-at-CCC, OR-group exactly-one, Cal-GETC
+coverage/double-count, unit-math floor, termination sanity.
 
 Every function returns a list[str] of violation messages (empty = pass).
 Nothing here calls build_plan() — callers (backtest_matrix.py, test_plan_engine.py)
@@ -24,7 +25,7 @@ from plan_engine import (
     _UC_SHARD_MAP,
     resolve_calgetc_school_key,
 )
-from test_plan_engine import (
+from plan_checks import (
     check_ghost_courses,
     check_prereq_violations,
     check_and_groups,

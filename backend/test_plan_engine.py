@@ -57,6 +57,14 @@ from plan_engine import (
     _MAX_QUARTER_UNITS_PER_TERM,
 )
 from course_sequence import infer_sequence_order, same_sequence_base
+from plan_checks import (  # noqa: F401 — re-exported for invariants.py back-compat
+    check_ghost_courses,
+    check_prereq_violations,
+    check_and_groups,
+    check_unit_overload,
+    check_completed_excluded,
+    check_no_duplicates,
+)
 
 # ── Test case definitions ─────────────────────────────────────────────────────
 # See module docstring for tuple format.
@@ -219,106 +227,10 @@ CASES = [
 
 # ── Checkers ─────────────────────────────────────────────────────────────────
 
-def check_ghost_courses(result: PlanResult) -> list:
-    placed = {s.code for s in result.all_courses()}
-    errors = []
-    for area, course_code in result.ge_completion.items():
-        for code in course_code.split(", "):
-            code = code.strip()
-            if not code or "via" in code or "satisfied" in code or "already completed" in code or "NOT ASSIGNED" in code:
-                continue
-            if code not in placed:
-                errors.append(f"Ghost in area {area}: {code!r} not placed in any term")
-    return errors
-
-
-def check_prereq_violations(result: PlanResult) -> list:
-    all_courses = result.all_courses()
-    errors = []
-    checked = set()
-    for a in all_courses:
-        for b in all_courses:
-            if a.code == b.code or (a.code, b.code) in checked:
-                continue
-            checked.add((a.code, b.code))
-            if a.prefix != b.prefix:
-                continue
-            if not same_sequence_base(a.number, b.number):
-                continue
-            # Same-lettered courses that jointly satisfy the identical UC
-            # requirement (e.g. Alameda's MATH 3E + 3F both articulating to
-            # "MATH 54 - Linear Algebra and Differential Equations") are a
-            # bundled pair, not a prerequisite chain of each other — the
-            # letter order doesn't imply which must come first. Flagging
-            # these was a false positive, not a real scheduling bug.
-            if a.uc_reqs and a.uc_reqs == b.uc_reqs:
-                continue
-            ord_a = infer_sequence_order(a.number)[1]
-            ord_b = infer_sequence_order(b.number)[1]
-            # a should precede b (ord_a < ord_b) meaning a.term <= b.term
-            if ord_a < ord_b and a.term > b.term:
-                errors.append(
-                    f"Prereq violation: {a.code} (ord {ord_a}, term {a.term}) "
-                    f"placed AFTER {b.code} (ord {ord_b}, term {b.term})"
-                )
-    return errors
-
-
-def check_and_groups(result: PlanResult) -> list:
-    placed = {s.code for s in result.all_courses()}
-    errors = []
-    for uc_req, cc_code, status in result.requirement_audit:
-        if status != "MET":
-            continue
-        if cc_code.startswith("satisfied via"):  # OR-group: winner handles this requirement
-            continue
-        required = [c.strip() for c in cc_code.split(" + ") if c.strip()]
-        missing  = [c for c in required if c not in placed and "already completed" not in c]
-        if missing:
-            errors.append(f"AND-group incomplete for {uc_req!r}: missing {missing}")
-    return errors
-
-
-def check_unit_overload(result: PlanResult) -> list:
-    cap = _MAX_QUARTER_UNITS_PER_TERM if result.is_quarter else _MAX_UNITS_PER_TERM
-    errors = []
-    for t in range(1, result.active_terms + 1):
-        units = sum(s.units for s in result.terms.get(t, []))
-        if units > cap + 0.5:  # 0.5 tolerance for rounding
-            errors.append(
-                f"Term {t} has {units:.1f}u -- exceeds {cap}u hard cap"
-            )
-    return errors
-
-
-def check_completed_excluded(result: PlanResult, completed: set) -> list:
-    """Completed courses must not appear anywhere in the scheduled plan."""
-    if not completed:
-        return []
-    placed = {s.code for s in result.all_courses()}
-    errors = []
-    for raw in completed:
-        code = raw.strip().upper()
-        if code in placed:
-            errors.append(
-                f"Completed course {code} was re-scheduled (should have been excluded)"
-            )
-    return errors
-
-
-def check_no_duplicates(result: PlanResult) -> list:
-    """No course should appear in more than one term."""
-    seen: dict = {}
-    errors = []
-    for s in result.all_courses():
-        if s.code in seen:
-            errors.append(
-                f"Duplicate: {s.code} scheduled in term {seen[s.code]} AND term {s.term}"
-            )
-        else:
-            seen[s.code] = s.term
-    return errors
-
+# The six answer-free checkers (ghost courses, prereq order, AND-groups,
+# unit caps, completed-excluded, duplicates) live in plan_checks.py now —
+# shared verbatim with invariants.py (backtest) and app.py (request-time
+# validate_plan). Imported above; the case-specific checkers below stay here.
 
 def check_content(
     result: PlanResult,

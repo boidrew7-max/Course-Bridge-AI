@@ -1241,6 +1241,7 @@ def _select_calgetc(
         return [], {}, deferred_areas
 
     by_area = by_school[school_key].get("byArea", {})
+    _NOT_ASSIGNED_TEXT = "NOT ASSIGNED — no eligible course found in this college's Cal-GETC list"
     lab_keys = {(c.get("prefix",""), c.get("number","")) for c in by_area.get("5C", [])}
     completed_set = completed_keys or set()
     ge_tag_prefix = "Cal-GETC"
@@ -1375,6 +1376,7 @@ def _select_calgetc(
         if area_code == "4":
             courses_4 = by_area.get("4", [])
             if not courses_4:
+                area_assignments["4"] = _NOT_ASSIGNED_TEXT
                 continue
             quota = 2
 
@@ -1443,12 +1445,30 @@ def _select_calgetc(
                 # record it so no later area can independently re-spend it, same
                 # as the single-course path below.
                 placed_ge_keys.add(ck)
-            area_assignments["4"] = ", ".join(codes)
+            if len(picks) < quota:
+                # A quota shortfall must read as a shortfall — a lone Area 4
+                # course silently rendering as ✅ MET was indistinguishable
+                # from a complete assignment.
+                short = quota - len(picks)
+                shortfall_txt = (
+                    f"NOT ASSIGNED ({short} more course{'s' if short > 1 else ''} "
+                    f"needed from a second discipline)"
+                )
+                area_assignments["4"] = (
+                    ", ".join(codes + [shortfall_txt]) if codes else _NOT_ASSIGNED_TEXT
+                )
+            else:
+                area_assignments["4"] = ", ".join(codes)
             continue
 
         # ── Standard area processing ──────────────────────────────────────
         courses = _data_courses(area_code)
         if not courses:
+            # An area this college's own Cal-GETC list simply has no courses
+            # for must surface as an explicit ❌ NOT ASSIGNED row — silently
+            # omitting it let the rendered GE table look complete and the
+            # Overall Status read PASS with a whole area missing.
+            area_assignments[area_code] = _NOT_ASSIGNED_TEXT
             continue
 
         # Completed-course double-label — excludes courses already spent on
@@ -1493,6 +1513,10 @@ def _select_calgetc(
                 seen.add(k)
                 unique.append(c)
         if not unique:
+            # Same as the empty-courses case above: every candidate was
+            # filtered out (honors-only under accept_honors=False, ESL,
+            # already spent) — never a silent omission.
+            area_assignments[area_code] = _NOT_ASSIGNED_TEXT
             continue
 
         # Demote sequence-predecessors of already-scheduled major courses to
@@ -1571,6 +1595,16 @@ def _select_calgetc(
             ge_courses.append(slot)
             area_assignments["5C"] = slot.code
             placed_ge_keys.add(pk)
+
+    # ── Final truth sweep ───────────────────────────────────────────────────
+    # Any required area STILL unassigned (and not deliberately deferred) gets
+    # an explicit NOT ASSIGNED row. This is the guarantee behind the render
+    # layer's Overall Status: an area can only be missing from the GE table
+    # if the engine never emitted it, and after this sweep that cannot
+    # happen — the table shows ❌ NOT MET instead of silently passing.
+    for area_code in [code for code, _, _ in required] + ["5C"]:
+        if area_code not in area_assignments and area_code not in deferred_areas:
+            area_assignments[area_code] = _NOT_ASSIGNED_TEXT
 
     return ge_courses, area_assignments, deferred_areas
 
@@ -2209,6 +2243,18 @@ def build_plan(
             r.warnings.append(f"No articulation data found for {college} -> {uc} | {major}")
             return r
 
+    # GE lookup produced nothing at all (college missing from calgetc_map,
+    # e.g. a district-level ASSIST name): say so explicitly — an empty GE
+    # table must never read as "GE complete", and render_plan_text refuses
+    # an overall PASS when this is the case.
+    if not area_assignments and not ge_deferred_areas:
+        result.warnings.append(
+            "GE DATA GAP: no Cal-GETC course list was found for this college, so no "
+            "general-education courses could be scheduled and this plan cannot "
+            "certify Cal-GETC. Verify your college's GE list on ASSIST.org or with "
+            "a counselor."
+        )
+
     # Canonical (shard-matched) name, not the raw user string — "De Anza"
     # must detect quarter-system exactly like "De Anza College" does.
     result.is_quarter = _is_quarter(matched_cc_name)
@@ -2526,7 +2572,11 @@ def render_plan_text(
         status in ("MET", "MET (CONDITIONAL)")
         for _, _, status in result.requirement_audit
     )
-    overall_pass = major_prep_complete and all_ge_met and not result.not_articulated
+    # An empty GE section (no assignments, nothing deferred) is a data gap,
+    # not completion — never grade it PASS.
+    ge_present = bool(result.ge_completion) or bool(result.ge_deferred_areas)
+    overall_pass = (major_prep_complete and all_ge_met and ge_present
+                    and not result.not_articulated)
     lines.append(f"**Overall Status:** {'PASS' if overall_pass else 'NOT COMPLETE'}")
     lines.append("")
     lines.append("---")

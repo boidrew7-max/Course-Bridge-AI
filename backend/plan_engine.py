@@ -1629,6 +1629,26 @@ def _assign_terms(
     max_units  = _MAX_QUARTER_UNITS_PER_TERM if is_quarter else _MAX_UNITS_PER_TERM
     base_terms = 6 if is_quarter else 4
 
+    # A GE pick that shares a lettered sequence with a MAJOR course must be
+    # ordered WITH the majors, not around them: e.g. Chaffey→Davis places
+    # required ENGL 1C in term 1, then Area 1A's ENGL 1A pick has no legal
+    # term left (its successor already sits in term 1). Promote such GE
+    # slots into the major passes — the topological sort orders the whole
+    # sequence (1A before 1C), instead of Pass 3 discovering an
+    # unsatisfiable bound after the majors are frozen.
+    _promoted_ge: list = []
+    _remaining_ge: list = []
+    _major_keys = [(s.prefix, s.number) for s in major_courses]
+    for _g in ge_courses:
+        _related = (
+            infer_sequence_order(_g.number)[1] >= 0
+            and any(mp == _g.prefix and same_sequence_base(mn, _g.number)
+                    for mp, mn in _major_keys)
+        )
+        (_promoted_ge if _related else _remaining_ge).append(_g)
+    major_courses = major_courses + _promoted_ge
+    ge_courses = _remaining_ge
+
     # Pre-calculate needed terms from total unit load so the cap is never breached
     total_u   = sum(s.units for s in major_courses + ge_courses)
     max_terms = max(base_terms, min(math.ceil(total_u / max_units), _MAX_TERMS_HARD))

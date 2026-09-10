@@ -66,7 +66,7 @@ export default function Footer() {
                     <li key={link.href}>
                       <a
                         href={link.href}
-                        className="cb-link flex items-center"
+                        className="cb-link cb-navlink inline-flex items-center"
                         style={{ minHeight: 44, fontSize: "var(--cb-fs-body-sm)" }}
                       >
                         {link.label}

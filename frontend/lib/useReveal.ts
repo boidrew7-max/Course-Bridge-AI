@@ -3,13 +3,22 @@
 import { useEffect } from "react";
 
 /**
- * Reveals every `.cb-reveal` element inside the page once, as it scrolls into
- * view. The CSS handles the actual fade and rise, and short circuits itself
- * under prefers-reduced-motion, so this only has to add the class.
+ * Reveals elements as they scroll into view, once each.
+ * Watches three shapes:
+ *   .cb-reveal        — fade + rise (element by element)
+ *   .cb-reveal-scale  — fade + gentle scale
+ *   [data-reveal-group] — container gets .cb-revealed; its children cascade
+ *                         via the nth-child transition delays in globals.css.
+ * Pass a rescanKey to re-run the scan when content appears later
+ * (e.g. after a plan loads).
  */
-export function useReveal() {
+export function useReveal(rescanKey?: unknown) {
   useEffect(() => {
-    const nodes = Array.from(document.querySelectorAll<HTMLElement>(".cb-reveal"));
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        ".cb-reveal, .cb-reveal-scale, [data-reveal-group]"
+      )
+    ).filter((node) => !node.classList.contains("cb-revealed"));
     if (nodes.length === 0) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -26,10 +35,10 @@ export function useReveal() {
           observer.unobserve(entry.target);
         }
       },
-      { rootMargin: "0px 0px -10% 0px", threshold: 0.05 },
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.05 }
     );
 
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-  }, []);
+  }, [rescanKey]);
 }

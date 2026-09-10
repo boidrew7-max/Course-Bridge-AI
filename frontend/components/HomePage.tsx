@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import Link from "next/link";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -8,16 +8,18 @@ import TransferAIWidget from "./TransferAIWidget";
 import { useTranslation } from "../lib/i18n";
 import type { Dictionary } from "../lib/locales";
 import { useReveal } from "../lib/useReveal";
+import { useCountUp } from "../lib/useCountUp";
+import BridgeDivider from "./BridgeDivider";
 
 export default function HomePage() {
   const { t } = useTranslation();
   useReveal();
 
   const STATS = [
-    { n: "116", label: t("home.stats.communityColleges") },
-    { n: "57K+", label: t("home.stats.coursesIndexed") },
-    { n: "9", label: t("home.stats.ucCampuses") },
-    { n: "121K+", label: t("home.stats.articulationAgreements") },
+    { n: 116, suffix: "", label: t("home.stats.communityColleges") },
+    { n: 57, suffix: "K+", label: t("home.stats.coursesIndexed") },
+    { n: 9, suffix: "", label: t("home.stats.ucCampuses") },
+    { n: 121, suffix: "K+", label: t("home.stats.articulationAgreements") },
   ];
 
   const PAIN_POINTS = [
@@ -49,12 +51,23 @@ export default function HomePage() {
     { title: t("home.get.feature6.title"), body: t("home.get.feature6.body") },
   ];
 
-  const FAQS = [
+  const FAQS: { q: string; a: ReactNode }[] = [
     { q: t("home.faq.q1"), a: t("home.faq.a1") },
     { q: t("home.faq.q2"), a: t("home.faq.a2") },
     { q: t("home.faq.q3"), a: t("home.faq.a3") },
     { q: t("home.faq.q4"), a: t("home.faq.a4") },
     { q: t("home.faq.q5"), a: t("home.faq.a5") },
+    {
+      q: t("home.faq.q6"),
+      a: (
+        <>
+          {t("home.faq.a6")}{" "}
+          <Link href="/privacy" className="cb-link" style={{ color: "var(--cb-link)", textDecoration: "underline" }}>
+            {t("home.faq.a6Link")}
+          </Link>
+        </>
+      ),
+    },
   ];
 
   return (
@@ -66,15 +79,15 @@ export default function HomePage() {
         <div className="cb-container">
           <div className="grid items-center gap-[var(--cb-space-5)] lg:grid-cols-[1.05fr_0.95fr]">
             <div>
-              <h1 className="cb-h1" style={{ maxWidth: "18ch" }}>
+              <h1 className="cb-h1 cb-enter" style={{ maxWidth: "18ch" }}>
                 {t("home.heroTitle")}
               </h1>
 
-              <p className="cb-lead" style={{ marginTop: "var(--cb-space-3)" }}>
+              <p className="cb-lead cb-enter cb-enter-1" style={{ marginTop: "var(--cb-space-3)" }}>
                 {t("home.heroBody")}
               </p>
 
-              <div style={{ marginTop: "var(--cb-space-4)" }}>
+              <div className="cb-enter cb-enter-2" style={{ marginTop: "var(--cb-space-4)" }}>
                 <Link href="/onboarding" className="cb-btn cb-btn-primary w-full sm:w-auto">
                   {t("home.buildMyPlan")}
                 </Link>
@@ -82,7 +95,7 @@ export default function HomePage() {
 
               {/* Trust element: counts from the articulation data the plans are built on. */}
               <dl
-                className="grid grid-cols-2 sm:grid-cols-4"
+                className="cb-enter cb-enter-3 grid grid-cols-2 sm:grid-cols-4"
                 style={{
                   gap: "var(--cb-space-3)",
                   marginTop: "var(--cb-space-5)",
@@ -91,49 +104,26 @@ export default function HomePage() {
                 }}
               >
                 {STATS.map((s) => (
-                  <div key={s.label}>
-                    <dt className="sr-only">{s.label}</dt>
-                    <dd style={{ margin: 0 }}>
-                      <span
-                        style={{
-                          display: "block",
-                          fontFamily: "var(--cb-font-heading)",
-                          fontSize: "var(--cb-fs-stat)",
-                          fontWeight: 700,
-                          lineHeight: 1.1,
-                          color: "var(--cb-link)",
-                        }}
-                      >
-                        {s.n}
-                      </span>
-                      <span
-                        style={{
-                          display: "block",
-                          marginTop: "0.25rem",
-                          fontSize: "var(--cb-fs-body-sm)",
-                          color: "var(--cb-muted)",
-                        }}
-                      >
-                        {s.label}
-                      </span>
-                    </dd>
-                  </div>
+                  <CountUpStat key={s.label} n={s.n} suffix={s.suffix} label={s.label} />
                 ))}
               </dl>
             </div>
 
-            <PlanPreview t={t} />
+            <div className="cb-enter cb-enter-3">
+              <PlanPreview t={t} />
+            </div>
           </div>
         </div>
       </section>
 
       {/* ------------------------------------------------- Problem vs solution */}
       <section id="students" className="cb-section">
+        <BridgeDivider />
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.why.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.why.body")}</p>
 
-          <div className="mt-[var(--cb-space-5)] grid gap-[var(--cb-space-3)] md:grid-cols-2">
+          <div className="mt-[var(--cb-space-5)] grid gap-[var(--cb-space-3)] md:grid-cols-2" data-reveal-group>
             <ComparisonCard title={t("home.without.title")} points={PAIN_POINTS} />
             <ComparisonCard title={t("home.with.title")} points={GAIN_POINTS} accent />
           </div>
@@ -149,11 +139,12 @@ export default function HomePage() {
           <ol
             className="mt-[var(--cb-space-5)] flex flex-col gap-[var(--cb-space-5)]"
             style={{ listStyle: "none", margin: 0, padding: 0 }}
+            data-reveal-group
           >
             {HOW_IT_WORKS.map((step, i) => (
               <li
                 key={step.number}
-                className={`cb-reveal grid items-center gap-[var(--cb-space-3)] md:grid-cols-2 md:gap-[var(--cb-space-6)] ${
+                className={`grid items-center gap-[var(--cb-space-3)] md:grid-cols-2 md:gap-[var(--cb-space-6)] ${
                   i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""
                 }`}
               >
@@ -197,9 +188,10 @@ export default function HomePage() {
           <ul
             className="mt-[var(--cb-space-5)] grid gap-[var(--cb-space-2)] sm:grid-cols-2 lg:grid-cols-3"
             style={{ listStyle: "none", margin: 0, padding: 0 }}
+            data-reveal-group
           >
             {WHAT_YOU_GET.map((f) => (
-              <li key={f.title} className="cb-card cb-reveal flex h-full flex-col">
+              <li key={f.title} className="cb-card flex h-full flex-col">
                 <h3 className="cb-h3">{f.title}</h3>
                 <p style={{ margin: "var(--cb-space-1) 0 0", color: "var(--cb-muted)" }}>{f.body}</p>
               </li>
@@ -210,9 +202,87 @@ export default function HomePage() {
 
       {/* ------------------------------------------------------------ Pricing */}
       <section id="pricing" className="cb-section cb-section-alt">
+        <BridgeDivider />
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.pricing.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.pricing.body")}</p>
+
+          <div
+            className="cb-card cb-reveal-scale"
+            style={{
+              margin: "var(--cb-space-4) auto 0",
+              maxWidth: "24rem",
+              borderColor: "var(--cb-accent)",
+              boxShadow: "var(--cb-shadow)",
+              textAlign: "center",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                borderRadius: "var(--cb-radius-pill)",
+                background: "var(--cb-accent-soft)",
+                color: "var(--cb-accent)",
+                padding: "0.25rem 0.875rem",
+                fontSize: "var(--cb-fs-body-sm)",
+                fontWeight: 600,
+              }}
+            >
+              {t("home.pricing.cardTitle")}
+            </span>
+
+            <p
+              style={{
+                margin: "var(--cb-space-2) 0 0",
+                fontFamily: "var(--cb-font-heading)",
+                fontSize: "var(--cb-fs-stat)",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                color: "var(--cb-text)",
+              }}
+            >
+              $0
+            </p>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-muted)" }}>
+              {t("home.pricing.cardPeriod")}
+            </p>
+
+            <ul
+              className="flex flex-col"
+              style={{
+                gap: "var(--cb-space-1)",
+                listStyle: "none",
+                margin: "var(--cb-space-3) 0 0",
+                padding: 0,
+                textAlign: "left",
+              }}
+            >
+              {[
+                t("home.pricing.feature1"),
+                t("home.pricing.feature2"),
+                t("home.pricing.feature3"),
+                t("home.pricing.feature4"),
+              ].map((feature) => (
+                <li key={feature} className="flex gap-[var(--cb-space-1)]" style={{ color: "var(--cb-muted)" }}>
+                  <span aria-hidden="true" style={{ color: "var(--cb-link)", flexShrink: 0 }}>
+                    ✓
+                  </span>
+                  {feature}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/onboarding"
+              className="cb-btn cb-btn-primary w-full"
+              style={{ marginTop: "var(--cb-space-3)" }}
+            >
+              {t("home.buildMyPlan")}
+            </Link>
+            <p style={{ margin: "var(--cb-space-2) 0 0", fontSize: "var(--cb-fs-body-sm)", color: "var(--cb-muted)" }}>
+              {t("home.pricing.cardNote")}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -254,6 +324,40 @@ export default function HomePage() {
 
 /* ------------------------------------------------------------------ pieces */
 
+function CountUpStat({ n, suffix, label }: { n: number; suffix: string; label: string }) {
+  const { ref, value } = useCountUp(n);
+  return (
+    <div>
+      <dt className="sr-only">{label}</dt>
+      <dd style={{ margin: 0 }}>
+        <span
+          style={{
+            display: "block",
+            fontFamily: "var(--cb-font-heading)",
+            fontSize: "var(--cb-fs-stat)",
+            fontWeight: 700,
+            lineHeight: 1.1,
+            color: "var(--cb-link)",
+          }}
+        >
+          <span ref={ref}>{value}</span>
+          {suffix}
+        </span>
+        <span
+          style={{
+            display: "block",
+            marginTop: "0.25rem",
+            fontSize: "var(--cb-fs-body-sm)",
+            color: "var(--cb-muted)",
+          }}
+        >
+          {label}
+        </span>
+      </dd>
+    </div>
+  );
+}
+
 type Translate = (key: keyof Dictionary, params?: Record<string, string | number>) => string;
 
 function ComparisonCard({
@@ -267,7 +371,7 @@ function ComparisonCard({
 }) {
   return (
     <div
-      className="cb-card cb-reveal"
+      className="cb-card"
       style={
         accent
           ? {
@@ -336,7 +440,7 @@ function PlanPreview({ t }: { t: Translate }) {
 
   return (
     <div
-      className="cb-card"
+      className="cb-card cb-float"
       role="img"
       aria-label={t("home.preview.label")}
       style={{ background: "var(--cb-surface-alt)", padding: "var(--cb-space-3)", boxShadow: "var(--cb-shadow)" }}
@@ -408,7 +512,7 @@ function FaqRow({
   defaultOpen,
 }: {
   question: string;
-  answer: string;
+  answer: ReactNode;
   defaultOpen: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -457,18 +561,20 @@ function FaqRow({
           </svg>
         </button>
       </h3>
-      {open && (
-        <p
-          id={panelId}
-          style={{
-            margin: "0 0 var(--cb-space-3)",
-            maxWidth: "var(--cb-measure)",
-            color: "var(--cb-muted)",
-          }}
-        >
-          {answer}
-        </p>
-      )}
+      <div className="cb-collapse" data-open={open ? "true" : "false"}>
+        <div aria-hidden={!open}>
+          <p
+            id={panelId}
+            style={{
+              margin: "0 0 var(--cb-space-3)",
+              maxWidth: "var(--cb-measure)",
+              color: "var(--cb-muted)",
+            }}
+          >
+            {answer}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

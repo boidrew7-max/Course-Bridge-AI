@@ -211,7 +211,22 @@ _CALGETC_REQUIRED = [
 _QUARTER_SCHOOLS = {"De Anza College", "Foothill College", "Lake Tahoe Community College"}
 
 def _is_quarter(college: str) -> bool:
-    return college in _QUARTER_SCHOOLS
+    """Case-insensitive, prefix-tolerant quarter-school check.
+
+    build_plan passes the CANONICAL shard-matched name here, but tolerate a
+    shortened form anyway ("De Anza" ⊂ "De Anza College") — an exact-only
+    match let a user-typed short name silently flip a quarter school into
+    semester mode: wrong term names, 20u caps instead of 18u, and the
+    60-semester-unit floor applied to what are actually quarter units.
+    """
+    cl = " ".join(college.lower().split())
+    if not cl:
+        return False
+    for q in _QUARTER_SCHOOLS:
+        ql = q.lower()
+        if cl == ql or (len(cl) >= 6 and (cl in ql or ql in cl)):
+            return True
+    return False
 
 _ART_SHARDS: "OrderedDict" = OrderedDict()
 # All 9 UC shards held at once cost ~1.75 GB of real Python heap (tracemalloc-
@@ -347,6 +362,24 @@ def _find_recommended_courses(uc_normalized: str, college: str, major: str) -> l
         if score > best_score:
             best_score, best_codes = score, codes
     return best_codes if best_score >= 0.55 else []
+
+
+# ── Completed-course key normalization ────────────────────────────────────────
+
+def _norm_completed_key(prefix: str, number: str) -> tuple:
+    """Canonical (PREFIX, NUMBER) for completed-course membership tests.
+
+    The completed set is USER input ("math 1a", "Math  1A", "MATH 1A") being
+    compared against data-side keys — raw case-sensitive tuple comparison
+    silently ignored any completed course that didn't exactly match the
+    scraped casing, so the engine re-scheduled courses the student said they
+    had already taken. Uppercase + collapse internal whitespace on BOTH
+    sides of every membership test.
+    """
+    return (
+        " ".join(str(prefix).split()).upper(),
+        " ".join(str(number).split()).upper(),
+    )
 
 
 # ── Data structures ───────────────────────────────────────────────────────────
@@ -645,7 +678,7 @@ def _inject_cc_prereqs(
 
         for prefix, number, title, units, slot_explicit_prereqs in chain_data["inject"]:
             k = (prefix.upper(), number.upper())
-            if k in existing or (prefix, number) in completed_keys:
+            if k in existing or _norm_completed_key(prefix, number) in completed_keys:
                 continue
             prereq_slot = CourseSlot(
                 prefix=prefix, number=number, title=title, units=units,
@@ -904,7 +937,7 @@ def _resolve_major_prep(
         return sum(
             float(c.get("u", 3) or 3)
             for c in chosen
-            if (c.get("p",""), c.get("n","")) not in completed
+            if _norm_completed_key(c.get("p",""), c.get("n","")) not in completed
         )
 
     def _commit_chosen(chosen, uc_str, uc_key=None):
@@ -926,7 +959,7 @@ def _resolve_major_prep(
             key = (c.get("p","").strip(), c.get("n","").strip())
             if uc_key is not None:
                 ledger.setdefault(key, uc_key)
-            if key in completed:
+            if _norm_completed_key(*key) in completed:
                 cc_codes.append(f"{key[0]} {key[1]} (already completed)")
                 continue
             if key not in committed:
@@ -1242,6 +1275,7 @@ def _select_calgetc(
         return [], {}, deferred_areas
 
     by_area = by_school[school_key].get("byArea", {})
+    _NOT_ASSIGNED_TEXT = "NOT ASSIGNED — no eligible course found in this college's Cal-GETC list"
     lab_keys = {(c.get("prefix",""), c.get("number","")) for c in by_area.get("5C", [])}
     completed_set = completed_keys or set()
     ge_tag_prefix = "Cal-GETC"
@@ -1333,6 +1367,23 @@ def _select_calgetc(
             return False
         return True
 
+    def _is_pred_of_scheduled(c) -> bool:
+        """True when this candidate is a sequence PREDECESSOR of a course
+        already scheduled for major prep (e.g. picking MATH 50A for Area 2
+        when major prep already schedules MATH 50B). Such a pick forces an
+        ordering the schedule may not be able to honor — the successor can
+        already sit in term 1 — so fresh-candidate lists sort these last and
+        only fall back to them when no clean alternative exists at all."""
+        n = c.get("number", "")
+        p = c.get("prefix", "")
+        c_ord = infer_sequence_order(n)[1]
+        if c_ord < 0:
+            return False
+        for sp, sn in scheduled_keys:
+            if sp == p and same_sequence_base(sn, n) and infer_sequence_order(sn)[1] > c_ord:
+                return True
+        return False
+
     def _data_courses(area_code: str) -> list:
         """Return raw course list from by_area for the given area code."""
         return by_area.get(area_code, [])
@@ -1378,6 +1429,7 @@ def _select_calgetc(
         if area_code == "4":
             courses_4 = by_area.get("4", [])
             if not courses_4:
+                area_assignments["4"] = _NOT_ASSIGNED_TEXT
                 continue
             quota = 2
 
@@ -1394,7 +1446,7 @@ def _select_calgetc(
                 if ck in seen_4 or ck in placed_ge_keys:
                     continue
                 seen_4.add(ck)
-                if ck in completed_set or ck in scheduled_keys:
+                if _norm_completed_key(*ck) in completed_set or ck in scheduled_keys:
                     existing.append(c)
                 else:
                     fresh.append(c)
@@ -1418,7 +1470,9 @@ def _select_calgetc(
             # Prefer double-labelling existing courses (no extra unit cost)
             for c in existing:
                 _try_add(c, False)
-            # Supplement with new courses as needed
+            # Supplement with new courses as needed — sequence-predecessors
+            # of already-scheduled major courses last (see _is_pred_of_scheduled)
+            fresh.sort(key=_is_pred_of_scheduled)
             for c in fresh:
                 _try_add(c, True)
             # If still short (e.g. discipline conflict) fill regardless of discipline
@@ -1438,18 +1492,36 @@ def _select_calgetc(
                     ge_courses.append(slot)
                     codes.append(slot.code)
                 else:
-                    suffix = " (already completed)" if ck in completed_set else ""
+                    suffix = " (already completed)" if _norm_completed_key(*ck) in completed_set else ""
                     codes.append(f"{c.get('prefix','')} {c.get('number','')}{suffix}")
                 # Every Area-4 pick (new or double-labelled) spends that course —
                 # record it so no later area can independently re-spend it, same
                 # as the single-course path below.
                 placed_ge_keys.add(ck)
-            area_assignments["4"] = ", ".join(codes)
+            if len(picks) < quota:
+                # A quota shortfall must read as a shortfall — a lone Area 4
+                # course silently rendering as ✅ MET was indistinguishable
+                # from a complete assignment.
+                short = quota - len(picks)
+                shortfall_txt = (
+                    f"NOT ASSIGNED ({short} more course{'s' if short > 1 else ''} "
+                    f"needed from a second discipline)"
+                )
+                area_assignments["4"] = (
+                    ", ".join(codes + [shortfall_txt]) if codes else _NOT_ASSIGNED_TEXT
+                )
+            else:
+                area_assignments["4"] = ", ".join(codes)
             continue
 
         # ── Standard area processing ──────────────────────────────────────
         courses = _data_courses(area_code)
         if not courses:
+            # An area this college's own Cal-GETC list simply has no courses
+            # for must surface as an explicit ❌ NOT ASSIGNED row — silently
+            # omitting it let the rendered GE table look complete and the
+            # Overall Status read PASS with a whole area missing.
+            area_assignments[area_code] = _NOT_ASSIGNED_TEXT
             continue
 
         # Completed-course double-label — excludes courses already spent on
@@ -1457,7 +1529,7 @@ def _select_calgetc(
         # by _claim automatically claiming a course's OTHER certified areas)
         # should let one course pay off more than one area.
         completed_matches = [c for c in courses
-                             if (c.get("prefix",""), c.get("number","")) in completed_set
+                             if _norm_completed_key(c.get("prefix",""), c.get("number","")) in completed_set
                              and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys]
         if area_code in ("5A", "5B"):
             completed_matches.sort(key=lambda c: (0 if (c.get("prefix",""), c.get("number","")) in lab_keys else 1))
@@ -1488,14 +1560,23 @@ def _select_calgetc(
             if not _ok(c):
                 continue
             k = (c.get("prefix",""), c.get("number",""))
-            if k in completed_set or k in placed_ge_keys:
+            if _norm_completed_key(*k) in completed_set or k in placed_ge_keys:
                 continue
             if k not in seen:
                 seen.add(k)
                 unique.append(c)
         if not unique:
+            # Same as the empty-courses case above: every candidate was
+            # filtered out (honors-only under accept_honors=False, ESL,
+            # already spent) — never a silent omission.
+            area_assignments[area_code] = _NOT_ASSIGNED_TEXT
             continue
 
+        # Demote sequence-predecessors of already-scheduled major courses to
+        # the back of the candidate list (stable — every other preference
+        # below still applies within each bucket). Applied FIRST so the
+        # area-specific sorts stay dominant among the clean candidates.
+        unique.sort(key=_is_pred_of_scheduled)
         if area_code == "1B":
             unique.sort(key=lambda c: (0 if c.get("prefix","").upper().startswith("ENGL") else 1))
         if area_code in ("5A", "5B"):
@@ -1528,14 +1609,38 @@ def _select_calgetc(
     # nothing so far satisfied 5C, schedule one dedicated lab course now
     # rather than leave a real requirement unmet.
     if "5C" not in area_assignments and "5C" in _required_codes:
-        lab_candidates = [
-            c for c in by_area.get("5C", [])
-            if _ok(c) and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys
-        ]
+        # A course ALREADY in the plan (major prep) or already completed that
+        # appears in this school's own 5C list satisfies the lab area by
+        # double-label — scheduling a fresh copy of it produced a literal
+        # duplicate (verified: Skyline → Irvine Environmental Engineering
+        # scheduled required-major-prep CHEM 237 in term 1 AND a second
+        # "Cal-GETC Area 5C" CHEM 237 in term 4, because this fallback only
+        # ever checked placed_ge_keys).
+        _reuse_done = False
+        for c in by_area.get("5C", []):
+            ck = (c.get("prefix",""), c.get("number",""))
+            if ck in placed_ge_keys:
+                continue
+            if _norm_completed_key(*ck) in completed_set:
+                _claim("5C", ck, f"{ck[0]} {ck[1]} (already completed)")
+                _reuse_done = True
+                break
+            if ck in scheduled_keys:
+                _claim("5C", ck, f"{ck[0]} {ck[1]}")
+                _reuse_done = True
+                break
+        if _reuse_done:
+            lab_candidates = []
+        else:
+            lab_candidates = [
+                c for c in by_area.get("5C", [])
+                if _ok(c) and (c.get("prefix",""), c.get("number","")) not in placed_ge_keys
+            ]
         seen_lab: set = set()
         lab_candidates = [c for c in lab_candidates
                            if (c.get("prefix",""), c.get("number","")) not in seen_lab
                            and not seen_lab.add((c.get("prefix",""), c.get("number","")))]
+        lab_candidates.sort(key=_is_pred_of_scheduled)
         if lab_candidates:
             pick = lab_candidates[0]
             pk = (pick.get("prefix",""), pick.get("number",""))
@@ -1543,6 +1648,19 @@ def _select_calgetc(
             ge_courses.append(slot)
             area_assignments["5C"] = slot.code
             placed_ge_keys.add(pk)
+
+    # ── Final truth sweep ───────────────────────────────────────────────────
+    # Any required area STILL unassigned (and not deliberately deferred) gets
+    # an explicit NOT ASSIGNED row. This is the guarantee behind the render
+    # layer's Overall Status: an area can only be missing from the GE table
+    # if the engine never emitted it, and after this sweep that cannot
+    # happen — the table shows ❌ NOT MET instead of silently passing.
+    _sweep_areas = [code for code, _, _ in required]
+    if ge_strategy != "NOT_APPLICABLE":
+        _sweep_areas.append("5C")
+    for area_code in _sweep_areas:
+        if area_code not in area_assignments and area_code not in deferred_areas:
+            area_assignments[area_code] = _NOT_ASSIGNED_TEXT
 
     return ge_courses, area_assignments, deferred_areas
 
@@ -1566,6 +1684,26 @@ def _assign_terms(
 
     max_units  = _MAX_QUARTER_UNITS_PER_TERM if is_quarter else _MAX_UNITS_PER_TERM
     base_terms = 6 if is_quarter else 4
+
+    # A GE pick that shares a lettered sequence with a MAJOR course must be
+    # ordered WITH the majors, not around them: e.g. Chaffey→Davis places
+    # required ENGL 1C in term 1, then Area 1A's ENGL 1A pick has no legal
+    # term left (its successor already sits in term 1). Promote such GE
+    # slots into the major passes — the topological sort orders the whole
+    # sequence (1A before 1C), instead of Pass 3 discovering an
+    # unsatisfiable bound after the majors are frozen.
+    _promoted_ge: list = []
+    _remaining_ge: list = []
+    _major_keys = [(s.prefix, s.number) for s in major_courses]
+    for _g in ge_courses:
+        _related = (
+            infer_sequence_order(_g.number)[1] >= 0
+            and any(mp == _g.prefix and same_sequence_base(mn, _g.number)
+                    for mp, mn in _major_keys)
+        )
+        (_promoted_ge if _related else _remaining_ge).append(_g)
+    major_courses = major_courses + _promoted_ge
+    ge_courses = _remaining_ge
 
     # Pre-calculate needed terms from total unit load so the cap is never breached
     total_u   = sum(s.units for s in major_courses + ge_courses)
@@ -1612,7 +1750,29 @@ def _assign_terms(
             del calc_assigned[role]
             unassigned_major.append(slot)
 
+    # Second consistency guard: role order vs the courses' OWN sequence order.
+    # role_order places diffeq before linalg, but some colleges number linear
+    # algebra BEFORE differential equations inside one lettered sequence
+    # (e.g. Alameda's MATH 3E = linear algebra, MATH 3F = diffeq — 81
+    # backtest plans scheduled 3F ahead of 3E). If two calc-chain picks share
+    # a lettered sequence and the fixed role ordering contradicts that
+    # sequence, demote both to Pass 2's topological sort, which orders by the
+    # sequence itself.
     role_order = ["calc1", "calc2", "calc3", "diffeq", "linalg"]
+    _role_rank = {r: i for i, r in enumerate(role_order)}
+    _demote: set = set()
+    _ordered_items = sorted(calc_assigned.items(), key=lambda kv: _role_rank[kv[0]])
+    for _i, (_r1, _s1) in enumerate(_ordered_items):
+        for _r2, _s2 in _ordered_items[_i + 1:]:
+            if _s1.prefix == _s2.prefix and same_sequence_base(_s1.number, _s2.number):
+                _o1 = infer_sequence_order(_s1.number)[1]
+                _o2 = infer_sequence_order(_s2.number)[1]
+                if 0 <= _o2 < _o1:   # later role, earlier sequence position
+                    _demote.add(_r1)
+                    _demote.add(_r2)
+    for _r in _demote:
+        unassigned_major.append(calc_assigned.pop(_r))
+
     present_roles = [r for r in role_order if r in calc_assigned]
     for i, role in enumerate(present_roles):
         term = min(i + 1, 4)   # calc chain stays in terms 1-4
@@ -1673,59 +1833,138 @@ def _assign_terms(
     for slot in topo_major:
         preds = _find_predecessors(slot, all_slots_for_pred)
         t     = _earliest_valid_term(slot, preds, term_units, max_units, max_terms)
+        # Open new terms (up to the hard ceiling) instead of overloading an
+        # existing one or placing a course at/before its own prerequisite —
+        # the old least-loaded fallback did both (21 cap breaches in the
+        # full backtest, all at quarter schools with packed base terms).
+        while t > max_terms and max_terms < _MAX_TERMS_HARD:
+            max_terms += 1
+            terms[max_terms] = []
+            term_units[max_terms] = 0.0
+        if t > max_terms:
+            # Hard ceiling reached — least-loaded prereq-legal term; the
+            # overload surfaces via _sanity_check + the request self-check.
+            floor_t = 1
+            for p in preds:
+                if p.term > 0:
+                    floor_t = max(floor_t, p.term + 1)
+            floor_t = min(floor_t, max_terms)
+            t = min(range(floor_t, max_terms + 1), key=lambda x: term_units[x])
         _place(slot, t)
 
     # Pass 3: Cal-GETC courses — prefer standard terms (1-4) first, then extended.
-    # Track placed Cal-GETC area terms to enforce 1A-before-1B ordering.
-    ge_area_term: dict = {}   # area_code -> term where it was placed
+    #
+    # Placement must respect course-sequence order GENERALLY, not just the
+    # old 1A-before-1B special case: two GE picks can come from the same
+    # lettered sequence (e.g. Bakersfield's HIST B30A for Area 3B and HIST
+    # B30B for Area 4 — 469 backtest plans had B30A land in a LATER term
+    # than B30B because load-balancing was the only placement criterion),
+    # and a GE pick can be the sequence predecessor or successor of a
+    # major-prep course already placed in Pass 1/2.
 
-    def _ge_min_term(slot: CourseSlot) -> int:
-        """Return earliest allowed term for this GE slot."""
+    # Place same-sequence GE picks in ordinal order (stable for everything
+    # else) — area-processing order is arbitrary relative to sequence order.
+    _ge_first_idx: dict = {}
+
+    def _ge_seq_group(slot: CourseSlot):
+        num, _ordv, lpfx = infer_sequence_order(slot.number)
+        return (slot.prefix, lpfx, num)
+
+    for _i, _s in enumerate(ge_courses):
+        _ge_first_idx.setdefault(_ge_seq_group(_s), _i)
+    ge_courses = sorted(
+        ge_courses,
+        key=lambda s: (_ge_first_idx[_ge_seq_group(s)], infer_sequence_order(s.number)),
+    )
+
+    ge_area_term: dict = {}   # area_code -> term where it was placed
+    # 1B must follow 1A only when 1A is itself being scheduled here — when
+    # 1A is already completed (or double-labelled onto major prep), forcing
+    # 1B out of term 1 was pure lost capacity.
+    _has_1a_slot = any(any("Area 1A" in tag for tag in s.tags) for s in ge_courses)
+    # Everything already placed (calc chain + topo major), growing as GE
+    # slots land — the predecessor/successor scan below reads .term off it.
+    _placed_for_seq: list = list(calc_assigned.values()) + topo_major
+
+    def _ge_term_bounds(slot: CourseSlot) -> tuple:
+        """(min_term, max_term) allowed for this GE slot.
+
+        min: strictly after any placed same-sequence predecessor (and after
+        Area 1A for the 1B slot). max: strictly before any placed
+        same-sequence successor — e.g. an Area-2 pick MATH 002B must land
+        before major-prep MATH 002C, not merely in the least-loaded term.
+        """
+        min_t, max_t = 1, _MAX_TERMS_HARD
         for tag in slot.tags:
             if "Area 1B" in tag:
-                return ge_area_term.get("1A", 1) + 1  # 1B must come strictly after 1A
-        return 1
+                min_t = max(min_t, ge_area_term.get("1A", 1 if _has_1a_slot else 0) + 1)
+        s_ord = infer_sequence_order(slot.number)[1]
+        if s_ord >= 0:
+            for other in _placed_for_seq:
+                if other.term <= 0 or other.prefix != slot.prefix:
+                    continue
+                if not same_sequence_base(other.number, slot.number):
+                    continue
+                o_ord = infer_sequence_order(other.number)[1]
+                if 0 <= o_ord < s_ord:
+                    min_t = max(min_t, other.term + 1)
+                elif 0 <= s_ord < o_ord:
+                    max_t = min(max_t, other.term - 1)
+        if max_t < min_t:
+            # Contradictory constraints (a successor already sits at/below
+            # the earliest legal term) — honor the predecessor side; the
+            # request-time self-check surfaces whatever remains.
+            max_t = _MAX_TERMS_HARD
+        return min_t, max_t
 
-    def _record_ge_area(slot: CourseSlot, t: int):
+    def _record_ge_placed(slot: CourseSlot, t: int):
         for tag in slot.tags:
             if "Area " in tag:
                 ge_area_term[tag.split("Area ")[1]] = t
+        _placed_for_seq.append(slot)
 
     for slot in ge_courses:
         placed = False
-        min_t  = _ge_min_term(slot)
-        # Try standard terms in load order, respecting min_t
+        min_t, max_allow = _ge_term_bounds(slot)
+        # Try standard terms in load order, respecting bounds
         for t in sorted(range(1, 5), key=lambda t: term_units[t]):
-            if t < min_t:
+            if t < min_t or t > max_allow:
                 continue
             if term_units[t] + slot.units <= max_units:
                 _place(slot, t)
-                _record_ge_area(slot, t)
+                _record_ge_placed(slot, t)
                 placed = True
                 break
         if not placed and max_terms > 4:
             # Try extended terms with cap
             for t in sorted(range(5, max_terms + 1), key=lambda t: term_units[t]):
-                if t < min_t:
+                if t < min_t or t > max_allow:
                     continue
                 if term_units[t] + slot.units <= max_units:
                     _place(slot, t)
-                    _record_ge_area(slot, t)
+                    _record_ge_placed(slot, t)
                     placed = True
                     break
         if not placed:
-            # Prefer adding a new term over overloading an existing one
-            if max_terms < _MAX_TERMS_HARD:
+            # Prefer adding a new term over overloading an existing one —
+            # but only when a new term is actually legal for this slot
+            # (a placed same-sequence successor caps how late it may go).
+            if max_terms < _MAX_TERMS_HARD and max_terms < max_allow:
                 max_terms += 1
                 terms[max_terms] = []
                 term_units[max_terms] = 0.0
                 _place(slot, max_terms)
-                _record_ge_area(slot, max_terms)
+                _record_ge_placed(slot, max_terms)
             else:
-                # At hard ceiling — put in least-loaded term (cap breached by ≤1 course)
-                t = min(range(1, max_terms + 1), key=lambda t: term_units[t])
+                # At hard ceiling — least-loaded term within legal bounds
+                # (cap breached by ≤1 course)
+                lo = min(min_t, max_terms)
+                hi = min(max_allow, max_terms)
+                if hi < lo:
+                    hi = max_terms
+                t = min(range(lo, hi + 1), key=lambda t: term_units[t])
                 _place(slot, t)
-                _record_ge_area(slot, t)
+                _record_ge_placed(slot, t)
 
     return terms, term_units
 
@@ -1759,17 +1998,23 @@ def _earliest_valid_term(
     max_units: float,
     max_terms: int,
 ) -> int:
+    """Earliest prereq-legal term with spare capacity.
+
+    May return a term BEYOND max_terms — that's the signal for the caller to
+    open a new term rather than breach a cap or (when the prerequisite sits
+    in the last term) drop a course into the same term as its own prereq,
+    both of which the old clamp-and-least-loaded fallback silently did.
+    """
     min_term = 1
     for pred in predecessors:
         if pred.term > 0:
             min_term = max(min_term, pred.term + 1)
-    min_term = min(min_term, max_terms)
 
     for t in range(min_term, max_terms + 1):
         if term_units[t] + slot.units <= max_units:
             return t
-    # All terms overflow — put in least-loaded term >= min_term
-    return min(range(min_term, max_terms + 1), key=lambda t: term_units[t])
+    # Nothing fits within the prereq-legal window — request a new term.
+    return max(min_term, max_terms + 1)
 
 
 # ── Double-label ──────────────────────────────────────────────────────────────
@@ -1816,7 +2061,14 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
         return
 
     calgetc = _load_calgetc()
-    school_data = calgetc.get("bySchool", {}).get(college, {})
+    by_school = calgetc.get("bySchool", {})
+    # Resolve the college the same way _select_calgetc does (case drift,
+    # dropped "Community", renamed colleges) instead of an exact dict.get —
+    # the exact lookup silently returned {} for any name variation, so the
+    # plan skipped elective filling entirely and shipped under the 60/90-unit
+    # transfer floor with nothing but a shortfall warning.
+    school_key = resolve_calgetc_school_key(college, by_school)
+    school_data = by_school.get(school_key, {}) if school_key else {}
     if not school_data:
         return
 
@@ -1837,7 +2089,7 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
                 continue
             if ck in excluded:
                 continue
-            if ck in completed:
+            if _norm_completed_key(*ck) in completed:
                 continue
             if not accept_honors and ck[1].upper().endswith("H"):
                 continue
@@ -1983,11 +2235,11 @@ def build_plan(
     completed_keys: set = set()
     for item in completed:
         if isinstance(item, (list, tuple)) and len(item) == 2:
-            completed_keys.add((str(item[0]).strip(), str(item[1]).strip()))
+            completed_keys.add(_norm_completed_key(item[0], item[1]))
         elif isinstance(item, str):
             parts = item.strip().split()
             if len(parts) >= 2:
-                completed_keys.add((parts[0], parts[1]))
+                completed_keys.add(_norm_completed_key(parts[0], parts[1]))
 
     uc_l  = _UC_NAME_MAP.get(uc.lower().strip(), uc.lower())
     shard = _load_uc_shard(uc_l)
@@ -2094,7 +2346,21 @@ def build_plan(
             r.warnings.append(f"No articulation data found for {college} -> {uc} | {major}")
             return r
 
-    result.is_quarter = _is_quarter(college)
+    # GE lookup produced nothing at all (college missing from calgetc_map,
+    # e.g. a district-level ASSIST name): say so explicitly — an empty GE
+    # table must never read as "GE complete", and render_plan_text refuses
+    # an overall PASS when this is the case.
+    if not area_assignments and not ge_deferred_areas:
+        result.warnings.append(
+            "GE DATA GAP: no Cal-GETC course list was found for this college, so no "
+            "general-education courses could be scheduled and this plan cannot "
+            "certify Cal-GETC. Verify your college's GE list on ASSIST.org or with "
+            "a counselor."
+        )
+
+    # Canonical (shard-matched) name, not the raw user string — "De Anza"
+    # must detect quarter-system exactly like "De Anza College" does.
+    result.is_quarter = _is_quarter(matched_cc_name)
     result.terms, _ = _assign_terms(major_courses, ge_courses, major, is_quarter=result.is_quarter)
 
     # Compute how many terms have courses
@@ -2110,8 +2376,11 @@ def build_plan(
     _apply_double_labels(result)
 
     result.total_units = sum(s.units for s in result.all_courses())
-    _fill_electives(result, college, exclude_codes=loser_cc_codes, accept_honors=accept_honors,
-                     completed_keys=completed_keys, ge_strategy=result.ge_strategy)
+    # Canonical name here too — the raw user string previously had to
+    # exact-match calgetc_map's own school key for ANY elective to fill.
+    _fill_electives(result, matched_cc_name, exclude_codes=loser_cc_codes,
+                     accept_honors=accept_honors, completed_keys=completed_keys,
+                     ge_strategy=result.ge_strategy)
 
     # Recompute metadata after elective filling (new terms may have been added)
     base_terms = 6 if result.is_quarter else 4
@@ -2229,6 +2498,19 @@ def _sanity_check(result: PlanResult):
         if units > 0 and units < 9.0:
             result.warnings.append(
                 f"Term {t} has only {units:.0f} units — likely needs additional GE electives."
+            )
+
+    # Overloaded term check — only reachable when the 8-term hard ceiling
+    # forced a cap breach; never silent.
+    cap = _MAX_QUARTER_UNITS_PER_TERM if result.is_quarter else _MAX_UNITS_PER_TERM
+    for t in range(1, result.active_terms + 1):
+        units = sum(s.units for s in result.terms.get(t, []))
+        if units > cap + 0.5:
+            result.warnings.append(
+                f"OVERLOADED TERM: Term {t} carries {_fmt_units(units)} units, above the "
+                f"{_fmt_units(cap)}-unit cap — this program could not fit within the "
+                f"8-term ceiling. Work with a counselor to move some of these courses "
+                f"into summer sessions."
             )
 
 
@@ -2394,7 +2676,11 @@ def render_plan_text(
         status in ("MET", "MET (CONDITIONAL)")
         for _, _, status in result.requirement_audit
     )
-    overall_pass = major_prep_complete and all_ge_met and not result.not_articulated
+    # An empty GE section (no assignments, nothing deferred) is a data gap,
+    # not completion — never grade it PASS.
+    ge_present = bool(result.ge_completion) or bool(result.ge_deferred_areas)
+    overall_pass = (major_prep_complete and all_ge_met and ge_present
+                    and not result.not_articulated)
     lines.append(f"**Overall Status:** {'PASS' if overall_pass else 'NOT COMPLETE'}")
     lines.append("")
     lines.append("---")

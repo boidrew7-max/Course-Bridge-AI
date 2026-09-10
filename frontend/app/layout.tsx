@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "../lib/i18n";
@@ -56,6 +57,9 @@ export default function RootLayout({
     <html lang="en" className={`${heading.variable} ${body.variable}`}>
       <body>
         <LanguageProvider>{children}</LanguageProvider>
+        {/* Branded loading overlay (window.CourseBridge) — shown while a plan
+            is generating; see generateAIPlan in app/PlannerClient.tsx. */}
+        <Script src="/coursebridge-loader.js" strategy="afterInteractive" />
       </body>
     </html>
   );

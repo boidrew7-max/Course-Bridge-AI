@@ -6,6 +6,7 @@ import { interpretCompletedCourses } from "../lib/courseInterpreter.js";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { useTranslation } from "../lib/i18n";
+import { useReveal } from "../lib/useReveal";
 
 const commonCompletedCourseAliases: Record<string, string[]> = {
  // Keep this client-side fallback in sync with lib/courseInterpreter.js.
@@ -15,6 +16,29 @@ const commonCompletedCourseAliases: Record<string, string[]> = {
  "ECON 2": ["intro macro", "macroeconomics", "econ 2"],
  "STAT C1000": ["statistics", "stats", "intro stats"],
 };
+
+// Branded full-screen loading overlay, loaded site-wide from
+// public/coursebridge-loader.js (see <Script> in app/layout.tsx).
+// Shown while a plan is generating; hidden as soon as the first
+// chunk of the plan streams in so the user watches it build live.
+type CourseBridgeOverlay = {
+ showLoader: (opts?: { messages?: string[]; interval?: number; minDuration?: number }) => void;
+ hideLoader: () => Promise<void> | void;
+ setMessage?: (text: string) => void;
+};
+
+function cbOverlay(): CourseBridgeOverlay | undefined {
+ if (typeof window === "undefined") return undefined;
+ return (window as unknown as { CourseBridge?: CourseBridgeOverlay }).CourseBridge;
+}
+
+const PLAN_LOADER_MESSAGES = [
+ "Reading your courses",
+ "Matching ASSIST articulation",
+ "Checking Cal-GETC coverage",
+ "Sequencing prerequisites",
+ "Mapping your terms",
+];
 
 function normalize(value: string) {
  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -1027,14 +1051,14 @@ function splitTableRow(line: string): string[] {
 }
 
 const STATUS_STYLES: Record<string, string> = {
- "MET": "bg-[#e7f3ed] text-[#0b7f46]",
- "MET (CONDITIONAL)": "bg-[#fff7db] text-[#8a6100]",
- "PASS": "bg-[#e7f3ed] text-[#0b7f46]",
- "NOT MET": "bg-[#fff0f0] text-[#9b1c1c]",
- "NOT COMPLETE": "bg-[#fff0f0] text-[#9b1c1c]",
- "NOT ARTICULATED": "bg-[#f1f0ee] text-[#6f7680]",
- "POST-TRANSFER": "bg-[#eef5ff] text-[#2f5fa8]",
- "RECOMMENDED": "bg-[#f5f0ff] text-[#6b3fa0]",
+ "MET": "bg-[var(--cb-accent-soft)] text-[var(--cb-accent)]",
+ "MET (CONDITIONAL)": "bg-[var(--cb-warning-bg)] text-[var(--cb-warning)]",
+ "PASS": "bg-[var(--cb-accent-soft)] text-[var(--cb-accent)]",
+ "NOT MET": "bg-[var(--cb-danger-bg)] text-[var(--cb-danger)]",
+ "NOT COMPLETE": "bg-[var(--cb-danger-bg)] text-[var(--cb-danger)]",
+ "NOT ARTICULATED": "bg-[var(--cb-surface-alt)] text-[var(--cb-muted)] border border-[var(--cb-border)]",
+ "POST-TRANSFER": "bg-[var(--cb-info-bg)] text-[var(--cb-info)]",
+ "RECOMMENDED": "bg-[var(--cb-plum-bg)] text-[var(--cb-plum)]",
 };
 
 function StatusBadge({ value }: { value: string }) {
@@ -1050,12 +1074,12 @@ function StatusBadge({ value }: { value: string }) {
 function MarkdownTable({ rows }: { rows: string[][] }) {
  const [header, ...body] = rows;
  return (
- <div className="my-3 overflow-x-auto rounded-xl border border-[#e5e0d5]">
+ <div className="my-3 overflow-x-auto rounded-xl border border-[var(--cb-border)]">
  <table className="w-full border-collapse text-sm">
  <thead>
- <tr className="bg-[#faf9f6]">
+ <tr className="bg-[var(--cb-surface-alt)]">
  {header.map((cell, i) => (
- <th key={i} className="border-b border-[#e5e0d5] px-3 py-2 text-left font-semibold text-[#303236]">
+ <th key={i} className="border-b border-[var(--cb-border)] px-3 py-2 text-left font-semibold text-[var(--cb-text)]">
  {renderInline(cell)}
  </th>
  ))}
@@ -1063,9 +1087,9 @@ function MarkdownTable({ rows }: { rows: string[][] }) {
  </thead>
  <tbody>
  {body.map((row, ri) => (
- <tr key={ri} className={ri % 2 === 1 ? "bg-[#faf9f6]/60" : undefined}>
+ <tr key={ri} className={ri % 2 === 1 ? "bg-[var(--cb-surface-alt)]/60" : undefined}>
  {row.map((cell, ci) => (
- <td key={ci} className="border-b border-[#eceae4] px-3 py-2 align-top text-[#4d535c] last:border-b-0">
+ <td key={ci} className="border-b border-[var(--cb-border)] px-3 py-2 align-top text-[var(--cb-body)] last:border-b-0">
  {ci === row.length - 1 ? <StatusBadge value={cell} /> : renderInline(cell)}
  </td>
  ))}
@@ -1124,9 +1148,9 @@ function parseTimeline(text: string): TimelineTerm[] {
 }
 
 const SCHEDULE_CATEGORY_META: Record<TimelineCourse["category"], { tag: string; tagClass: string }> = {
- major: { tag: "Major prep", tagClass: "bg-[#e7f3ed] text-[#0b7f46]" },
- breadth: { tag: "Breadth / GE", tagClass: "bg-[#fff7db] text-[#8a6100]" },
- english: { tag: "English", tagClass: "bg-[#eef5ff] text-[#2f5fa8]" },
+ major: { tag: "Major prep", tagClass: "bg-[var(--cb-accent-soft)] text-[var(--cb-accent)]" },
+ breadth: { tag: "Breadth / GE", tagClass: "bg-[var(--cb-warning-bg)] text-[var(--cb-warning)]" },
+ english: { tag: "English", tagClass: "bg-[var(--cb-info-bg)] text-[var(--cb-info)]" },
 };
 
 // Lightweight client-side "have they already told us this is done" check.
@@ -1185,28 +1209,28 @@ function PlanTimeline({ text, completedRaw, college }: { text: string; school: s
  const totalUnits = terms.reduce((sum, t) => sum + t.units, 0);
 
  return (
- <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4">
+ <div className="cb-pop-in rounded-2xl border border-[var(--cb-border)] bg-white p-4">
  <div className="flex items-baseline justify-between">
- <h2 className="text-lg font-bold text-[#303236]">Your Schedule</h2>
- <p className="text-xs font-medium text-[#7b818b]">
+ <h2 className="text-lg font-bold text-[var(--cb-text)]">Your Schedule</h2>
+ <p className="text-xs font-medium text-[var(--cb-muted)]">
  {terms.length} term{terms.length > 1 ? "s" : ""} · {totalUnits % 1 === 0 ? totalUnits : totalUnits.toFixed(1)} units
  </p>
  </div>
- <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[#7b818b]">
- <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#0b7f46]" />Completed</span>
- <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border border-[#d8d0c3]" />Still to take</span>
+ <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--cb-muted)]">
+ <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[var(--cb-accent)]" />Completed</span>
+ <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border border-[var(--cb-border)]" />Still to take</span>
  </div>
 
  <div className="cb-scroll-x mt-4 -mx-4 px-4 pb-2">
- <div className="flex w-max items-start">
+ <div className="cb-stagger flex w-max items-start">
  {terms.map((term, ti) => (
  <div key={ti} className="flex items-start">
- <div className="w-[230px] shrink-0 rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4 shadow-sm">
+ <div className="cb-lift w-[230px] shrink-0 rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4 shadow-sm">
  <div className="flex items-center gap-2.5">
- <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0b7f46] text-[11px] font-bold text-white">{ti + 1}</span>
+ <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--cb-accent)] text-[11px] font-bold text-white">{ti + 1}</span>
  <div>
- <p className="text-sm font-bold text-[#1a2e22]">{term.label}</p>
- <p className="text-[11px] text-[#7b818b]">{term.courses.length} course{term.courses.length > 1 ? "s" : ""} · {term.units % 1 === 0 ? term.units : term.units.toFixed(1)}u</p>
+ <p className="text-sm font-bold text-[var(--cb-text)]">{term.label}</p>
+ <p className="text-[11px] text-[var(--cb-muted)]">{term.courses.length} course{term.courses.length > 1 ? "s" : ""} · {term.units % 1 === 0 ? term.units : term.units.toFixed(1)}u</p>
  </div>
  </div>
  <div className="mt-3 flex flex-col">
@@ -1218,15 +1242,15 @@ function PlanTimeline({ text, completedRaw, college }: { text: string; school: s
  key={ci}
  type="button"
  onClick={() => setSelected({ course: c, termLabel: term.label })}
- className={`flex flex-col gap-1 rounded-xl border-t px-1.5 py-2.5 text-left transition hover:bg-white hover: ${ci === 0 ? "border-t-0" : "border-[#eceae4]"}`}
+ className={`flex flex-col gap-1 rounded-xl border-t px-1.5 py-2.5 text-left transition hover:bg-[var(--cb-surface)] hover:shadow-sm ${ci === 0 ? "border-t-0" : "border-[var(--cb-border)]"}`}
  >
  <span className="flex items-center justify-between gap-2">
- <span className={`text-xs font-bold ${done ? "text-[#7b818b] line-through decoration-[#b8d8c7]" : "text-[#1a2e22]"}`}>{c.code}</span>
- <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] ${done ? "bg-[#0b7f46] text-white" : "border border-[#d8d0c3]"}`}>{done ? "✓" : ""}</span>
+ <span className={`text-xs font-bold ${done ? "text-[var(--cb-muted)] line-through decoration-[var(--cb-accent-muted)]" : "text-[var(--cb-text)]"}`}>{c.code}</span>
+ <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] ${done ? "bg-[var(--cb-accent)] text-white" : "border border-[var(--cb-border)]"}`}>{done ? "✓" : ""}</span>
  </span>
- <span className={`text-[11px] leading-tight ${done ? "text-[#a2a7af]" : "text-[#7b818b]"}`}>{c.title}</span>
+ <span className={`text-[11px] leading-tight ${done ? "text-[var(--cb-faint)]" : "text-[var(--cb-muted)]"}`}>{c.title}</span>
  <span className="flex items-center justify-between">
- <span className="text-[10px] font-semibold text-[#a2a7af]">{c.units}u</span>
+ <span className="text-[10px] font-semibold text-[var(--cb-faint)]">{c.units}u</span>
  <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${meta.tagClass}`}>{meta.tag}</span>
  </span>
  </button>
@@ -1235,7 +1259,7 @@ function PlanTimeline({ text, completedRaw, college }: { text: string; school: s
  </div>
  </div>
  {ti < terms.length - 1 && (
- <div className="flex items-center self-stretch px-1.5 pt-12 text-[#d8d0c3]">
+ <div className="flex items-center self-stretch px-1.5 pt-12 text-[var(--cb-border)]">
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>
  </div>
  )}
@@ -1248,56 +1272,56 @@ function PlanTimeline({ text, completedRaw, college }: { text: string; school: s
  <>
  <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setSelected(null)} />
  <div className="fixed right-0 top-0 z-50 h-full w-full max-w-[380px] overflow-y-auto bg-white p-6 shadow-2xl">
- <button onClick={() => setSelected(null)} className="absolute right-5 top-5 rounded-lg border border-[#d8d0c3] p-1.5 text-[#7b818b] hover:text-[#303236] hover:">✕</button>
- <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b]">{selected.termLabel}</p>
- <h3 className="mt-1 text-xl font-bold text-[#1a2e22]">{selected.course.code}</h3>
- <p className="text-sm text-[#6f7680]">{selected.course.title}</p>
+ <button onClick={() => setSelected(null)} className="absolute right-5 top-5 rounded-lg border border-[var(--cb-border)] p-1.5 text-[var(--cb-muted)] hover:text-[var(--cb-text)] hover:bg-[var(--cb-surface-alt)]">✕</button>
+ <p className="text-xs font-bold uppercase tracking-widest text-[var(--cb-muted)]">{selected.termLabel}</p>
+ <h3 className="mt-1 text-xl font-bold text-[var(--cb-text)]">{selected.course.code}</h3>
+ <p className="text-sm text-[var(--cb-muted)]">{selected.course.title}</p>
 
  <div className="mt-5 flex flex-wrap gap-2">
  <span className={`rounded-full px-3 py-1 text-xs font-bold ${SCHEDULE_CATEGORY_META[selected.course.category].tagClass}`}>{SCHEDULE_CATEGORY_META[selected.course.category].tag}</span>
- <span className="rounded-full border border-[#d8d0c3] px-3 py-1 text-xs font-bold text-[#4d535c]">{selected.course.units} units</span>
+ <span className="rounded-full border border-[var(--cb-border)] px-3 py-1 text-xs font-bold text-[var(--cb-body)]">{selected.course.units} units</span>
  </div>
 
- <p className="mt-6 text-xs font-bold uppercase tracking-widest text-[#7b818b]">Recommended professor</p>
+ <p className="mt-6 text-xs font-bold uppercase tracking-widest text-[var(--cb-muted)]">Recommended professor</p>
  {profState.loading && (
- <div className="mt-2 rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4">
+ <div className="mt-2 rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4">
  <div className="space-y-2 animate-pulse">
- <div className="h-3 w-1/2 rounded-full bg-[#e8e3da]" />
- <div className="h-3 w-1/3 rounded-full bg-[#e8e3da]" />
+ <div className="h-3 w-1/2 rounded-full bg-[var(--cb-border)]" />
+ <div className="h-3 w-1/3 rounded-full bg-[var(--cb-border)]" />
  </div>
  </div>
  )}
  {!profState.loading && profState.found && profState.professor && (
- <div className="mt-2 rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4">
+ <div className="mt-2 rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4">
  <div className="flex items-start justify-between gap-3">
  <div>
- <p className="font-bold text-[#1a2e22]">{profState.professor.name}</p>
- <p className="text-xs text-[#7b818b]">{profState.professor.department} &middot; {profState.professor.school}</p>
+ <p className="font-bold text-[var(--cb-text)]">{profState.professor.name}</p>
+ <p className="text-xs text-[var(--cb-muted)]">{profState.professor.department} &middot; {profState.professor.school}</p>
  </div>
- <p className="shrink-0 font-bold text-[#0b7f46]">{(profState.professor.avgRating ?? 0).toFixed(1)} &#9733;</p>
+ <p className="shrink-0 font-bold text-[var(--cb-accent)]">{(profState.professor.avgRating ?? 0).toFixed(1)} &#9733;</p>
  </div>
  <div className="mt-3 flex gap-5">
  <div>
- <p className="text-sm font-bold text-[#1a2e22]">{profState.professor.numRatings}</p>
- <p className="text-[10px] uppercase tracking-wide text-[#7b818b]">Ratings</p>
+ <p className="text-sm font-bold text-[var(--cb-text)]">{profState.professor.numRatings}</p>
+ <p className="text-[10px] uppercase tracking-wide text-[var(--cb-muted)]">Ratings</p>
  </div>
  <div>
- <p className="text-sm font-bold text-[#1a2e22]">{(profState.professor.avgDifficulty ?? 0).toFixed(1)}/5</p>
- <p className="text-[10px] uppercase tracking-wide text-[#7b818b]">Difficulty</p>
+ <p className="text-sm font-bold text-[var(--cb-text)]">{(profState.professor.avgDifficulty ?? 0).toFixed(1)}/5</p>
+ <p className="text-[10px] uppercase tracking-wide text-[var(--cb-muted)]">Difficulty</p>
  </div>
  {profState.professor.wouldTakeAgainPercent != null && profState.professor.wouldTakeAgainPercent >= 0 && (
  <div>
- <p className="text-sm font-bold text-[#1a2e22]">{Math.round(profState.professor.wouldTakeAgainPercent)}%</p>
- <p className="text-[10px] uppercase tracking-wide text-[#7b818b]">Would retake</p>
+ <p className="text-sm font-bold text-[var(--cb-text)]">{Math.round(profState.professor.wouldTakeAgainPercent)}%</p>
+ <p className="text-[10px] uppercase tracking-wide text-[var(--cb-muted)]">Would retake</p>
  </div>
  )}
  </div>
- <p className="mt-3 text-[11px] text-[#a2a7af]">Highest-rated instructor with enough reviews to be reliable in this department at {college || "your college"}, sourced from professor ratings.</p>
+ <p className="mt-3 text-[11px] text-[var(--cb-faint)]">Highest-rated instructor with enough reviews to be reliable in this department at {college || "your college"}, sourced from professor ratings.</p>
  </div>
  )}
  {!profState.loading && !profState.found && (
- <div className="mt-2 rounded-2xl border border-dashed border-[#d8d0c3] bg-[#faf8f3] p-4">
- <p className="text-sm text-[#6f7680]">No professor rating data found for this department at {college || "your college"} yet.</p>
+ <div className="mt-2 rounded-2xl border border-dashed border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4">
+ <p className="text-sm text-[var(--cb-muted)]">No professor rating data found for this department at {college || "your college"} yet.</p>
  </div>
  )}
  </div>
@@ -1334,15 +1358,15 @@ function KeyNotesCard({ items }: { items: string[] }) {
  {stats.length > 0 && (
  <div className="grid gap-2 sm:grid-cols-3">
  {stats.map((s, i) => (
- <div key={i} className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
- <p className="text-[10px] font-bold uppercase tracking-wider text-[#7b818b]">{s.label}</p>
- <p className="mt-1 text-sm font-semibold text-[#1a2e22] leading-snug">{renderInline(s.value)}</p>
+ <div key={i} className="rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-3">
+ <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--cb-muted)]">{s.label}</p>
+ <p className="mt-1 text-sm font-semibold text-[var(--cb-text)] leading-snug">{renderInline(s.value)}</p>
  </div>
  ))}
  </div>
  )}
  {notes.map((n, i) => (
- <div key={i} className="rounded-lg border-l-2 border-[#0b7f46] bg-[#faf8f3] py-2 pl-3 pr-3 text-sm leading-6 text-[#4d535c]">
+ <div key={i} className="rounded-lg border-l-2 border-[var(--cb-accent)] bg-[var(--cb-surface-alt)] py-2 pl-3 pr-3 text-sm leading-6 text-[var(--cb-body)]">
  {renderInline(n)}
  </div>
  ))}
@@ -1452,7 +1476,7 @@ function SimpleMarkdown({ text }: { text: string }) {
  flush();
  flushKeyNotes();
  inKeyNotes = true;
- out.push(<h3 key={out.length} className="mt-5 mb-1 text-base font-bold text-[#0b7f46]">Key Notes</h3>);
+ out.push(<h3 key={out.length} className="mt-5 mb-1 text-base font-bold text-[var(--cb-accent)]">Key Notes</h3>);
  continue;
  }
  if (inKeyNotes) {
@@ -1471,13 +1495,13 @@ function SimpleMarkdown({ text }: { text: string }) {
 
  if (/^###\s/.test(line)) {
  flush();
- out.push(<h4 key={out.length} className="mt-4 mb-1 font-bold text-[#303236]">{line.slice(4)}</h4>);
+ out.push(<h4 key={out.length} className="mt-4 mb-1 font-bold text-[var(--cb-text)]">{line.slice(4)}</h4>);
  } else if (/^##\s/.test(line)) {
  flush();
- out.push(<h3 key={out.length} className="mt-5 mb-1 text-base font-bold text-[#0b7f46]">{line.slice(3)}</h3>);
+ out.push(<h3 key={out.length} className="mt-5 mb-1 text-base font-bold text-[var(--cb-accent)]">{line.slice(3)}</h3>);
  } else if (/^#\s/.test(line)) {
  flush();
- out.push(<h2 key={out.length} className="mt-5 mb-2 text-lg font-bold text-[#303236]">{line.slice(2)}</h2>);
+ out.push(<h2 key={out.length} className="mt-5 mb-2 text-lg font-bold text-[var(--cb-text)]">{line.slice(2)}</h2>);
  } else if (/^[\*\-]\s/.test(line)) {
  listBuf.push(line.slice(2));
  } else if (line.trim() === "") {
@@ -1498,23 +1522,23 @@ function UCStatsPanel({ school }: { school: string }) {
  const s = getUcStats(school);
  if (!s) return null;
  const rateNum = parseFloat(s.rate);
- const color = rateNum < 30 ? "text-red-600" : rateNum < 55 ? "text-yellow-600" : "text-green-600";
+ const color = rateNum < 30 ? "text-[var(--cb-danger)]" : rateNum < 55 ? "text-[var(--cb-warning)]" : "text-[var(--cb-accent)]";
  const label = rateNum < 30 ? "Very Selective" : rateNum < 55 ? "Selective" : "Accessible";
  return (
- <div className="mt-4 rounded-2xl border border-[#d8d0c3] bg-white p-4">
- <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] mb-3">{ucDisplayName(school)}: Admission Stats</p>
+ <div className="mt-4 rounded-2xl border border-[var(--cb-border)] bg-white p-4">
+ <p className="text-xs font-bold uppercase tracking-widest text-[var(--cb-muted)] mb-3">{ucDisplayName(school)}: Admission Stats</p>
  <div className="grid grid-cols-3 gap-3 text-center">
- <div className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
+ <div className="rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-3">
  <p className={`text-xl font-bold ${color}`}>{s.rate}</p>
- <p className="text-xs text-[#7b818b] mt-1">Transfer admit rate</p>
+ <p className="text-xs text-[var(--cb-muted)] mt-1">Transfer admit rate</p>
  </div>
- <div className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
- <p className="text-xl font-bold text-[#303236]">{s.gpa}</p>
- <p className="text-xs text-[#7b818b] mt-1">Avg transfer GPA</p>
+ <div className="rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-3">
+ <p className="text-xl font-bold text-[var(--cb-text)]">{s.gpa}</p>
+ <p className="text-xs text-[var(--cb-muted)] mt-1">Avg transfer GPA</p>
  </div>
- <div className="rounded-xl border border-[#d8d0c3] bg-[#faf8f3] p-3">
- <p className={`text-xl font-bold ${s.tag ? "text-green-600" : "text-red-500"}`}>{s.tag ? "✓ TAG" : "✗ TAG"}</p>
- <p className="text-xs text-[#7b818b] mt-1">{s.tag ? `Min GPA ${s.tagGPA}` : "No TAG offered"}</p>
+ <div className="rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-3">
+ <p className={`text-xl font-bold ${s.tag ? "text-[var(--cb-accent)]" : "text-[var(--cb-danger)]"}`}>{s.tag ? "✓ TAG" : "✗ TAG"}</p>
+ <p className="text-xs text-[var(--cb-muted)] mt-1">{s.tag ? `Min GPA ${s.tagGPA}` : "No TAG offered"}</p>
  </div>
  </div>
  <p className={`mt-3 text-xs font-semibold ${color}`}>{label}: Aim for 3.0+ minimum (3.5+ for selective campuses). UC eligibility floor is 2.4 but far from competitive.</p>
@@ -1562,6 +1586,10 @@ export default function PlannerClient() {
  const [onboardingDone, setOnboardingDone] = useState(true);
  const [aiPlan, setAiPlan] = useState("");
  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+
+ // Scroll reveals for checker cards and the hero stat rail; rescans once a
+ // plan is showing so content that mounted with it gets observed too.
+ useReveal(aiPlan ? "with-plan" : "no-plan");
  const chatEndRef = useRef<HTMLDivElement>(null);
 
  // ── Account (email/password or Google sign-in) ────────────────
@@ -1734,6 +1762,7 @@ export default function PlannerClient() {
  const plans = await plansRes.json();
  if (Array.isArray(plans) && plans.length > 0) {
  const latest = plans[0]; // API returns most-recently-updated first
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, minDuration: 2300 });
  setFirstName(user.username ?? "");
  setCommunityCollege(latest.college ?? "");
  setTargetSchool(latest.uc ?? "");
@@ -1758,6 +1787,7 @@ export default function PlannerClient() {
  planText: latest.plan_text ?? "",
  }));
  } catch {}
+ void cbOverlay()?.hideLoader();
  return;
  }
  }
@@ -1908,6 +1938,14 @@ export default function PlannerClient() {
  setAiPlanLoading(true);
  setAiPlan("");
  let accumulated = "";
+ // Branded overlay covers the wait until the plan starts streaming in.
+ let overlayUp = true;
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500 });
+ const dropOverlay = () => {
+ if (!overlayUp) return;
+ overlayUp = false;
+ void cbOverlay()?.hideLoader();
+ };
  try {
  const res = await fetch("/api/plan", {
  method: "POST",
@@ -1929,6 +1967,7 @@ export default function PlannerClient() {
  const chunk = JSON.parse(payload);
  accumulated += chunk;
  setAiPlan(accumulated);
+ if (accumulated) dropOverlay();
  } catch {}
  }
  }
@@ -1939,6 +1978,7 @@ export default function PlannerClient() {
  } catch {
  setAiPlan("Something went wrong generating your plan. Please try again in a moment.");
  } finally {
+ dropOverlay();
  setAiPlanLoading(false);
  }
  }
@@ -1957,6 +1997,10 @@ export default function PlannerClient() {
  }
 
  async function loadOrGeneratePlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
+ // Branded overlay plays on every plan open — saved plans get a short
+ // branded moment (minDuration), fresh generations keep it up until the
+ // plan starts streaming (generateAIPlan takes over the same overlay).
+ cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500, minDuration: 2300 });
  try {
  const meRes = await fetch("/api/auth/me");
  if (meRes.ok) {
@@ -1972,6 +2016,7 @@ export default function PlannerClient() {
  if (existing?.plan_text) {
  setAiPlan(existing.plan_text);
  cachePlanText(existing.plan_text);
+ void cbOverlay()?.hideLoader();
  return;
  }
  }
@@ -2192,14 +2237,14 @@ export default function PlannerClient() {
  : "";
 
  return (
- <main className="min-h-screen bg-[#faf9f6] text-[#2f3135]">
+ <main className="min-h-screen bg-[var(--cb-surface-alt)] text-[var(--cb-body)]">
  <Navbar />
 
  <section className="mx-auto max-w-[980px] px-5 py-8 md:px-8">
  {/* ── School tabs ─────────────────────────────────────── */}
  {planSchools.length > 1 && (
- <div className="mb-6 rounded-2xl border border-[#d8d0c3] bg-white px-5 py-4 shadow-sm">
- <p className="text-xs font-bold uppercase tracking-widest text-[#7b818b] mb-3">Your target schools</p>
+ <div className="mb-6 rounded-2xl border border-[var(--cb-border)] bg-white px-5 py-4 shadow-sm">
+ <p className="text-xs font-bold uppercase tracking-widest text-[var(--cb-muted)] mb-3">Your target schools</p>
  <div className="flex flex-wrap gap-2">
  {planSchools.map(school => (
  <button key={school}
@@ -2209,7 +2254,7 @@ export default function PlannerClient() {
  setResult(null);
  loadOrGeneratePlan(communityCollege, school, targetMajor, completedCourses, wizardHonors ?? true, wizardApCredits, wizardMode ?? "competitive");
  }}
- className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[#0b7f46] bg-[#0b7f46] text-white shadow-[#0b7f46]/20" : "border-[#d8d0c3] bg-[#faf8f3] text-[#4d535c] hover:border-[#0b7f46] hover:bg-[#f0faf5] hover: hover:text-[#0b7f46]"}`}>
+ className={`rounded-full border px-4 py-2 text-sm font-semibold transition shadow-sm ${activeSchoolTab === school ? "border-[var(--cb-accent)] bg-[var(--cb-accent)] text-white shadow-[var(--cb-accent)]/20" : "border-[var(--cb-border)] bg-[var(--cb-surface-alt)] text-[var(--cb-body)] hover:border-[var(--cb-accent)] hover:bg-[var(--cb-accent-tint)] hover:text-[var(--cb-accent)]"}`}>
  {ucDisplayName(school)}
  </button>
  ))}
@@ -2218,9 +2263,9 @@ export default function PlannerClient() {
  )}
 
  {!onboardingDone ? (
- <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] shadow-[0_18px_45px_rgba(67,54,36,0.08)] p-6">
- <h2 className="text-3xl font-bold text-[#303236]">Build your plan</h2>
- <p className="mt-3 text-base leading-7 text-[#7b818b]">Major prep comes first.</p>
+ <div className="rounded-3xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] shadow-[0_18px_45px_rgba(67,54,36,0.08)] p-6">
+ <h2 className="text-3xl font-bold text-[var(--cb-text)]">Build your plan</h2>
+ <p className="mt-3 text-base leading-7 text-[var(--cb-muted)]">Major prep comes first.</p>
  <form className="mt-8 space-y-5">
  <SelectField label="Current college" value={communityCollege} options={collegeOptions}
  onChange={(value) => { setCommunityCollege(value); setTargetSchool(""); setTargetMajor(""); resetResults(); }} />
@@ -2229,14 +2274,14 @@ export default function PlannerClient() {
  <SelectField label="Target major" value={targetMajor} options={majorOptions}
  onChange={(value) => { setTargetMajor(value); resetResults(); }} />
  <label className="block">
- <span className="mb-2 block text-sm font-bold text-[#303236]">Completed courses</span>
+ <span className="mb-2 block text-sm font-bold text-[var(--cb-text)]">Completed courses</span>
  <textarea value={completedCourses}
  onChange={(e) => { setCompletedCourses(e.target.value); resetResults(); }}
- className="min-h-40 w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition placeholder:text-[#a2a7af] placeholder: focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+ className="min-h-40 w-full rounded-2xl border border-[var(--cb-border)] bg-white px-4 py-3 text-sm text-[var(--cb-text)] outline-none transition placeholder:text-[var(--cb-faint)] focus:border-[var(--cb-accent)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
  placeholder="Example: econ1, math110a, math130, cs111c" />
  </label>
  <button type="button" data-generate-plan onClick={checkTransferPlan}
- className="w-full rounded-2xl bg-[#0b7f46] px-5 py-4 text-lg font-bold text-white shadow-sm transition hover:bg-[#08683a]">
+ className="w-full rounded-2xl bg-[var(--cb-accent)] px-5 py-4 text-lg font-bold text-white shadow-sm transition hover:bg-[var(--cb-accent-hover)]">
  Generate Plan
  </button>
  </form>
@@ -2245,36 +2290,36 @@ export default function PlannerClient() {
  <>
  <div className="print-plan">
  {/* ── Hero: school name as a wordmark, key facts as a plain stat rail ── */}
- <div className="rounded-[26px] border border-[#d8d0c3] bg-[#faf9f6] p-7 md:p-10">
+ <div className="rounded-3xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-7 md:p-10">
  <div className="flex flex-wrap items-start justify-between gap-4">
  <div className="min-w-0">
- <span className="inline-flex items-center rounded-full border border-[#b8d8c7] bg-[#e7f3ed] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-[#0b7f46]">
+ <span className="inline-flex items-center rounded-full border border-[var(--cb-accent-muted)] bg-[var(--cb-accent-soft)] px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-[var(--cb-accent)]">
  Transfer Plan
  </span>
- <p className="mt-4 text-sm font-semibold text-[#7b818b]">
+ <p className="mt-4 text-sm font-semibold text-[var(--cb-muted)]">
  {firstName ? `Welcome back, ${firstName}. Your path to` : "Your path to"}
  </p>
  <h1
- className="mt-1 text-[32px] md:text-[44px] font-semibold italic leading-[1.08] text-[#003262]"
- style={{ fontFamily: '"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif' }}
+ className="mt-1 text-[32px] md:text-[44px] font-bold leading-[1.08] text-[var(--cb-text)]"
+ style={{ fontFamily: "var(--cb-font-heading)" }}
  >
  {schoolDisplayName || "your target school"}
  </h1>
- <p className="mt-3 text-sm text-[#5b6169]">
+ <p className="mt-3 text-sm text-[var(--cb-muted)]">
  {[targetMajor, communityCollege && `from ${communityCollege}`].filter(Boolean).join(" · ") || "Set your college and major to get started."}
  </p>
  </div>
  <div className="flex shrink-0 gap-2">
  <button
  onClick={() => { try { localStorage.removeItem("cb_profile"); } catch {} router.push("/onboarding"); }}
- className="rounded-xl border border-[#d8d0c3] bg-white px-3.5 py-2 text-xs font-semibold text-[#7b818b] transition hover:border-[#0b7f46] hover:text-[#0b7f46] print:hidden"
+ className="rounded-xl border border-[var(--cb-border)] bg-white px-3.5 py-2 text-xs font-semibold text-[var(--cb-muted)] transition hover:border-[var(--cb-accent)] hover:text-[var(--cb-accent)] print:hidden"
  >
  Edit my info
  </button>
  {aiPlan && !aiPlanLoading && (
  <button
  onClick={() => window.print()}
- className="rounded-xl bg-[#0b7f46] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#08683a] print:hidden"
+ className="rounded-xl bg-[var(--cb-accent)] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[var(--cb-accent-hover)] print:hidden"
  >
  Print / PDF
  </button>
@@ -2282,34 +2327,34 @@ export default function PlannerClient() {
  </div>
  </div>
 
- <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-[#e5e0d5] pt-6">
+ <div className="mt-7 flex flex-wrap gap-x-8 gap-y-4 border-t border-[var(--cb-border)] pt-6" data-reveal-group>
  <div>
- <p className="text-base font-bold text-[#1a2e22]">{heroTerms.length > 0 ? `~${heroTerms.length} term${heroTerms.length > 1 ? "s" : ""}` : "Not set"}</p>
- <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b]">Estimated</p>
+ <p className="text-base font-bold text-[var(--cb-text)]">{heroTerms.length > 0 ? `~${heroTerms.length} term${heroTerms.length > 1 ? "s" : ""}` : "Not set"}</p>
+ <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--cb-muted)]">Estimated</p>
  </div>
  <div>
- <p className="text-base font-bold text-[#1a2e22]">{ucAppDate}</p>
- <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b]">Apply by</p>
+ <p className="text-base font-bold text-[var(--cb-text)]">{ucAppDate}</p>
+ <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--cb-muted)]">Apply by</p>
  </div>
  {ucStats && (
  <>
  <div>
- <p className={`text-base font-bold ${ucStats.tag ? "text-[#1a2e22]" : "text-[#8a6100]"}`}>{ucStats.tag ? `${ucStats.tagGPA}+ GPA` : "Not offered"}</p>
- <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b]">TAG</p>
+ <p className={`text-base font-bold ${ucStats.tag ? "text-[var(--cb-text)]" : "text-[var(--cb-warning)]"}`}>{ucStats.tag ? `${ucStats.tagGPA}+ GPA` : "Not offered"}</p>
+ <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--cb-muted)]">TAG</p>
  </div>
  <div>
- <p className="text-base font-bold text-[#1a2e22]">{ucStats.gpa}</p>
- <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b]">GPA target</p>
+ <p className="text-base font-bold text-[var(--cb-text)]">{ucStats.gpa}</p>
+ <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--cb-muted)]">GPA target</p>
  </div>
  <div>
- <p className="text-base font-bold text-[#1a2e22]">{ucStats.rate}</p>
- <p className="text-[11px] font-semibold uppercase tracking-wide text-[#7b818b]">Admit rate</p>
+ <p className="text-base font-bold text-[var(--cb-text)]">{ucStats.rate}</p>
+ <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--cb-muted)]">Admit rate</p>
  </div>
  </>
  )}
  </div>
  {competitivenessLine && (
- <p className="mt-4 text-sm italic text-[#5b6169]">{competitivenessLine}</p>
+ <p className="mt-4 text-sm italic text-[var(--cb-muted)]">{competitivenessLine}</p>
  )}
  <button type="button" data-generate-plan onClick={checkTransferPlan} className="hidden" />
  </div>
@@ -2317,23 +2362,23 @@ export default function PlannerClient() {
  {/* ── Plan: schedule board, full notes, empty/error states ── */}
  <div className="mt-6">
  {result?.error && (
- <div className="rounded-2xl border border-[#ef9a9a] bg-[#fff0f0] p-6">
- <h3 className="text-xl font-bold text-[#9b1c1c]">{result.error}</h3>
- <p className="mt-2 text-[#7f1d1d]">{result.notes}</p>
+ <div className="rounded-2xl border border-[var(--cb-danger-border)] bg-[var(--cb-danger-bg)] p-6">
+ <h3 className="text-xl font-bold text-[var(--cb-danger)]">{result.error}</h3>
+ <p className="mt-2 text-[var(--cb-danger)]">{result.notes}</p>
  </div>
  )}
 
  {aiPlanLoading && !aiPlan && (
- <div className="rounded-2xl border border-[#d8d0c3] bg-white p-6">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-white p-6">
  <div className="flex items-center gap-1.5">
  {[0, 150, 300].map(d => (
- <div key={d} className="h-2 w-2 rounded-full bg-[#0b7f46]/70 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+ <div key={d} className="h-2 w-2 rounded-full bg-[var(--cb-accent)]/70 animate-bounce" style={{ animationDelay: `${d}ms` }} />
  ))}
- <span className="ml-2 text-xs text-[#7b818b]">Building your plan…</span>
+ <span className="ml-2 text-xs text-[var(--cb-muted)]">Building your plan…</span>
  </div>
  <div className="mt-5 space-y-3 animate-pulse">
  {[80, 60, 90, 50, 70].map((w, i) => (
- <div key={i} className="h-3 rounded-full bg-[#e8e3da]" style={{ width: `${w}%` }} />
+ <div key={i} className="h-3 rounded-full bg-[var(--cb-border)]" style={{ width: `${w}%` }} />
  ))}
  </div>
  </div>
@@ -2343,12 +2388,12 @@ export default function PlannerClient() {
  <div className="flex flex-col gap-4">
  <PlanTimeline text={aiPlan} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} college={communityCollege} />
 
- <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4 text-sm text-[#303236]">
+ <div className="cb-pop-in rounded-2xl border border-[var(--cb-border)] bg-white p-4 text-sm text-[var(--cb-text)]">
  <SimpleMarkdown text={aiPlan} />
  </div>
 
  {!aiPlanLoading && (
- <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4 text-xs text-[#7b818b] print:hidden">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4 text-xs text-[var(--cb-muted)] print:hidden">
  <p>
  This plan is built from real ASSIST.org and Cal-GETC data, but requirements can change
  and every combination isn&apos;t equally well-documented. Always confirm your final plan
@@ -2358,38 +2403,38 @@ export default function PlannerClient() {
  <button
  type="button"
  onClick={() => { setFeedbackOpen(true); setFeedbackStatus("idle"); }}
- className="mt-2 font-semibold text-[#0b7f46] hover:underline"
+ className="mt-2 font-semibold text-[var(--cb-accent)] hover:underline"
  >
  Something look wrong? Report it
  </button>
  ) : feedbackStatus === "sent" ? (
- <p className="mt-2 font-semibold text-[#0b7f46]">Thanks, we&apos;ll take a look.</p>
+ <p className="mt-2 font-semibold text-[var(--cb-accent)]">Thanks, we&apos;ll take a look.</p>
  ) : (
  <div className="mt-3 space-y-2">
  <textarea
  value={feedbackText}
  onChange={(e) => setFeedbackText(e.target.value)}
  placeholder="What looked wrong with this plan?"
- className="w-full min-h-20 rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+ className="w-full min-h-20 rounded-xl border border-[var(--cb-border)] bg-white px-3 py-2 text-sm text-[var(--cb-text)] outline-none focus:border-[var(--cb-accent)] focus:ring-2 focus:ring-[var(--cb-accent)]/10"
  />
  <div className="flex items-center gap-2">
  <button
  type="button"
  onClick={submitPlanFeedback}
  disabled={feedbackStatus === "sending" || !feedbackText.trim()}
- className="rounded-lg bg-[#0b7f46] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#08683a] disabled:opacity-50"
+ className="rounded-lg bg-[var(--cb-accent)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--cb-accent-hover)] disabled:opacity-50"
  >
  {feedbackStatus === "sending" ? "Sending…" : "Send"}
  </button>
  <button
  type="button"
  onClick={() => { setFeedbackOpen(false); setFeedbackText(""); }}
- className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#7b818b] hover:text-[#303236] hover:"
+ className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[var(--cb-muted)] hover:text-[var(--cb-text)] hover:bg-[var(--cb-surface-alt)]"
  >
  Cancel
  </button>
  {feedbackStatus === "error" && (
- <span className="text-xs text-[#9b1c1c]">Couldn&apos;t send, try again.</span>
+ <span className="text-xs text-[var(--cb-danger)]">Couldn&apos;t send, try again.</span>
  )}
  </div>
  </div>
@@ -2405,24 +2450,25 @@ export default function PlannerClient() {
 
  {/* ── Extra tools (visible after onboarding) ────────────── */}
  {onboardingDone && (
- <div className="mt-10 space-y-3 print:hidden">
- <h2 className="mb-1 text-lg font-bold text-[#1a2e22]">Checkers</h2>
+ <div className="mt-10 space-y-3 print:hidden" data-reveal-group>
+ <h2 className="mb-1 text-lg font-bold text-[var(--cb-text)]">Checkers</h2>
 
  {/* TAG Eligibility Checker */}
- <div className="rounded-[22px] border border-[#d8d0c3] bg-white shadow-sm overflow-hidden">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowTagChecker(v => !v)}
- className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:"
+ aria-expanded={showTagChecker}
+ className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
- <span className="text-sm font-bold text-[#303236]">TAG Eligibility Checker</span>
- <span className="ml-2 text-xs text-[#7b818b]">Transfer Admission Guarantee</span>
+ <span className="text-sm font-bold text-[var(--cb-text)]">TAG Eligibility Checker</span>
+ <span className="ml-2 text-xs text-[var(--cb-muted)]">Transfer Admission Guarantee</span>
  </div>
- <span className="shrink-0 text-xl leading-none text-[#7b818b]">{showTagChecker ? "−" : "+"}</span>
+ <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showTagChecker ? "−" : "+"}</span>
  </button>
  {showTagChecker && (
- <div className="px-5 pb-5 space-y-4">
- <p className="text-xs text-[#7b818b] leading-5">
+ <div className="cb-step-in px-5 pb-5 space-y-4">
+ <p className="text-xs text-[var(--cb-muted)] leading-5">
  TAG guarantees admission if you meet requirements.{" "}
  <strong>UCLA, UC Berkeley, and UCSD do NOT offer TAG.</strong>
  </p>
@@ -2430,38 +2476,38 @@ export default function PlannerClient() {
  {/* Input form */}
  <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
  <div>
- <label className="text-xs font-semibold text-[#303236] block mb-1">Your GPA</label>
+ <label className="text-xs font-semibold text-[var(--cb-text)] block mb-1">Your GPA</label>
  <input
  type="number" min="1.0" max="4.0" step="0.01"
  placeholder="e.g. 3.6"
  value={tagGpaInput}
  onChange={e => setTagGpaInput(e.target.value)}
- className="w-full rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] focus:outline-none focus:ring-2 focus:ring-[#0b7f46]/30"
+ className="w-full rounded-xl border border-[var(--cb-border)] bg-white px-3 py-2 text-sm text-[var(--cb-text)] focus:outline-none focus:ring-2 focus:ring-[var(--cb-accent)]/30"
  />
  </div>
  <div>
- <label className="text-xs font-semibold text-[#303236] block mb-1">Your Major</label>
+ <label className="text-xs font-semibold text-[var(--cb-text)] block mb-1">Your Major</label>
  <input
  type="text"
  placeholder={targetMajor || "e.g. Economics"}
  value={tagMajorInput}
  onChange={e => setTagMajorInput(e.target.value)}
  onKeyDown={e => { if (e.key === "Enter") checkTagEligibility(); }}
- className="w-full rounded-xl border border-[#d1c7b8] bg-white px-3 py-2 text-sm text-[#303236] focus:outline-none focus:ring-2 focus:ring-[#0b7f46]/30"
+ className="w-full rounded-xl border border-[var(--cb-border)] bg-white px-3 py-2 text-sm text-[var(--cb-text)] focus:outline-none focus:ring-2 focus:ring-[var(--cb-accent)]/30"
  />
  </div>
  <div className="flex items-end">
  <button
  onClick={checkTagEligibility}
  disabled={tagLoading}
- className="rounded-xl bg-[#0b7f46] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#08683a] disabled:opacity-50 whitespace-nowrap"
+ className="rounded-xl bg-[var(--cb-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--cb-accent-hover)] disabled:opacity-50 whitespace-nowrap"
  >
  {tagLoading ? "Checking…" : "Check Eligibility"}
  </button>
  </div>
  </div>
 
- {tagError && <p className="text-xs text-red-600 font-semibold">{tagError}</p>}
+ {tagError && <p className="text-xs text-[var(--cb-danger)] font-semibold">{tagError}</p>}
 
  {/* Results grid */}
  {tagResults && (
@@ -2470,21 +2516,21 @@ export default function PlannerClient() {
  {tagResults.map(r => (
  <div key={r.campus} className={`rounded-xl border p-3 ${
  r.eligible
- ? "border-green-300 bg-green-50"
- : "border-[#f0c5c5] bg-[#fff5f5]"
+ ? "border-[var(--cb-accent-muted)] bg-[var(--cb-accent-tint)]"
+ : "border-[var(--cb-danger-border)] bg-[var(--cb-danger-bg)]"
  }`}>
- <p className="text-xs font-bold text-[#303236]">{r.campus}</p>
- <p className={`mt-1 text-xs font-semibold ${r.eligible ? "text-green-700" : "text-red-600"}`}>
+ <p className="text-xs font-bold text-[var(--cb-text)]">{r.campus}</p>
+ <p className={`mt-1 text-xs font-semibold ${r.eligible ? "text-[var(--cb-accent)]" : "text-[var(--cb-danger)]"}`}>
  {r.eligible ? "✓ Eligible" : "✗ Not eligible"}
  </p>
  {r.majorExcluded && (
- <p className="mt-0.5 text-xs text-red-500">Major excluded from TAG</p>
+ <p className="mt-0.5 text-xs text-[var(--cb-danger)]">Major excluded from TAG</p>
  )}
  {!r.majorExcluded && r.gpaOk === false && (
- <p className="mt-0.5 text-xs text-red-500">Need {r.requiredGPA} GPA (you have {tagGpaInput})</p>
+ <p className="mt-0.5 text-xs text-[var(--cb-danger)]">Need {r.requiredGPA} GPA (you have {tagGpaInput})</p>
  )}
  {r.eligible && (
- <p className="mt-0.5 text-xs text-[#7b818b]">Min GPA: {r.requiredGPA}</p>
+ <p className="mt-0.5 text-xs text-[var(--cb-muted)]">Min GPA: {r.requiredGPA}</p>
  )}
  </div>
  ))}
@@ -2492,9 +2538,9 @@ export default function PlannerClient() {
 
  {/* Eligible campuses next steps */}
  {tagResults.some(r => r.eligible) && (
- <div className="rounded-xl border border-green-200 bg-green-50 p-3">
- <p className="text-xs font-bold text-green-800 mb-1">Next steps for eligible campuses</p>
- <ul className="text-xs text-green-700 space-y-0.5 list-disc pl-4">
+ <div className="rounded-xl border border-[var(--cb-accent-muted)] bg-[var(--cb-accent-tint)] p-3">
+ <p className="text-xs font-bold text-[var(--cb-accent-hover)] mb-1">Next steps for eligible campuses</p>
+ <ul className="text-xs text-[var(--cb-accent)] space-y-0.5 list-disc pl-4">
  <li>Submit TAG application via <strong>UC TAP</strong>: September 1 to 30</li>
  <li>Submit UC Application: October 1 to November 30</li>
  <li>Major on TAG must exactly match your UC application major</li>
@@ -2504,9 +2550,9 @@ export default function PlannerClient() {
  )}
 
  {/* Shared requirements reminder */}
- <div className="rounded-xl bg-[#faf8f3] border border-[#d8d0c3] p-3">
- <p className="text-xs font-bold text-[#303236] mb-1">Universal TAG Requirements</p>
- <ul className="text-xs text-[#6f7680] space-y-0.5 list-disc pl-4">
+ <div className="rounded-xl bg-[var(--cb-surface-alt)] border border-[var(--cb-border)] p-3">
+ <p className="text-xs font-bold text-[var(--cb-text)] mb-1">Universal TAG Requirements</p>
+ <ul className="text-xs text-[var(--cb-muted)] space-y-0.5 list-disc pl-4">
  <li>30+ UC-transferable units completed at time of TAG submission</li>
  <li>60 semester units by end of spring before transfer</li>
  <li>At least one UC-E (English) and one UC-M (Math) completed</li>
@@ -2521,39 +2567,40 @@ export default function PlannerClient() {
  </div>
 
  {/* Cal-GETC Checklist */}
- <div className="rounded-[22px] border border-[#d8d0c3] bg-white shadow-sm overflow-hidden">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowCalgetc(v => !v)}
- className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:"
+ aria-expanded={showCalgetc}
+ className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
- <span className="text-sm font-bold text-[#303236]">Cal-GETC Checklist</span>
- <span className="ml-2 text-xs text-[#7b818b]">
+ <span className="text-sm font-bold text-[var(--cb-text)]">Cal-GETC Checklist</span>
+ <span className="ml-2 text-xs text-[var(--cb-muted)]">
  {Object.values(calgetcChecked).filter(Boolean).length}/{CALGETC_AREAS.length} areas done
  </span>
  </div>
- <span className="shrink-0 text-xl leading-none text-[#7b818b]">{showCalgetc ? "−" : "+"}</span>
+ <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showCalgetc ? "−" : "+"}</span>
  </button>
  {showCalgetc && (
- <div className="px-5 pb-5 space-y-2">
- <p className="text-xs text-[#7b818b] mb-3">Check off each Cal-GETC area as you complete it. Progress is saved in your browser.</p>
+ <div className="cb-step-in px-5 pb-5 space-y-2">
+ <p className="text-xs text-[var(--cb-muted)] mb-3">Check off each Cal-GETC area as you complete it. Progress is saved in your browser.</p>
  {CALGETC_AREAS.map(area => (
- <label key={area.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${calgetcChecked[area.id] ? "border-green-300 bg-green-50" : "border-[#d8d0c3] bg-[#faf8f3] hover:border-[#0b7f46]/40"}`}>
+ <label key={area.id} className={`flex items-start gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${calgetcChecked[area.id] ? "border-[var(--cb-accent-muted)] bg-[var(--cb-accent-tint)]" : "border-[var(--cb-border)] bg-[var(--cb-surface-alt)] hover:border-[var(--cb-accent)]/40"}`}>
  <input
  type="checkbox"
  checked={!!calgetcChecked[area.id]}
  onChange={e => setCalgetcChecked(prev => ({ ...prev, [area.id]: e.target.checked }))}
- className="mt-0.5 h-4 w-4 rounded accent-[#0b7f46]"
+ className="mt-0.5 h-4 w-4 rounded accent-[var(--cb-accent)]"
  />
  <div>
- <p className="text-sm font-semibold text-[#303236]">Area {area.area}: {area.title}</p>
- <p className="text-xs text-[#7b818b]">{area.detail}</p>
+ <p className="text-sm font-semibold text-[var(--cb-text)]">Area {area.area}: {area.title}</p>
+ <p className="text-xs text-[var(--cb-muted)]">{area.detail}</p>
  </div>
  </label>
  ))}
- <div className="mt-3 h-2 rounded-full bg-[#e0d9cf] overflow-hidden">
+ <div className="mt-3 h-2 rounded-full bg-[var(--cb-border)] overflow-hidden">
  <div
- className="h-full rounded-full bg-[#0b7f46] transition-all duration-300"
+ className="h-full rounded-full bg-[var(--cb-accent)] transition-all duration-300"
  style={{ width: `${Math.round((Object.values(calgetcChecked).filter(Boolean).length / CALGETC_AREAS.length) * 100)}%` }}
  />
  </div>
@@ -2562,21 +2609,22 @@ export default function PlannerClient() {
  </div>
 
  {/* Course Progress Tracker */}
- <div className="rounded-[22px] border border-[#d8d0c3] bg-white shadow-sm overflow-hidden">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowTracker(v => !v)}
- className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:"
+ aria-expanded={showTracker}
+ className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
- <span className="text-sm font-bold text-[#303236]">Course Progress Tracker</span>
- <span className="ml-2 text-xs text-[#7b818b]">
+ <span className="text-sm font-bold text-[var(--cb-text)]">Course Progress Tracker</span>
+ <span className="ml-2 text-xs text-[var(--cb-muted)]">
  {trackerCourses.filter(c => c.status === "done").length} done · {trackerCourses.filter(c => c.status === "in-progress").length} in progress
  </span>
  </div>
- <span className="shrink-0 text-xl leading-none text-[#7b818b]">{showTracker ? "−" : "+"}</span>
+ <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showTracker ? "−" : "+"}</span>
  </button>
  {showTracker && (
- <div className="px-5 pb-5 space-y-3">
+ <div className="cb-step-in px-5 pb-5 space-y-3">
  <div className="flex gap-2">
  <input
  value={trackerInput}
@@ -2588,7 +2636,7 @@ export default function PlannerClient() {
  }
  }}
  placeholder="Add a course (e.g. MATH 1A)"
- className="flex-1 rounded-xl border border-[#d1c7b8] bg-[#faf8f3] px-3 py-2 text-sm outline-none focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+ className="flex-1 rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] px-3 py-2 text-sm outline-none focus:border-[var(--cb-accent)] focus:ring-2 focus:ring-[var(--cb-accent)]/10"
  />
  <button
  onClick={() => {
@@ -2597,20 +2645,20 @@ export default function PlannerClient() {
  setTrackerInput("");
  }
  }}
- className="rounded-xl bg-[#0b7f46] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#08683a]"
+ className="rounded-xl bg-[var(--cb-accent)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--cb-accent-hover)]"
  >Add</button>
  </div>
  {trackerCourses.length === 0 && (
- <p className="text-xs text-[#a2a7af] text-center py-3">No courses added yet. Type a course name and press Enter.</p>
+ <p className="text-xs text-[var(--cb-faint)] text-center py-3">No courses added yet. Type a course name and press Enter.</p>
  )}
  <div className="space-y-2">
  {trackerCourses.map(c => (
- <div key={c.id} className="flex items-center gap-3 rounded-xl border border-[#d8d0c3] bg-[#faf8f3] px-3 py-2">
- <p className="flex-1 text-sm text-[#303236]">{c.name}</p>
+ <div key={c.id} className="flex items-center gap-3 rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] px-3 py-2">
+ <p className="flex-1 text-sm text-[var(--cb-text)]">{c.name}</p>
  <select
  value={c.status}
  onChange={e => setTrackerCourses(prev => prev.map(x => x.id === c.id ? { ...x, status: e.target.value as "planned"|"in-progress"|"done" } : x))}
- className={`rounded-lg border px-2 py-1 text-xs font-semibold outline-none ${c.status === "done" ? "border-green-300 bg-green-50 text-green-700" : c.status === "in-progress" ? "border-yellow-300 bg-yellow-50 text-yellow-700" : "border-[#d8d0c3] bg-white text-[#7b818b]"}`}
+ className={`rounded-lg border px-2 py-1 text-xs font-semibold outline-none ${c.status === "done" ? "border-[var(--cb-accent-muted)] bg-[var(--cb-accent-tint)] text-[var(--cb-accent)]" : c.status === "in-progress" ? "border-[var(--cb-warning-border)] bg-[var(--cb-warning-bg)] text-[var(--cb-warning)]" : "border-[var(--cb-border)] bg-white text-[var(--cb-muted)]"}`}
  >
  <option value="planned">Planned</option>
  <option value="in-progress">In Progress</option>
@@ -2618,7 +2666,7 @@ export default function PlannerClient() {
  </select>
  <button
  onClick={() => setTrackerCourses(prev => prev.filter(x => x.id !== c.id))}
- className="text-xs text-[#c4b9aa] transition hover:text-[#9b1c1c] hover:"
+ className="text-xs text-[var(--cb-faint)] transition hover:text-[var(--cb-danger)]"
  >✕</button>
  </div>
  ))}
@@ -2628,58 +2676,60 @@ export default function PlannerClient() {
  </div>
 
  {/* Application Deadline Reminders */}
- <div className="rounded-[22px] border border-[#d8d0c3] bg-white shadow-sm overflow-hidden">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowDeadlines(v => !v)}
- className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:"
+ aria-expanded={showDeadlines}
+ className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div>
- <span className="text-sm font-bold text-[#303236]">Application Deadline Reminders</span>
- <span className="ml-2 text-xs text-[#7b818b]">TAG · UC App · FAFSA · more</span>
+ <span className="text-sm font-bold text-[var(--cb-text)]">Application Deadline Reminders</span>
+ <span className="ml-2 text-xs text-[var(--cb-muted)]">TAG · UC App · FAFSA · more</span>
  </div>
- <span className="shrink-0 text-xl leading-none text-[#7b818b]">{showDeadlines ? "−" : "+"}</span>
+ <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showDeadlines ? "−" : "+"}</span>
  </button>
  {showDeadlines && (
- <div className="px-5 pb-5">
+ <div className="cb-step-in px-5 pb-5">
  <div className="space-y-3">
  {DEADLINES.map(d => (
- <div key={d.label} className="flex items-start gap-4 rounded-xl border border-[#d8d0c3] bg-[#faf8f3] px-4 py-3">
+ <div key={d.label} className="flex items-start gap-4 rounded-xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] px-4 py-3">
  <div className="min-w-[90px]">
- <p className="text-xs font-bold text-[#0b7f46]">{d.date}</p>
+ <p className="text-xs font-bold text-[var(--cb-accent)]">{d.date}</p>
  </div>
  <div>
- <p className="text-sm font-semibold text-[#303236]">{d.label}</p>
- <p className="text-xs text-[#7b818b]">{d.note}</p>
+ <p className="text-sm font-semibold text-[var(--cb-text)]">{d.label}</p>
+ <p className="text-xs text-[var(--cb-muted)]">{d.note}</p>
  </div>
  </div>
  ))}
  </div>
- <p className="mt-3 text-xs text-[#a2a7af]">Dates are typical annual deadlines. Always confirm with the official UC and financial aid websites.</p>
+ <p className="mt-3 text-xs text-[var(--cb-faint)]">Dates are typical annual deadlines. Always confirm with the official UC and financial aid websites.</p>
  </div>
  )}
  </div>
 
  {/* Key Notes about the target school */}
- <div className="rounded-[22px] border border-[#d8d0c3] bg-white shadow-sm overflow-hidden">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-white shadow-sm overflow-hidden">
  <button
  onClick={() => setShowKeyNotes(v => !v)}
- className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[#faf8f3] hover:"
+ aria-expanded={showKeyNotes}
+ className="w-full flex items-center justify-between px-6 py-5 text-left transition hover:bg-[var(--cb-surface-alt)]"
  >
  <div className="flex flex-wrap items-baseline gap-2">
- <span className="text-[15px] font-bold text-[#1a2e22]">Key Notes{schoolForStats ? `: ${schoolDisplayName}` : ""}</span>
- <span className="text-xs font-medium text-[#7b818b]">Competitiveness, GPA, and admissions context</span>
+ <span className="text-[15px] font-bold text-[var(--cb-text)]">Key Notes{schoolForStats ? `: ${schoolDisplayName}` : ""}</span>
+ <span className="text-xs font-medium text-[var(--cb-muted)]">Competitiveness, GPA, and admissions context</span>
  </div>
- <span className="shrink-0 text-xl leading-none text-[#7b818b]">{showKeyNotes ? "−" : "+"}</span>
+ <span className="shrink-0 text-xl leading-none text-[var(--cb-muted)]">{showKeyNotes ? "−" : "+"}</span>
  </button>
  {showKeyNotes && (
- <div className="px-6 pb-6 space-y-3">
+ <div className="cb-step-in px-6 pb-6 space-y-3">
  {schoolForStats
  ? <UCStatsPanel school={schoolForStats} />
- : <p className="text-xs text-[#7b818b]">Pick a target school to see admissions context here.</p>
+ : <p className="text-xs text-[var(--cb-muted)]">Pick a target school to see admissions context here.</p>
  }
  {result && !result.error && (
- <p className="text-xs text-[#7b818b]">
- Local readiness estimate from your entered courses: <span className="font-bold text-[#0b7f46]">{result.readinessScore}% ({readinessLabel})</span>
+ <p className="text-xs text-[var(--cb-muted)]">
+ Local readiness estimate from your entered courses: <span className="font-bold text-[var(--cb-accent)]">{result.readinessScore}% ({readinessLabel})</span>
  </p>
  )}
  </div>
@@ -2700,7 +2750,7 @@ export default function PlannerClient() {
  {!chatOpen && (
  <button
  onClick={() => setChatOpen(true)}
- className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[#0b7f46] px-5 py-4 text-sm font-semibold text-white shadow-xl transition hover:bg-[#08683a] active:scale-95 print:hidden"
+ className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[var(--cb-accent)] px-5 py-4 text-sm font-semibold text-white shadow-xl transition hover:-translate-y-0.5 hover:bg-[var(--cb-accent-hover)] active:scale-95 print:hidden"
  >
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -2710,8 +2760,8 @@ export default function PlannerClient() {
  )}
 
  {chatOpen && (
- <div className="fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[#e5e0d5] bg-white shadow-2xl print:hidden">
- <div className="flex items-center justify-between bg-gradient-to-r from-[#0a6e3d] to-[#0d9456] px-5 py-4 shrink-0">
+ <div className="cb-chat-in fixed bottom-6 right-6 z-50 flex h-[32rem] w-[22rem] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-[var(--cb-border)] bg-white shadow-2xl print:hidden">
+ <div className="flex items-center justify-between bg-[var(--cb-accent)] px-5 py-4 shrink-0">
  <div className="min-w-0">
  <p className="text-base font-bold text-white">CourseBridge</p>
  {communityCollege && targetSchool
@@ -2727,13 +2777,13 @@ export default function PlannerClient() {
  <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
  {chatMessages.length === 0 && chatLoading && (
  <div className="flex justify-start">
- <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] px-4 py-3 text-sm text-[#7b818b]">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] px-4 py-3 text-sm text-[var(--cb-muted)]">
  <span className="animate-pulse">CourseBridge is thinking…</span>
  </div>
  </div>
  )}
  {chatMessages.length === 0 && !chatLoading && (
- <p className="text-sm text-[#7b818b]">
+ <p className="text-sm text-[var(--cb-muted)]">
  Ask about your transfer plan, GE, TAG, or what to take next semester.
  </p>
  )}
@@ -2741,7 +2791,7 @@ export default function PlannerClient() {
  <div className="flex flex-wrap gap-2 pb-1">
  {["What should I take next semester?", "How competitive is my GPA?", "Tell me about TAG"].map((q) => (
  <button key={q} onClick={() => sendChatMessage(q)}
- className="rounded-full border border-[#d8d0c3] bg-[#faf8f3] px-3 py-1.5 text-xs text-[#4d535c] transition hover:border-[#0b7f46] hover:text-[#0b7f46]">
+ className="rounded-full border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] px-3 py-1.5 text-xs text-[var(--cb-body)] transition hover:border-[var(--cb-accent)] hover:text-[var(--cb-accent)]">
  {q}
  </button>
  ))}
@@ -2751,8 +2801,8 @@ export default function PlannerClient() {
  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
  <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
  msg.role === "user"
- ? "bg-[#0b7f46] text-white"
- : "border border-[#d8d0c3] bg-[#faf8f3] text-[#303236]"
+ ? "bg-[var(--cb-accent)] text-white"
+ : "border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] text-[var(--cb-text)]"
  }`}>
  {msg.content || (msg.role === "assistant" && chatLoading ? <span className="animate-pulse">…</span> : "")}
  </div>
@@ -2761,7 +2811,7 @@ export default function PlannerClient() {
  <div ref={chatEndRef} />
  </div>
 
- <div className="border-t border-[#d8d0c3] p-4 shrink-0">
+ <div className="border-t border-[var(--cb-border)] p-4 shrink-0">
  <div className="flex gap-3">
  <input
  type="text"
@@ -2769,12 +2819,12 @@ export default function PlannerClient() {
  onChange={(e) => setChatInput(e.target.value)}
  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); } }}
  placeholder="Ask about your transfer plan…"
- className="flex-1 rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] px-4 py-3 text-sm outline-none transition focus:border-[#0b7f46] focus:ring-2 focus:ring-[#0b7f46]/10"
+ className="flex-1 rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] px-4 py-3 text-sm outline-none transition focus:border-[var(--cb-accent)] focus:ring-2 focus:ring-[var(--cb-accent)]/10"
  />
  <button
  onClick={() => sendChatMessage()}
  disabled={!chatInput.trim() || chatLoading}
- className="rounded-2xl bg-[#0b7f46] px-4 py-3 text-white transition hover:bg-[#08683a] disabled:opacity-40"
+ className="rounded-2xl bg-[var(--cb-accent)] px-4 py-3 text-white transition hover:bg-[var(--cb-accent-hover)] disabled:opacity-40"
  >
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -2803,14 +2853,14 @@ function SelectField({
 }) {
  return (
  <label className="block">
- <span className="mb-2 block text-sm font-bold text-[#303236]">
+ <span className="mb-2 block text-sm font-bold text-[var(--cb-text)]">
  {label}
  </span>
 
  <select
  value={value}
  onChange={(event) => onChange(event.target.value)}
- className="w-full rounded-2xl border border-[#d1c7b8] bg-white px-4 py-3 text-sm text-[#303236] outline-none transition focus:border-[#0b7f46] focus:ring-4 focus:ring-[#0b7f46]/10"
+ className="w-full rounded-2xl border border-[var(--cb-border)] bg-white px-4 py-3 text-sm text-[var(--cb-text)] outline-none transition focus:border-[var(--cb-accent)] focus:ring-4 focus:ring-[var(--cb-accent)]/10"
  >
  <option value="" disabled>
  Select {label.toLowerCase()}
@@ -2828,7 +2878,7 @@ function SelectField({
 
 function PainPoint({ text }: { text: string }) {
  return (
- <div className="rounded-2xl border border-[#d8d0c3] bg-[#faf8f3] p-4 text-sm font-medium text-[#4d535c] shadow-sm">
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4 text-sm font-medium text-[var(--cb-body)] shadow-sm">
  {text}
  </div>
  );
@@ -2844,26 +2894,26 @@ function Step({
  children: ReactNode;
 }) {
  return (
- <div className="rounded-3xl border border-[#d8d0c3] bg-[#faf8f3] p-5 shadow-[0_18px_45px_rgba(67,54,36,0.06)]">
- <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-[#0b7f46] text-sm font-bold text-white">
+ <div className="rounded-3xl border border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-5 shadow-[0_18px_45px_rgba(67,54,36,0.06)]">
+ <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--cb-accent)] text-sm font-bold text-white">
  {number}
  </div>
 
- <h3 className="text-xl font-bold text-[#303236]">{title}</h3>
+ <h3 className="text-xl font-bold text-[var(--cb-text)]">{title}</h3>
 
- <p className="mt-2 leading-6 text-[#6f7680]">{children}</p>
+ <p className="mt-2 leading-6 text-[var(--cb-muted)]">{children}</p>
  </div>
  );
 }
 
 function PreviewCard({ title, items }: { title: string; items: string[] }) {
  return (
- <div className="rounded-2xl border border-[#d8d0c3] bg-white p-4">
- <p className="mb-3 text-sm font-bold text-[#303236]">{title}</p>
+ <div className="rounded-2xl border border-[var(--cb-border)] bg-white p-4">
+ <p className="mb-3 text-sm font-bold text-[var(--cb-text)]">{title}</p>
 
  <div className="space-y-2">
  {items.map((item) => (
- <p key={item} className="text-sm text-[#6f7680]">
+ <p key={item} className="text-sm text-[var(--cb-muted)]">
  {item}
  </p>
  ))}
@@ -2874,13 +2924,13 @@ function PreviewCard({ title, items }: { title: string; items: string[] }) {
 
 function EmptyDashboard() {
  return (
- <div className="flex min-h-[560px] items-center justify-center rounded-3xl border border-dashed border-[#d8d0c3] bg-white/60 p-8 text-center">
+ <div className="flex min-h-[560px] items-center justify-center rounded-3xl border border-dashed border-[var(--cb-border)] bg-white/60 p-8 text-center">
  <div>
- <p className="text-3xl font-bold text-[#303236]">
+ <p className="text-3xl font-bold text-[var(--cb-text)]">
  Your transfer plan will appear here.
  </p>
 
- <p className="mt-4 max-w-md text-lg leading-8 text-[#7b818b]">
+ <p className="mt-4 max-w-md text-lg leading-8 text-[var(--cb-muted)]">
  Choose a current college, target university, and major. Then enter
  your completed courses and generate a plan.
  </p>

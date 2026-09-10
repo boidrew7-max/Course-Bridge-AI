@@ -56,7 +56,7 @@ const zh: Dictionary = {
   "footer.terms": "服务条款",
   "footer.login": "登录",
   "footer.buildMyPlan": "制定我的计划",
-  "footer.disclaimer": "CourseBridge 为独立产品，与 ASSIST、UC、CSU 或 CCSF 均无关联。请务必通过 ASSIST.org、官方院校目录以及顾问核实相关要求。",
+  "footer.disclaimer": "CourseBridge 为独立产品，与 ASSIST、UC 或 CSU 均无关联。请务必通过 ASSIST.org、官方院校目录以及顾问核实相关要求。",
   "footer.copyright": "© {year} CourseBridge 保留所有权利。",
 
   // Home: hero
@@ -120,6 +120,13 @@ const zh: Dictionary = {
   // Home: pricing
   "home.pricing.title": "测试期间免费使用",
   "home.pricing.body": "在我们持续完善产品期间，CourseBridge 目前对所有加州社区学院学生免费开放。",
+  "home.pricing.cardTitle": "测试期间免费",
+  "home.pricing.cardPeriod": "面向所有加州社区学院学生",
+  "home.pricing.feature1": "无限次生成转学计划",
+  "home.pricing.feature2": "覆盖全部 116 所社区学院",
+  "home.pricing.feature3": "所有 UC 校区与专业",
+  "home.pricing.feature4": "Cal-GETC、TAG 及截止日期检查工具",
+  "home.pricing.cardNote": "无需信用卡，无付费墙。",
 
   // Home: FAQ
   "home.faq.title": "常见问题",
@@ -134,6 +141,9 @@ const zh: Dictionary = {
   "home.faq.a4": "不收费。在测试阶段，CourseBridge 对所有加州社区学院学生免费。",
   "home.faq.q5": "可以上传成绩单而不用手动输入课程吗？",
   "home.faq.a5": "可以。在引导流程中上传 PDF 成绩单，CourseBridge 会自动提取你已完成的课程供你确认。",
+  "home.faq.q6": "我的数据是私密的吗？",
+  "home.faq.a6": "是的。你的课程和计划只用于生成你的转学方案，你可以随时删除账户。",
+  "home.faq.a6Link": "阅读隐私政策",
 
   // Home: final CTA
   "home.cta.title": "看看你还缺哪些课",

@@ -1,10 +1,11 @@
 """
 Invariant checks for full-matrix backtesting.
 
-Reuses the existing per-case checkers from test_plan_engine.py (they take a
-built PlanResult and need no expected answer) and adds the invariants that
-only make sense at matrix scale: course-exists-at-CCC, OR-group exactly-one,
-Cal-GETC coverage/double-count, unit-math floor, termination sanity.
+Reuses the shared per-case checkers from plan_checks.py (they take a built
+PlanResult and need no expected answer — the same battery /plan_v2 runs on
+every served plan) and adds the invariants that only make sense at matrix
+scale: course-exists-at-CCC, OR-group exactly-one, Cal-GETC
+coverage/double-count, unit-math floor, termination sanity.
 
 Every function returns a list[str] of violation messages (empty = pass).
 Nothing here calls build_plan() — callers (backtest_matrix.py, test_plan_engine.py)
@@ -25,7 +26,7 @@ from plan_engine import (
     _load_uc_shard,
     resolve_calgetc_school_key,
 )
-from test_plan_engine import (
+from plan_checks import (
     check_ghost_courses,
     check_prereq_violations,
     check_and_groups,
@@ -263,8 +264,14 @@ def check_calgetc_no_double_count(result: PlanResult, college: str = "") -> list
     errors = []
     course_to_areas: dict = {}
     for area, val in result.ge_completion.items():
-        if not val or "NOT ASSIGNED" in str(val):
+        if not val:
             errors.append(f"Cal-GETC area {area} claimed but has no real assignment: {val!r}")
+            continue
+        if "NOT ASSIGNED" in str(val):
+            # An explicit NOT ASSIGNED row is the engine being honest about
+            # a gap — rendered as ❌ NOT MET, and Overall Status refuses
+            # PASS. The silent-omission failure it replaced is what
+            # check_calgetc_six_areas now guards unconditionally.
             continue
         for code in str(val).split(", "):
             code = code.strip()
@@ -292,9 +299,17 @@ def check_calgetc_no_double_count(result: PlanResult, college: str = "") -> list
 
 
 def check_calgetc_six_areas(result: PlanResult) -> list:
-    """If the plan's own audit claims Cal-GETC PASS, all 6 top-level areas
-    (1, 2, 3, 4, 5, 6 — treating 1A/1B/1C and 5A/5B/5C as one area each) must
-    be covered.
+    """Every required Cal-GETC area must be PRESENT in the engine's output —
+    assigned, explicitly NOT ASSIGNED, or explicitly deferred. A missing key
+    is a silent omission: the rendered GE table looks complete (and Overall
+    Status can read PASS) with a whole area gone. The engine's final truth
+    sweep in _select_calgetc guarantees full coverage, so this check is now
+    unconditional — the old version only fired when a plan had NO warnings
+    at all, which in practice was almost never.
+
+    Plans with no GE data at all (ge_completion empty — college missing from
+    calgetc_map) are a separate condition: build_plan warns GE DATA GAP and
+    the renderer refuses an overall PASS.
 
     Skipped entirely when ge_strategy == "NOT_APPLICABLE": those colleges
     (e.g. UC Berkeley's College of Engineering) don't use Cal-GETC at all —
@@ -305,24 +320,12 @@ def check_calgetc_six_areas(result: PlanResult) -> list:
     """
     if result.ge_strategy == "NOT_APPLICABLE":
         return []
-    audit_text = " ".join(f"{a}" for a in (result.requirement_audit or []))
-    if "Overall Status" not in audit_text and not result.ge_completion:
+    if not result.ge_completion:
         return []
-    covered = set(result.ge_completion.keys())
-    top_level = {"1", "2", "3", "4", "5", "6"}
-    got_top = set()
-    for area in covered:
-        if area.startswith("1"):
-            got_top.add("1")
-        elif area.startswith("5"):
-            got_top.add("5")
-        elif area.startswith("3"):
-            got_top.add("3")
-        else:
-            got_top.add(area)
-    missing = top_level - got_top
-    if missing and not result.warnings and not result.sparse_major_prep:
-        return [f"Cal-GETC claims completion but areas missing: {sorted(missing)}"]
+    present = set(result.ge_completion) | set(getattr(result, "ge_deferred_areas", []) or [])
+    missing = _CALGETC_AREAS - present
+    if missing:
+        return [f"Cal-GETC areas silently absent from ge_completion: {sorted(missing)}"]
     return []
 
 

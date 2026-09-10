@@ -568,6 +568,164 @@ def test_term_header_repair():
     return {"id": "THR", "desc": "Term header repair", "status": "PASS", "errors": []}
 
 
+# ── De Anza -> Berkeley Civil Engineering: series-shape + NOT_APPLICABLE ──────
+
+def test_berkeley_ce_chemistry_and_breadth():
+    """Regression test for the bug where UC-side "Series" requirements
+    (e.g. Berkeley Civil Engineering's Chemistry: CHEM 1A + 1AL + 1B required
+    together) were silently dropped by the scraper, and for the separate bug
+    where Cal-GETC areas beyond Reading & Composition got scheduled for a
+    College of Engineering major even though that college doesn't accept
+    Cal-GETC certification at all."""
+    print(f"\n{'-'*70}")
+    print("BERKELEY CE TEST: De Anza -> Berkeley -> Civil Engineering "
+          "[Series requirement + non-Cal-GETC breadth framework]")
+
+    try:
+        result = build_plan("De Anza College", "Berkeley", "Civil Engineering B.S.",
+                             accept_honors=False)
+    except Exception as e:
+        import traceback
+        print(f"  ERROR building plan: {e}")
+        print(traceback.format_exc()[:500])
+        return {"id": "CE", "desc": "Berkeley CE chemistry+breadth", "status": "ERROR", "errors": [str(e)]}
+
+    errors = []
+
+    # A chemistry requirement must be present in the audit somewhere (MET,
+    # NOT MET, or genuinely unarticulated) - never simply absent.
+    all_uc_codes = (
+        [uc_req for uc_req, _cc, _status in result.requirement_audit]
+        + result.post_transfer + result.not_articulated + result.recommended_optional
+    )
+    if not any("CHEM" in code.upper() for code in all_uc_codes):
+        errors.append("No Chemistry requirement found anywhere in the plan's tracking "
+                       "(audit/post-transfer/not-articulated/recommended) - the Series "
+                       "requirement silently vanished")
+    else:
+        chem_rows = [(u, c, s) for u, c, s in result.requirement_audit if "CHEM" in u.upper()]
+        if chem_rows and not any(s in ("MET", "MET (CONDITIONAL)") for _, _, s in chem_rows):
+            errors.append(f"Chemistry requirement present but never MET: {chem_rows}")
+
+    # No Cal-GETC area beyond Reading & Composition (1A/1B) should be
+    # selected - Berkeley's College of Engineering doesn't accept Cal-GETC.
+    if result.ge_strategy != "NOT_APPLICABLE":
+        errors.append(f"Expected ge_strategy='NOT_APPLICABLE' for Berkeley CE, got {result.ge_strategy!r}")
+    non_reading_comp_areas = set(result.ge_completion) - {"1A", "1B"}
+    if non_reading_comp_areas:
+        errors.append(f"Cal-GETC areas beyond 1A/1B were selected for a non-Cal-GETC "
+                       f"college: {sorted(non_reading_comp_areas)}")
+    for slot in result.all_courses():
+        ge_tags = [t for t in slot.tags if t.startswith("Cal-GETC Area") and t not in
+                   ("Cal-GETC Area 1A", "Cal-GETC Area 1B")]
+        if ge_tags:
+            errors.append(f"{slot.code} is tagged with a non-1A/1B Cal-GETC area: {ge_tags}")
+
+    if errors:
+        print(f"  FAIL ({len(errors)} errors):")
+        for e in errors:
+            print(f"    * {e}")
+        return {"id": "CE", "desc": "Berkeley CE chemistry+breadth", "status": "FAIL", "errors": errors}
+
+    print(f"  Chemistry requirement: present and resolved")
+    print(f"  ge_strategy: {result.ge_strategy} (only 1A/1B selected)")
+    print(f"  PASS")
+    return {"id": "CE", "desc": "Berkeley CE chemistry+breadth", "status": "PASS", "errors": []}
+
+
+def test_post_transfer_section_consistency():
+    """A plan with real not_articulated requirements (Berkeley CE always has
+    some — e.g. Engineering programming/thermo not offered at De Anza) must
+    never claim 'all UC requirements have CC articulation'. Tests the actual
+    rendered text, not just the underlying data, since that's where the
+    contradiction was found."""
+    print(f"\n{'-'*70}")
+    print("POST-TRANSFER CONSISTENCY TEST: De Anza -> Berkeley -> Civil Engineering")
+
+    from plan_engine import render_plan_text
+    try:
+        result = build_plan("De Anza College", "Berkeley", "Civil Engineering B.S.",
+                             accept_honors=False)
+        text = render_plan_text(result, "", "3.5+", "", "competitive")
+    except Exception as e:
+        import traceback
+        print(f"  ERROR: {e}")
+        print(traceback.format_exc()[:500])
+        return {"id": "PTC", "desc": "Post-transfer consistency", "status": "ERROR", "errors": [str(e)]}
+
+    errors = []
+    if not result.not_articulated:
+        errors.append("Test fixture assumption broken: expected Berkeley CE to have real "
+                       "not_articulated entries (e.g. Engineering programming/thermo) - "
+                       "update this test if that's no longer true")
+    if "None — all UC requirements have CC articulation." in text and result.not_articulated:
+        errors.append("render_plan_text claims 'None - all UC requirements have CC "
+                       "articulation' while not_articulated is non-empty - contradictory")
+    section = text.split("## Post-Transfer Requirements", 1)[-1].split("## Term", 1)[0]
+    for na in result.not_articulated:
+        if na not in section:
+            errors.append(f"not_articulated entry {na!r} missing from the rendered "
+                           f"Post-Transfer Requirements section")
+
+    if errors:
+        print(f"  FAIL ({len(errors)} errors):")
+        for e in errors:
+            print(f"    * {e}")
+        return {"id": "PTC", "desc": "Post-transfer consistency", "status": "FAIL", "errors": errors}
+
+    print(f"  not_articulated entries: {len(result.not_articulated)}, all reflected in rendered text")
+    print(f"  PASS")
+    return {"id": "PTC", "desc": "Post-transfer consistency", "status": "PASS", "errors": []}
+
+
+def test_no_chem1b_without_chem1a_data():
+    """Data integrity: no Berkeley shard agreement should require CHEM 1B
+    (or reference it as a CC-side course) without a CHEM 1A requirement
+    also present somewhere in the same agreement - the two are always
+    paired in a real general-chemistry sequence. Regression guard for the
+    Series-shape parser bug that dropped 1A+1AL series entirely, which
+    would have left exactly this kind of 1B-without-1A gap."""
+    print(f"\n{'-'*70}")
+    print("DATA TEST: no Berkeley agreement has CHEM 1B without CHEM 1A")
+
+    import gzip
+    import orjson
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "articulations_Berkeley.json.gz")
+    if not os.path.exists(path):
+        print("  SKIP: articulations_Berkeley.json.gz not found")
+        return {"id": "DATA1", "desc": "CHEM 1B requires CHEM 1A", "status": "SKIP", "errors": []}
+
+    with gzip.open(path, "rb") as f:
+        shard = orjson.loads(f.read())
+
+    bad = []
+    for key, entry in shard.items():
+        if key.startswith("_") or not isinstance(entry, list):
+            continue
+        prefixes_numbers = set()
+        for row in entry:
+            uc = row.get("uc") or {}
+            if uc.get("p", "").upper() == "CHEM":
+                for n in uc.get("n", "").split("+"):
+                    prefixes_numbers.add(n.strip().upper())
+            for grp in row.get("cc", []) or []:
+                for c in grp:
+                    if c.get("p", "").upper() == "CHEM":
+                        prefixes_numbers.add(c.get("n", "").strip().upper())
+        if "1B" in prefixes_numbers and "1A" not in prefixes_numbers:
+            bad.append(key)
+
+    if bad:
+        print(f"  FAIL: {len(bad)} agreement(s) have CHEM 1B with no CHEM 1A:")
+        for k in bad[:10]:
+            print(f"    * {k}")
+        return {"id": "DATA1", "desc": "CHEM 1B requires CHEM 1A", "status": "FAIL", "errors": bad}
+
+    print(f"  Checked {len(shard)} Berkeley agreements, 0 CHEM 1B-without-1A gaps")
+    print(f"  PASS")
+    return {"id": "DATA1", "desc": "CHEM 1B requires CHEM 1A", "status": "PASS", "errors": []}
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -585,6 +743,9 @@ def main():
 
     # Always run term header repair test regardless of case filter
     results.append(test_term_header_repair())
+    results.append(test_berkeley_ce_chemistry_and_breadth())
+    results.append(test_post_transfer_section_consistency())
+    results.append(test_no_chem1b_without_chem1a_data())
 
     print(f"\n{'='*70}")
     print("SUMMARY")

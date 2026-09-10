@@ -143,13 +143,30 @@ def _ge_strategy(uc_normalized: str, major: str) -> tuple[str, str]:
     if uc_normalized == "berkeley":
         if any(w in major_l for w in _BERKELEY_NON_LS_WORDS):
             college_label = "Haas School of Business" if "business" in major_l else "College of Engineering"
+            # NOT_APPLICABLE, not MAJOR_PREP_FIRST: these colleges don't just
+            # deprioritize Cal-GETC, they don't use it at all for admission —
+            # a materially different policy from "STEM majors elsewhere can
+            # defer Cal-GETC until after transfer" (that Cal-GETC still has
+            # to be completed eventually). Conflating the two under one
+            # strategy string was a real bug: it let Cal-GETC courses (e.g.
+            # BIOL 26, PSYC 5, PHIL 20A) get scheduled into a College of
+            # Engineering plan as if they counted toward something, when
+            # this college's own admissions guidance says it doesn't accept
+            # Cal-GETC certification at all. Engineering/Haas use their own
+            # separate breadth requirement (e.g. Engineering's Humanities &
+            # Social Sciences list) that isn't modeled in this tool yet — see
+            # build_plan's NOT_APPLICABLE branch, which stops scheduling any
+            # Cal-GETC course for these majors rather than silently mislabel
+            # something as satisfying a requirement it doesn't.
             return (
-                "MAJOR_PREP_FIRST",
+                "NOT_APPLICABLE",
                 f"UC Berkeley's {college_label} does not accept or recommend Cal-GETC "
                 "certification — this differs from the rest of the campus (College of "
-                "Letters & Science requires it). Focus on required and recommended major "
-                "preparation; confirm your GE approach with a counselor before relying on "
-                "Cal-GETC for this specific major.",
+                "Letters & Science requires it). This college has its own separate breadth "
+                "requirement (for Engineering: a Humanities & Social Sciences list, not "
+                "modeled in this tool) — confirm your specific requirements with a "
+                "counselor or your college's own admissions page rather than relying on "
+                "Cal-GETC for this major.",
             )
         return (
             "CERTIFY",
@@ -1078,6 +1095,23 @@ def _resolve_major_prep(
             for c in chosen:
                 loser_cc_codes.add((c.get("p",""), c.get("n","")))
 
+        # no_cc_arts items reaching here means SOME (not all) alternatives in
+        # this OR-group had no CC articulation, so they never hit the
+        # `if not candidates` POST-TRANSFER branch above. They still need a
+        # row: the pick_n quota was met by real winners, so — same as a
+        # `candidates`-sourced loser — they're moot, not something the
+        # student still needs. Without this they vanished from every output
+        # (audit/post-transfer/not-articulated) with zero trace whenever the
+        # OR-group had a mix of articulated and unarticulated alternatives.
+        # Found via check_no_requirement_group_vanishes (backtest matrix):
+        # American River College's "AMERSTD 10" alternative had no CC option
+        # at all, but AFRICAM 5A/5B (real, articulated) won the same 2-slot
+        # pick, so AMERSTD 10 hit exactly this gap.
+        for uc_str, uc_key in no_cc_arts:
+            if uc_key in skip_uc_keys:
+                continue
+            audit_rows.append((uc_str, f"satisfied via {winner_cc_desc}", "MET"))
+
     # ── Process AND entries (Following / legacy) ──────────────────────────────
     for art in and_arts:
         uc_c   = art.get("uc", {})
@@ -1213,7 +1247,26 @@ def _select_calgetc(
     ge_tag_prefix = "Cal-GETC"
 
     required = _CALGETC_REQUIRED
-    _required_codes = {code for code, _, _ in required} | {"5C"}
+    if ge_strategy == "NOT_APPLICABLE":
+        # This college does not accept or recommend Cal-GETC certification at
+        # all (see _ge_strategy — e.g. UC Berkeley's College of Engineering).
+        # Selecting the rest of Cal-GETC here would mislabel courses as
+        # satisfying a requirement this college doesn't evaluate (verified
+        # real case: BIOL 26 sitting in what looked like a completed breadth
+        # slot for a Civil Engineering plan). Reading & Composition (1A/1B)
+        # is kept regardless — it's a real, separate UC/campus graduation
+        # requirement independent of Cal-GETC certification (Engineering's
+        # own Humanities & Social Sciences list explicitly requires 2
+        # reading-and-composition courses), not something specific to this
+        # one college's Cal-GETC policy.
+        required = [r for r in required if r[0] in ("1A", "1B")]
+    # "5C" isn't its own entry in _CALGETC_REQUIRED (see the "5C: no separate
+    # slot" handling below) but the multi-area carve-out and the guaranteed-
+    # completion fallback both key off _required_codes containing it — only
+    # when Cal-GETC is actually in play for this college.
+    _required_codes = {code for code, _, _ in required}
+    if ge_strategy != "NOT_APPLICABLE":
+        _required_codes = _required_codes | {"5C"}
 
     # ── Multi-area carve-out lookup ──────────────────────────────────────────
     # A course listed under more than one area in this school's own byArea
@@ -1736,7 +1789,8 @@ def _apply_double_labels(result: PlanResult):
 # ── Elective filling ──────────────────────────────────────────────────────────
 
 def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None = None,
-                     accept_honors: bool = False, completed_keys: set | None = None) -> None:
+                     accept_honors: bool = False, completed_keys: set | None = None,
+                     ge_strategy: str = "CERTIFY") -> None:
     """
     Fill unit shortfall with UC-transferable courses from the school's Cal-GETC pool.
 
@@ -1817,8 +1871,34 @@ def _fill_electives(result: PlanResult, college: str, exclude_codes: set | None 
     relevant_prefixes = sorted(p for p in by_prefix if p in major_prefixes)
     other_prefixes    = sorted(p for p in by_prefix if p not in major_prefixes)
 
+    # For colleges that don't use Cal-GETC at all (ge_strategy ==
+    # "NOT_APPLICABLE" — e.g. UC Berkeley's College of Engineering), prefer
+    # humanities/social-science filler over science filler: real Engineering
+    # breadth requirements (Humanities & Social Sciences) don't want more
+    # science courses, and this college's students already get plenty of
+    # required science through major prep (physics, math, etc.) — pure
+    # science electives add nothing there. Push science-area courses to a
+    # separate, lowest-priority tier rather than excluding them outright, so
+    # they're still used as a last resort if nothing else fills the unit
+    # minimum. "Science" here means "listed under Cal-GETC 5A/5B/5C in this
+    # college's own data" — reusing data already loaded, not a new
+    # per-college H&SS course list this tool doesn't have.
+    if ge_strategy == "NOT_APPLICABLE":
+        science_keys: set = set()
+        for area in ("5A", "5B", "5C"):
+            for c in school_data.get("byArea", {}).get(area, []):
+                science_keys.add((c.get("prefix", ""), c.get("number", "")))
+        science_prefixes = sorted(
+            p for p in other_prefixes
+            if all((c.get("prefix", ""), c.get("number", "")) in science_keys for c in pool if c.get("prefix") == p)
+        )
+        other_prefixes = sorted(p for p in other_prefixes if p not in science_prefixes)
+        tiers = (relevant_prefixes, other_prefixes, science_prefixes)
+    else:
+        tiers = (relevant_prefixes, other_prefixes)
+
     candidates: list = []
-    for tier_prefixes in (relevant_prefixes, other_prefixes):
+    for tier_prefixes in tiers:
         while any(by_prefix[p] for p in tier_prefixes):
             for p in tier_prefixes:
                 if by_prefix[p]:
@@ -2031,7 +2111,7 @@ def build_plan(
 
     result.total_units = sum(s.units for s in result.all_courses())
     _fill_electives(result, college, exclude_codes=loser_cc_codes, accept_honors=accept_honors,
-                     completed_keys=completed_keys)
+                     completed_keys=completed_keys, ge_strategy=result.ge_strategy)
 
     # Recompute metadata after elective filling (new terms may have been added)
     base_terms = 6 if result.is_quarter else 4
@@ -2321,10 +2401,19 @@ def render_plan_text(
     lines.append("")
 
     # ── Post-Transfer Requirements ───────────────────────────────────────────
+    # Bug found via De Anza -> Berkeley Civil Engineering: this section used
+    # to say "None — all UC requirements have CC articulation" whenever
+    # post_transfer was empty, without checking not_articulated — false
+    # whenever a required course had genuinely no CC equivalent (na rows),
+    # which is a distinct, real gap from a noArticulationReason-flagged
+    # POST-TRANSFER row, but equally means NOT every UC requirement has CC
+    # articulation. Both lists now drive this section.
     lines.append("## Post-Transfer Requirements")
-    if result.post_transfer:
+    if result.post_transfer or result.not_articulated:
         for pt in result.post_transfer:
             lines.append(f"- {pt} — No CC articulation. Take at {result.uc} after transfer.")
+        for na in result.not_articulated:
+            lines.append(f"- {na} — Not articulated at this college. Confirm with a counselor or take at {result.uc} after transfer.")
     else:
         lines.append("None — all UC requirements have CC articulation.")
     lines.append("")
@@ -2350,13 +2439,25 @@ def render_plan_text(
 
     # ── Cal-GETC Completion ──────────────────────────────────────────────────
     lines.append("## Cal-GETC Completion")
-    for area_code, course_code in result.ge_completion.items():
-        label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
-        mark = "❌" if "NOT ASSIGNED" in str(course_code) else "✅"
-        lines.append(f"- {label}: {mark} {course_code}")
-    for area_code in result.ge_deferred_areas:
-        label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
-        lines.append(f"- {label}: ⏳ Deferred until after transfer (Cal-GETC for STEM)")
+    if result.ge_strategy == "NOT_APPLICABLE":
+        lines.append(
+            "- This college does not accept or recommend full Cal-GETC certification "
+            "for this major — only Reading & Composition (1A/1B) is scheduled below as "
+            "a separate, real graduation requirement. See Key Notes for this college's "
+            "own breadth requirement."
+        )
+        for area_code, course_code in result.ge_completion.items():
+            label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+            mark = "❌" if "NOT ASSIGNED" in str(course_code) else "✅"
+            lines.append(f"- {label}: {mark} {course_code}")
+    else:
+        for area_code, course_code in result.ge_completion.items():
+            label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+            mark = "❌" if "NOT ASSIGNED" in str(course_code) else "✅"
+            lines.append(f"- {label}: {mark} {course_code}")
+        for area_code in result.ge_deferred_areas:
+            label = _CALGETC_AREA_LABELS.get(area_code, f"Area {area_code}")
+            lines.append(f"- {label}: ⏳ Deferred until after transfer (Cal-GETC for STEM)")
     lines.append("")
 
     # ── Key Notes ────────────────────────────────────────────────────────────
@@ -2399,6 +2500,15 @@ def render_plan_text(
                 "- If your schedule is tight, it is OK to leave some Cal-GETC areas incomplete at "
                 "transfer and finish them at the university — do not sacrifice required or "
                 "recommended major prep to finish GE early."
+            )
+        elif result.ge_strategy == "NOT_APPLICABLE":
+            lines.append(
+                "- This plan schedules major preparation, Reading & Composition (a real, "
+                "separate graduation requirement), and electives — no other Cal-GETC areas, "
+                "since this college doesn't evaluate them. Electives are chosen to favor "
+                "humanities/social-science coursework over science, matching this college's "
+                "own breadth focus. Verify your specific breadth/GE requirement directly with "
+                "this college or a counselor before registering."
             )
     if result.extended_plan and not result.summer_overflow:
         term_word = "quarters" if result.is_quarter else "semesters"

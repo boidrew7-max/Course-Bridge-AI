@@ -135,7 +135,8 @@ def _run_one(triple) -> dict:
         row["duration_ms"] = int((time.time() - t0) * 1000)
         return row
 
-    errors = run_all_invariants(result, college, course_index=_get_course_index())
+    errors = run_all_invariants(result, college, course_index=_get_course_index(),
+                                 uc_normalized=uc, shard_key=shard_key)
     row["duration_ms"] = int((time.time() - t0) * 1000)
     row["total_units"] = round(result.total_units, 1)
     row["course_count"] = len(result.all_courses())

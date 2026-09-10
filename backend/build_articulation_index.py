@@ -132,6 +132,42 @@ def _row_units(rows: list) -> list:
             plain_chain[prefix_u] = (plain_num, unit_id)
     return unit_ids
 
+def _series_identity(series: dict) -> tuple[int | None, dict] | None:
+    """
+    A cell/articulation can carry `{"type": "Series", "series": {...}}`
+    instead of `{"type": "Course", "course": {...}}` when the UC SIDE of a
+    single requirement is itself a multi-course bundle (e.g. Berkeley Civil
+    Engineering's "General Chemistry (full sequence with lab)" = CHEM 1A +
+    1AL + 1B all required together as ONE requirement, not three separate
+    ones). Every place in this file that reads `c.get("course")` needs a
+    parallel `c.get("series")` fallback, or the whole requirement — the UC
+    course cell in templateAssets AND its matching row in articulations —
+    is invisible everywhere: not scheduled, not POST-TRANSFER, not even
+    NOT ARTICULATED. Confirmed real and not rare: verified via De Anza ->
+    Berkeley Civil Engineering (Chemistry silently missing from every
+    output), and this "series"-on-the-UC-side shape is a generic ASSIST
+    construct, not specific to that one agreement or major.
+
+    Returns (synthetic_ciid, uc_dict) using the first sub-course's own
+    courseIdentifierParentId as the identity — stable and derived
+    identically here and in parse_one(), so a cell's synthetic id here
+    matches the same series' synthetic id when read again from the
+    separate `articulations` blob. Returns None if the series has no
+    usable sub-courses.
+    """
+    courses = series.get("courses") or []
+    if not courses or not isinstance(courses[0], dict):
+        return None
+    ciid = courses[0].get("courseIdentifierParentId")
+    prefixes = {c.get("prefix", "") for c in courses if isinstance(c, dict)}
+    prefix = courses[0].get("prefix", "") if len(prefixes) == 1 else "/".join(sorted(prefixes))
+    number = "+".join(c.get("courseNumber", "") for c in courses if isinstance(c, dict))
+    title = series.get("name") or ", ".join(
+        f"{c.get('prefix','')} {c.get('courseNumber','')}".strip() for c in courses if isinstance(c, dict)
+    )
+    return ciid, {"prefix": prefix, "courseNumber": number, "courseTitle": title}
+
+
 # instruction.type values the parser actively handles
 _KNOWN_TYPES = {"Following", "NFromArea"}
 
@@ -151,7 +187,7 @@ _STALE_ATTR_RE = re.compile(
 )
 
 
-def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict]:
+def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict, list]:
     """
     Parse templateAssets and return:
       cell_to_group: {courseIdentifierParentId (int) -> (groupId str, pick_n int, sec_idx int|None)}
@@ -161,6 +197,9 @@ def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict]:
         UC courses the major requires that never got a row in `articulations` at
         all (ASSIST gives them no noArticulationReason either — they just don't
         appear there), which the old parser silently dropped.
+      unresolved_cells: list of raw cell "type" strings for cells that could not
+        be identified at all (neither "course" nor a resolvable "series") - see
+        the build-time completeness check in main().
 
     pick_n semantics:
       0  = "Following" (AND — complete all)
@@ -171,6 +210,7 @@ def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict]:
            (flat pool across the whole group — used for NFromArea/NFromFollowing).
     """
     cell_to_group: dict = {}
+    unresolved_cells: list = []
     unknown_types: Counter = Counter()
     all_uc_cells: dict = {}
 
@@ -314,25 +354,52 @@ def _parse_template_assets(ta_raw) -> tuple[dict, Counter, dict]:
                         continue
                     course = c.get("course") or {}
                     ciid = course.get("courseIdentifierParentId")
-                    if ciid is not None:
-                        # If the same course appears in multiple groups, first wins.
-                        # (Duplicate across emphasis tracks handled at engine level.)
-                        if ciid not in cell_to_group:
-                            cell_to_group[ciid] = (eff_gid, sec_pick_n, unit_key)
-                        if ciid not in all_uc_cells:
-                            all_uc_cells[ciid] = {
-                                "p": course.get("prefix", ""),
-                                "n": course.get("courseNumber", ""),
-                                "t": course.get("courseTitle", ""),
+                    if ciid is None and c.get("series"):
+                        ident = _series_identity(c["series"])
+                        if ident is not None:
+                            ciid, series_uc = ident
+                            course = {
+                                "prefix": series_uc["prefix"],
+                                "courseNumber": series_uc["courseNumber"],
+                                "courseTitle": series_uc["courseTitle"],
                             }
+                    if ciid is None:
+                        # Neither "course" nor a resolvable "series" - this cell
+                        # represents a real UC requirement (it has a "type" and
+                        # took up a row in the template) that this parser cannot
+                        # identify at all. This must never happen silently: see
+                        # the build-time completeness check in main() - unlike a
+                        # genuine "na" row (a real, IDENTIFIED UC course with no
+                        # articulation data), this is a cell whose very identity
+                        # was never established, so it can't even become an "na"
+                        # row. Counted and surfaced by main(); the build fails
+                        # loudly rather than silently dropping the requirement
+                        # the way the pre-fix "series" gap did.
+                        unresolved_cells.append(c.get("type", "<unknown>"))
+                        continue
+                    # If the same course appears in multiple groups, first wins.
+                    # (Duplicate across emphasis tracks handled at engine level.)
+                    if ciid not in cell_to_group:
+                        cell_to_group[ciid] = (eff_gid, sec_pick_n, unit_key)
+                    if ciid not in all_uc_cells:
+                        all_uc_cells[ciid] = {
+                            "p": course.get("prefix", ""),
+                            "n": course.get("courseNumber", ""),
+                            "t": course.get("courseTitle", ""),
+                        }
 
-    return cell_to_group, unknown_types, all_uc_cells
+    return cell_to_group, unknown_types, all_uc_cells, unresolved_cells
 
 
-def parse_one(filepath) -> tuple[list | None, Counter]:
+def parse_one(filepath) -> tuple[list | None, Counter, list]:
     """
-    Returns (rows, unknown_instr_types).
+    Returns (rows, unknown_instr_types, unresolved_cells).
     rows: list of shard entries, or None if no CC articulations found.
+    unresolved_cells: raw "type" strings for cells this parser could not
+      identify at all, from both templateAssets and articulations - see the
+      build-time completeness check in main(), which fails the build loudly
+      if this is ever non-empty rather than let a requirement vanish with no
+      trace the way the "series" shape did before this parser handled it.
 
     Row fields beyond uc/cc/g/k/sec:
       "cond": True on a CC course dict inside "cc" — ASSIST attaches a per-course
@@ -348,20 +415,21 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
         ASSIST's own data, not explicitly marked post-transfer.
     """
     unknown_types: Counter = Counter()
+    unresolved_cells: list = []
     try:
         with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
     except Exception:
-        return None, unknown_types
+        return None, unknown_types, unresolved_cells
 
     result = data.get("result") or {}
     arts_raw = result.get("articulations", "[]")
     try:
         arts = json.loads(arts_raw) if isinstance(arts_raw, str) else (arts_raw or [])
     except Exception:
-        return None, unknown_types
+        return None, unknown_types, unresolved_cells
 
-    cell_to_group, unknown_types, all_uc_cells = _parse_template_assets(
+    cell_to_group, unknown_types, all_uc_cells, unresolved_cells = _parse_template_assets(
         result.get("templateAssets", "[]")
     )
 
@@ -383,7 +451,17 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
             continue
         inner = art.get("articulation") or {}
         uc_c = inner.get("course") or {}
+        if not uc_c and inner.get("series"):
+            ident = _series_identity(inner["series"])
+            if ident is not None:
+                _series_ciid, uc_c = ident
+                uc_c = {"courseIdentifierParentId": _series_ciid, **uc_c}
         if not uc_c:
+            if inner.get("type"):
+                # Same "cannot identify this cell at all" case as the
+                # templateAssets side - a real articulation row this parser
+                # doesn't recognize, not a genuinely empty one.
+                unresolved_cells.append(inner.get("type"))
             continue
 
         # Link articulation to its RequirementGroup via courseIdentifierParentId
@@ -489,7 +567,7 @@ def parse_one(filepath) -> tuple[list | None, Counter]:
             row["sec"] = sec_idx
         rows.append(row)
 
-    return (rows if rows else None), unknown_types
+    return (rows if rows else None), unknown_types, unresolved_cells
 
 
 def main():
@@ -504,13 +582,23 @@ def main():
     processed = 0
     skipped = 0
     all_unknown: Counter = Counter()
+    unresolved_by_uc: Counter = Counter()
+    unresolved_type_counts: Counter = Counter()
+    unresolved_examples: dict = {}   # uc -> first offending filename
 
     for i, fname in enumerate(fnames):
         if i % 10000 == 0:
             print(f"  {i}/{len(fnames)}...")
         key = fname[:-5]  # strip .json
-        rows, unknown = parse_one(os.path.join(AGREEMENTS_DIR, fname))
+        # "College__UC__Major.json" - UC is the second "__"-delimited segment.
+        parts = key.split("__")
+        uc_label = parts[1] if len(parts) >= 3 else "<unknown>"
+        rows, unknown, unresolved = parse_one(os.path.join(AGREEMENTS_DIR, fname))
         all_unknown.update(unknown)
+        if unresolved:
+            unresolved_by_uc[uc_label] += len(unresolved)
+            unresolved_type_counts.update(unresolved)
+            unresolved_examples.setdefault(uc_label, fname)
         if rows:
             index[key] = rows
             processed += 1
@@ -525,6 +613,33 @@ def main():
             print(f"  {itype:<40} {cnt:>6,} occurrences")
     else:
         print("No unhandled instruction types.")
+
+    # ── Build-time completeness check ───────────────────────────────────────
+    # Every UC course cell the parser encounters must become exactly one
+    # output row: articulated (a normal row), post-transfer (noArticulation-
+    # Reason set), or "na" (present in templateAssets, absent from
+    # articulations). A cell this parser can't identify at all - neither
+    # "course" nor a resolvable "series", or any future shape not yet
+    # handled - falls through all three and disappears with zero trace. That
+    # is exactly the bug this whole fix started from (Chemistry silently
+    # missing from every De Anza -> Berkeley Civil Engineering output). Never
+    # let that happen again silently: fail the build loudly instead.
+    if unresolved_by_uc:
+        print("\nFAILED — unresolved UC requirement cells (neither course nor series), by campus:")
+        for uc_label, cnt in unresolved_by_uc.most_common():
+            example = unresolved_examples.get(uc_label, "?")
+            print(f"  {uc_label:<20} {cnt:>6,} unresolved cell(s)  (e.g. {example})")
+        print("\nBy raw cell type:")
+        for cell_type, cnt in unresolved_type_counts.most_common():
+            print(f"  {cell_type:<20} {cnt:>6,}")
+        print(
+            "\nRefusing to write output: a requirement type this parser doesn't "
+            "recognize would silently vanish from the shard. Extend "
+            "_parse_template_assets()/parse_one() to handle the type(s) above, "
+            "then re-run."
+        )
+        sys.exit(1)
+    print("Completeness check passed: every UC requirement cell resolved to a real row.")
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(index, f, separators=(",", ":"))

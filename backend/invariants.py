@@ -22,6 +22,7 @@ from plan_engine import (
     _MAX_TERMS_HARD,
     _DATA_DIR,
     _UC_SHARD_MAP,
+    _load_uc_shard,
     resolve_calgetc_school_key,
 )
 from test_plan_engine import (
@@ -293,7 +294,17 @@ def check_calgetc_no_double_count(result: PlanResult, college: str = "") -> list
 def check_calgetc_six_areas(result: PlanResult) -> list:
     """If the plan's own audit claims Cal-GETC PASS, all 6 top-level areas
     (1, 2, 3, 4, 5, 6 — treating 1A/1B/1C and 5A/5B/5C as one area each) must
-    be covered."""
+    be covered.
+
+    Skipped entirely when ge_strategy == "NOT_APPLICABLE": those colleges
+    (e.g. UC Berkeley's College of Engineering) don't use Cal-GETC at all —
+    by design only Reading & Composition (1A/1B) is scheduled there, which
+    isn't a coverage gap, it's the whole point of that strategy. Without
+    this exemption every Berkeley Engineering/Haas plan false-positives
+    here the moment ge_completion is intentionally partial.
+    """
+    if result.ge_strategy == "NOT_APPLICABLE":
+        return []
     audit_text = " ".join(f"{a}" for a in (result.requirement_audit or []))
     if "Overall Status" not in audit_text and not result.ge_completion:
         return []
@@ -386,8 +397,76 @@ def check_no_unexplained_honors(result: PlanResult, accept_honors: bool) -> list
     ]
 
 
+def check_no_requirement_group_vanishes(result: PlanResult, uc_normalized: str, shard_key: str) -> list:
+    """A required UC course-group present in our own raw shard data for this
+    exact triple must show up SOMEWHERE in the plan's own tracking — as a
+    MET/NOT MET audit row, a POST-TRANSFER entry, a NOT ARTICULATED entry, or
+    a recommended-optional entry. If a whole subject prefix from the raw
+    shard never appears in any of those, the parser or engine dropped a real
+    requirement with zero trace — exactly the class of bug found in De Anza
+    -> Berkeley Civil Engineering, where a "Series" UC-side requirement
+    (Chemistry: 3 courses required together as one requirement) used a JSON
+    shape neither build_articulation_index.py nor plan_engine.py recognized,
+    so Chemistry never appeared in the audit, post_transfer, OR
+    not_articulated — not a status bug (check_required_never_silently_dropped
+    already covers that), a total-absence bug that check couldn't catch
+    because there was no row to inspect in the first place.
+
+    Checked at PREFIX granularity (not exact course-number matching): a
+    winning OR-group's display label can get rewritten (winner_group_label)
+    in ways that don't cleanly re-derive the original "PREFIX NUMBER" text,
+    so exact-string matching would false-positive on legitimate relabeling.
+    A subject prefix disappearing entirely is still a strong, low-noise
+    signal that something real vanished, without needing to reverse-engineer
+    every display transform.
+    """
+    shard_name = _UC_SHARD_MAP.get(uc_normalized)
+    if not shard_name or shard_key.startswith("GOLDEN__"):
+        return []
+    shard = _load_uc_shard(uc_normalized)
+    entry = shard.get(shard_key)
+    if not entry:
+        return []
+
+    raw_prefixes: set = set()
+    for row in entry:
+        p = (row.get("uc") or {}).get("p", "").strip().upper()
+        if p:
+            raw_prefixes.add(p)
+    if not raw_prefixes:
+        return []
+
+    def _prefix_of(uc_display: str) -> str:
+        # uc_display is "{p} {n} - {t}" (see build_articulation_index.py's
+        # "uc" dict) - p itself can contain a space ("CIV ENG", "MEC ENG"),
+        # so isolate "{p} {n}" via " - " first, then drop only the LAST
+        # token (the number) rather than splitting on the first space,
+        # which would truncate "CIV ENG 70" down to just "CIV".
+        code_part = uc_display.split(" - ", 1)[0].strip()
+        return code_part.rsplit(" ", 1)[0].strip().upper() if " " in code_part else code_part.upper()
+
+    seen_prefixes: set = set()
+    for source in (result.post_transfer, result.not_articulated, result.recommended_optional):
+        for text in source:
+            token = _prefix_of(text)
+            if token:
+                seen_prefixes.add(token)
+    for uc_req, _cc_code, _status in result.requirement_audit:
+        token = _prefix_of(uc_req)
+        if token:
+            seen_prefixes.add(token)
+
+    missing = raw_prefixes - seen_prefixes
+    if not missing:
+        return []
+    return [f"Requirement prefix {p!r} present in raw shard data but absent from every "
+            f"plan output (audit/post-transfer/not-articulated/recommended) - a real "
+            f"requirement vanished with no trace" for p in sorted(missing)]
+
+
 def run_all_invariants(result: PlanResult, college: str, completed: set | None = None,
-                        course_index: dict | None = None, accept_honors: bool = False) -> list:
+                        course_index: dict | None = None, accept_honors: bool = False,
+                        uc_normalized: str | None = None, shard_key: str | None = None) -> list:
     """Full invariant battery for one built PlanResult. Returns a flat list of
     violation message strings; empty means the plan is clean."""
     errors = []
@@ -404,4 +483,6 @@ def run_all_invariants(result: PlanResult, college: str, completed: set | None =
     errors += check_termination_sane(result)
     errors += check_required_never_silently_dropped(result)
     errors += check_no_unexplained_honors(result, accept_honors)
+    if uc_normalized and shard_key:
+        errors += check_no_requirement_group_vanishes(result, uc_normalized, shard_key)
     return errors

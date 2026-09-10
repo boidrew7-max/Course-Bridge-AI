@@ -1103,17 +1103,25 @@ function MarkdownTable({ rows }: { rows: string[][] }) {
 
 // ── Term timeline (parsed from the rendered plan's "## Term N (Label)" blocks) ──
 
-type TimelineCourse = { code: string; title: string; units: string; category: "major" | "breadth" | "english" };
+type TimelineCourse = { code: string; title: string; units: string; category: "major" | "breadth" | "elective" | "english" | "other" };
 type TimelineTerm = { label: string; units: number; courses: TimelineCourse[] };
 
 const TERM_HEADER_RE = /^##\s*Term\s+\d+\s*\(([^)]+)\)/;
 const COURSE_LINE_RE = /^-\s*([A-Z]{1,10}\s+[A-Z0-9]+H?)\s*[—:-]{1,2}\s*(.+?)\s*\((\d+(?:\.\d+)?)u\)(?:\s*\[([^\]]*)\])?\s*$/;
 
+// Positively matches each real backend tag (see plan_engine.py's CourseSlot
+// tags: "Required Major Prep", "Cal-GETC Area X", "Elective — transfer unit
+// minimum") instead of falling through to "breadth" for anything
+// unrecognized — a unit-filler elective was displaying as "Breadth / GE",
+// implying it satisfied a requirement it doesn't. Any tag this doesn't
+// recognize now shows a neutral "other" label instead of a requirement one.
 function categorizeCourse(code: string, tags: string): TimelineCourse["category"] {
  const t = tags.toLowerCase();
  if (t.includes("english") || /^(ENGL|EWRT)\b/i.test(code)) return "english";
  if (t.includes("major prep")) return "major";
- return "breadth";
+ if (t.includes("cal-getc") || t.includes("breadth")) return "breadth";
+ if (t.includes("elective")) return "elective";
+ return "other";
 }
 
 function parseTimeline(text: string): TimelineTerm[] {
@@ -1151,6 +1159,10 @@ const SCHEDULE_CATEGORY_META: Record<TimelineCourse["category"], { tag: string; 
  major: { tag: "Major prep", tagClass: "bg-[var(--cb-accent-soft)] text-[var(--cb-accent)]" },
  breadth: { tag: "Breadth / GE", tagClass: "bg-[var(--cb-warning-bg)] text-[var(--cb-warning)]" },
  english: { tag: "English", tagClass: "bg-[var(--cb-info-bg)] text-[var(--cb-info)]" },
+ // Unit-filler only — doesn't satisfy any requirement, so it gets its own
+ // neutral label rather than being implied as GE/breadth completion.
+ elective: { tag: "Elective (units)", tagClass: "bg-[var(--cb-border)] text-[var(--cb-muted)]" },
+ other: { tag: "Other", tagClass: "bg-[var(--cb-border)] text-[var(--cb-muted)]" },
 };
 
 // Lightweight client-side "have they already told us this is done" check.

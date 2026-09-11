@@ -223,6 +223,18 @@ CASES = [
          {"min_total_units": 60.0,
           "must_include_ge_areas": {"1C", "6"},
           "must_not_include_ge_strings": {"NOT ASSIGNED"}}),
+
+    # ── Sequence-aware "pick 1" (regression for the off-by-one/two bug) ───────
+    # UCSD CSE Computer Science lists CHEM 6A + CHEM 6B in one "complete 1 of
+    # the following" science group (alongside PHYS/BILD options). ASSIST
+    # flattens it to amountUnitType="Course", so the engine used to schedule
+    # only the first course (CHEM 1A) and mark CHEM 6B "satisfied via CHEM 1A",
+    # dropping CHEM 1B from the plan. "pick 1" of a prerequisite sequence means
+    # "pick 1 SEQUENCE": both CHEM 1A and CHEM 1B must be scheduled. This case
+    # locks that in.
+    (33, "De Anza -> UCSD -> CSE Computer Science [pick-1 science SEQUENCE, not 1 course]",
+         "De Anza College", "San Diego", "CSE Computer Science B.S.", False,
+         {"must_include": {"CHEM 1A", "CHEM 1B"}}),
 ]
 
 # ── Checkers ─────────────────────────────────────────────────────────────────

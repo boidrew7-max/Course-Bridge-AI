@@ -1113,12 +1113,44 @@ def _resolve_major_prep(
         winners = candidates[:pick_n]
         losers  = candidates[pick_n:]
 
+        # ── Sequence completion (pick-ONE) ─────────────────────────────────
+        # A "complete 1 of the following" group whose members form a lettered
+        # prerequisite sequence (e.g. CHEM 6A + CHEM 6B, or a language 1/2/3)
+        # is really "complete 1 SEQUENCE", not "complete 1 COURSE" — you can't
+        # take CHEM 6B without CHEM 6A. ASSIST flattens both to
+        # amountUnitType="Course", so the old code kept only the single
+        # cheapest course (CHEM 6A -> CHEM 1A) and marked its sibling CHEM 6B
+        # "satisfied via CHEM 1A", dropping CHEM 1B from the plan — the
+        # "always off by one or two courses" bug.
+        #
+        # Fix, purely ADDITIVE: keep exactly the winner the old code chose,
+        # then also schedule any same-sequence siblings of that winner that
+        # are in this group (they are the rest of the one chosen option), so
+        # the whole winning sequence lands in the plan. This never changes
+        # WHICH option wins — it only completes it — so it cannot swap a
+        # correct pick for another. Restricted to pick_n == 1: genuine "pick N
+        # of many" breadth lists (e.g. "pick 4 of 9 history courses", which
+        # are independent one-term courses, not prerequisite chains) must stay
+        # per-course and are left untouched.
+        if pick_n == 1 and winners and losers:
+            _wp, _wn = winners[0][3]           # winner uc_key (prefix, number)
+            if infer_sequence_order(_wn)[1] >= 0:   # winner is a lettered course
+                promoted, still_losing = [], []
+                for cand in losers:
+                    _lp, _ln = cand[3]
+                    if _lp == _wp and same_sequence_base(_wn, _ln):
+                        promoted.append(cand)       # same sequence as winner
+                    else:
+                        still_losing.append(cand)
+                winners = winners + promoted
+                losers  = still_losing
+
         for _cost, uc_str, chosen, _key in winners:
             _commit_chosen(chosen, uc_str, uc_key=_key)
 
         # Record winner description for "satisfied via" on losers
         winner_cc_desc = (
-            " or ".join(
+            " + ".join(
                 "/".join(c.get("p","") + " " + c.get("n","") for c in w[2])
                 for w in winners
             ) if winners else "selected option"

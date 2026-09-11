@@ -1806,7 +1806,8 @@ export default function PlannerClient() {
  const plans = await plansRes.json();
  if (Array.isArray(plans) && plans.length > 0) {
  const latest = plans[0]; // API returns most-recently-updated first
- cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, minDuration: 2300 });
+ // Saved plan loaded on mount: show it silently, no branded animation
+ // (the overlay is reserved for a genuine first-time generation).
  setFirstName(user.username ?? "");
  setCommunityCollege(latest.college ?? "");
  setTargetSchool(latest.uc ?? "");
@@ -1831,7 +1832,6 @@ export default function PlannerClient() {
  planText: latest.plan_text ?? "",
  }));
  } catch {}
- hidePlanLoaderAfterPaint();
  return;
  }
  }
@@ -2036,10 +2036,12 @@ export default function PlannerClient() {
  }
 
  async function loadOrGeneratePlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
- // Branded overlay plays on every plan open — saved plans get a short
- // branded moment (minDuration), fresh generations keep it up until the
- // plan starts streaming (generateAIPlan takes over the same overlay).
- cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500, minDuration: 2300 });
+ // The branded overlay plays ONLY when a plan is actually generated for the
+ // first time. A plan already saved to the account (or cached) opens
+ // silently — no animation — so it never replays on repeat opens. So we do
+ // NOT show the loader up front here: the saved-plan branch below returns
+ // without it, and only the generateAIPlan path (a genuine first-time
+ // generation) shows it.
  try {
  const meRes = await fetch("/api/auth/me");
  if (meRes.ok) {
@@ -2053,9 +2055,8 @@ export default function PlannerClient() {
  p.college === college && p.uc === school && p.major === major
  );
  if (existing?.plan_text) {
- setAiPlan(existing.plan_text);
+ setAiPlan(existing.plan_text);   // saved plan: show it, no animation
  cachePlanText(existing.plan_text);
- hidePlanLoaderAfterPaint();
  return;
  }
  }

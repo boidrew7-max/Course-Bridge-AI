@@ -119,14 +119,7 @@ const es: Dictionary = {
 
   // Home: pricing
   "home.pricing.title": "Gratis para cada estudiante",
-  "home.pricing.body": "CourseBridge es gratuito para todos los estudiantes de community college de California. Sin tarjeta de crédito, sin trampa.",
-  "home.pricing.cardTitle": "Gratis para estudiantes",
-  "home.pricing.cardPeriod": "para cada estudiante de community college de California",
-  "home.pricing.feature1": "Planes de transferencia ilimitados",
-  "home.pricing.feature2": "Las 116 community colleges",
-  "home.pricing.feature3": "Todos los campus y carreras de la UC",
-  "home.pricing.feature4": "Verificadores de Cal-GETC, TAG y fechas límite",
-  "home.pricing.cardNote": "Sin tarjeta de crédito. Sin muro de pago.",
+  "home.pricing.body": "Queremos que CourseBridge siga siendo una herramienta gratuita que todos los estudiantes de community college de California puedan usar. Sin tarjeta de crédito, sin muro de pago.",
 
   // Home: FAQ
   "home.faq.title": "Preguntas frecuentes",

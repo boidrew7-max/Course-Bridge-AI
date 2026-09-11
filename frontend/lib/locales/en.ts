@@ -117,14 +117,7 @@ const en = {
 
   // Home: pricing
   "home.pricing.title": "Free for every student",
-  "home.pricing.body": "CourseBridge is free for every California community college student. No credit card, no catch.",
-  "home.pricing.cardTitle": "Free for students",
-  "home.pricing.cardPeriod": "for every California community college student",
-  "home.pricing.feature1": "Unlimited transfer plans",
-  "home.pricing.feature2": "All 116 community colleges",
-  "home.pricing.feature3": "Every UC campus and major",
-  "home.pricing.feature4": "Cal-GETC, TAG, and deadline checkers",
-  "home.pricing.cardNote": "No credit card. No paywall.",
+  "home.pricing.body": "We want CourseBridge to stay a free tool every California community college student can use. No credit card, no paywall.",
 
   // Home: FAQ
   "home.faq.title": "Common questions",

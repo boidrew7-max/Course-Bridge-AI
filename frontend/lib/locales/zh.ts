@@ -119,14 +119,7 @@ const zh: Dictionary = {
 
   // Home: pricing
   "home.pricing.title": "对每位学生完全免费",
-  "home.pricing.body": "CourseBridge 对所有加州社区学院学生完全免费，无需信用卡，没有隐藏费用。",
-  "home.pricing.cardTitle": "学生免费",
-  "home.pricing.cardPeriod": "面向所有加州社区学院学生",
-  "home.pricing.feature1": "无限次生成转学计划",
-  "home.pricing.feature2": "覆盖全部 116 所社区学院",
-  "home.pricing.feature3": "所有 UC 校区与专业",
-  "home.pricing.feature4": "Cal-GETC、TAG 及截止日期检查工具",
-  "home.pricing.cardNote": "无需信用卡，无付费墙。",
+  "home.pricing.body": "我们希望 CourseBridge 一直是所有加州社区学院学生都能免费使用的工具。无需信用卡，没有付费墙。",
 
   // Home: FAQ
   "home.faq.title": "常见问题",

@@ -120,7 +120,7 @@ const es: Dictionary = {
   // Home: pricing
   "home.pricing.title": "Gratis para cada estudiante",
   "home.pricing.body": "CourseBridge es gratuito para todos los estudiantes de community college de California. Sin tarjeta de crédito, sin trampa.",
-  "home.pricing.cardTitle": "Siempre gratis",
+  "home.pricing.cardTitle": "Gratis para estudiantes",
   "home.pricing.cardPeriod": "para cada estudiante de community college de California",
   "home.pricing.feature1": "Planes de transferencia ilimitados",
   "home.pricing.feature2": "Las 116 community colleges",

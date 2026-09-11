@@ -118,7 +118,7 @@ const en = {
   // Home: pricing
   "home.pricing.title": "Free for every student",
   "home.pricing.body": "CourseBridge is free for every California community college student. No credit card, no catch.",
-  "home.pricing.cardTitle": "Always free",
+  "home.pricing.cardTitle": "Free for students",
   "home.pricing.cardPeriod": "for every California community college student",
   "home.pricing.feature1": "Unlimited transfer plans",
   "home.pricing.feature2": "All 116 community colleges",

@@ -118,9 +118,9 @@ const zh: Dictionary = {
   "home.get.feature6.body": "在规划过程中持续关注 TAG、UC 申请及经济资助的各项截止日期。",
 
   // Home: pricing
-  "home.pricing.title": "测试期间免费使用",
-  "home.pricing.body": "在我们持续完善产品期间，CourseBridge 目前对所有加州社区学院学生免费开放。",
-  "home.pricing.cardTitle": "测试期间免费",
+  "home.pricing.title": "对每位学生完全免费",
+  "home.pricing.body": "CourseBridge 对所有加州社区学院学生完全免费，无需信用卡，没有隐藏费用。",
+  "home.pricing.cardTitle": "始终免费",
   "home.pricing.cardPeriod": "面向所有加州社区学院学生",
   "home.pricing.feature1": "无限次生成转学计划",
   "home.pricing.feature2": "覆盖全部 116 所社区学院",
@@ -138,7 +138,7 @@ const zh: Dictionary = {
   "home.faq.q3": "我需要注册账号吗？",
   "home.faq.a3": "不注册也可以生成计划。注册后会保存你的学院、专业和已修课程，下次回来计划仍在。",
   "home.faq.q4": "收费吗？",
-  "home.faq.a4": "不收费。在测试阶段，CourseBridge 对所有加州社区学院学生免费。",
+  "home.faq.a4": "不收费。CourseBridge 对所有加州社区学院学生免费。",
   "home.faq.q5": "可以上传成绩单而不用手动输入课程吗？",
   "home.faq.a5": "可以。在引导流程中上传 PDF 成绩单，CourseBridge 会自动提取你已完成的课程供你确认。",
   "home.faq.q6": "我的数据是私密的吗？",

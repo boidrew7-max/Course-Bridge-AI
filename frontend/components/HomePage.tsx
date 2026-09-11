@@ -202,7 +202,6 @@ export default function HomePage() {
 
       {/* ------------------------------------------------------------ Pricing */}
       <section id="pricing" className="cb-section cb-section-alt">
-        <BridgeDivider />
         <div className="cb-container">
           <h2 className="cb-h2 cb-reveal">{t("home.pricing.title")}</h2>
           <p className="cb-lead cb-reveal">{t("home.pricing.body")}</p>

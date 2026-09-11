@@ -1599,6 +1599,38 @@ export default function PlannerClient() {
  const [aiPlan, setAiPlan] = useState("");
  const [aiPlanLoading, setAiPlanLoading] = useState(false);
 
+ // ── Branded loader: hide only AFTER the plan has actually painted ──────
+ // The overlay used to be hidden synchronously right after setAiPlan(...),
+ // but setAiPlan only *schedules* a render — the plan text isn't in the DOM
+ // yet, so the overlay could lift a frame or two before the plan appeared
+ // ("the screen leaves before the plan is ready"). Instead, callers set
+ // pendingHideRef and this effect hides the loader from a useEffect keyed on
+ // aiPlan, which React runs only after the new plan has been committed and
+ // painted. hideLoader() still honors its own minDuration, so the branded
+ // moment is never cut short either. A timeout is armed as a safety net so a
+ // stuck overlay can never outlive an unexpected empty render.
+ const pendingHideRef = useRef(false);
+ const hideFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const hidePlanLoaderAfterPaint = useCallback(() => {
+ pendingHideRef.current = true;
+ if (hideFallbackRef.current) clearTimeout(hideFallbackRef.current);
+ hideFallbackRef.current = setTimeout(() => {
+ if (!pendingHideRef.current) return;
+ pendingHideRef.current = false;
+ void cbOverlay()?.hideLoader();
+ }, 6000);
+ }, []);
+ useEffect(() => {
+ if (!pendingHideRef.current) return;
+ // aiPlan is now painted (useEffect runs post-commit). Empty string means
+ // "nothing to show yet" — keep waiting for real content (the safety
+ // timeout still guarantees the overlay can't stick forever).
+ if (!aiPlan) return;
+ pendingHideRef.current = false;
+ if (hideFallbackRef.current) { clearTimeout(hideFallbackRef.current); hideFallbackRef.current = null; }
+ void cbOverlay()?.hideLoader();
+ }, [aiPlan]);
+
  // Scroll reveals for checker cards and the hero stat rail; rescans once a
  // plan is showing so content that mounted with it gets observed too.
  useReveal(aiPlan ? "with-plan" : "no-plan");
@@ -1799,7 +1831,7 @@ export default function PlannerClient() {
  planText: latest.plan_text ?? "",
  }));
  } catch {}
- void cbOverlay()?.hideLoader();
+ hidePlanLoaderAfterPaint();
  return;
  }
  }
@@ -1950,14 +1982,10 @@ export default function PlannerClient() {
  setAiPlanLoading(true);
  setAiPlan("");
  let accumulated = "";
- // Branded overlay covers the wait until the plan starts streaming in.
- let overlayUp = true;
+ // Branded overlay covers the wait. It is lifted only after the finished
+ // plan has painted (hidePlanLoaderAfterPaint + the aiPlan effect), never
+ // on the first byte — otherwise the overlay left before the plan was ready.
  cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500 });
- const dropOverlay = () => {
- if (!overlayUp) return;
- overlayUp = false;
- void cbOverlay()?.hideLoader();
- };
  try {
  const res = await fetch("/api/plan", {
  method: "POST",
@@ -1979,7 +2007,6 @@ export default function PlannerClient() {
  const chunk = JSON.parse(payload);
  accumulated += chunk;
  setAiPlan(accumulated);
- if (accumulated) dropOverlay();
  } catch {}
  }
  }
@@ -1990,7 +2017,7 @@ export default function PlannerClient() {
  } catch {
  setAiPlan("Something went wrong generating your plan. Please try again in a moment.");
  } finally {
- dropOverlay();
+ hidePlanLoaderAfterPaint();
  setAiPlanLoading(false);
  }
  }
@@ -2028,7 +2055,7 @@ export default function PlannerClient() {
  if (existing?.plan_text) {
  setAiPlan(existing.plan_text);
  cachePlanText(existing.plan_text);
- void cbOverlay()?.hideLoader();
+ hidePlanLoaderAfterPaint();
  return;
  }
  }

@@ -364,6 +364,61 @@ def _find_recommended_courses(uc_normalized: str, college: str, major: str) -> l
     return best_codes if best_score >= 0.55 else []
 
 
+# ── Per-college course catalog (for interpreting completed-course text) ──────
+
+_CATALOG_CACHE: dict = {}
+
+
+def college_catalog(shard: dict, college_key_part: str, cc_display_name: str) -> list:
+    """Every course this college is known to offer, as {"prefix","number",
+    "title"}: the CC side of every articulation entry for the college in
+    this UC shard (all majors) plus the college's whole Cal-GETC list. This
+    is exactly the pool a plan can draw from, so anything a student names
+    that isn't here cannot be in the plan either.
+
+    shard: the loaded UC shard; college_key_part: the "College_Name" segment
+    of shard keys; cc_display_name: the college name for the Cal-GETC map.
+    Cached per (shard identity, college)."""
+    cache_key = (id(shard), college_key_part)
+    if cache_key in _CATALOG_CACHE:
+        return _CATALOG_CACHE[cache_key]
+    seen: set = set()
+    out: list = []
+
+    def _add(prefix, number, title):
+        p, n = str(prefix or "").strip(), str(number or "").strip()
+        if not p or not n:
+            return
+        k = (p.upper(), n.upper())
+        if k in seen:
+            return
+        seen.add(k)
+        out.append({"prefix": p, "number": n, "title": str(title or "").strip()})
+
+    prefix = college_key_part + "__"
+    for key, arts in shard.items():
+        if not key.startswith(prefix):
+            continue
+        for art in arts:
+            for grp in art.get("cc", []) or []:
+                for c in grp:
+                    _add(c.get("p"), c.get("n"), c.get("t"))
+
+    calgetc = _load_calgetc()
+    by_school = calgetc.get("bySchool", {})
+    school_key = resolve_calgetc_school_key(cc_display_name, by_school) if by_school else None
+    if school_key:
+        sdata = by_school.get(school_key, {})
+        for c in sdata.get("allCourses", []) or []:
+            _add(c.get("prefix"), c.get("number"), c.get("title"))
+        for courses in (sdata.get("byArea", {}) or {}).values():
+            for c in courses:
+                _add(c.get("prefix"), c.get("number"), c.get("title"))
+
+    _CATALOG_CACHE[cache_key] = out
+    return out
+
+
 # ── Completed-course key normalization ────────────────────────────────────────
 
 def _norm_completed_key(prefix: str, number: str) -> tuple:
@@ -444,6 +499,15 @@ class PlanResult:
                                       # intentionally left for after transfer
                                       # (e.g. "1C" under MAJOR_PREP_FIRST) —
                                       # never a silent gap, always labeled.
+    completed_recognized: list = field(default_factory=list)   # [{"code","title","source"}]
+                                      # what the student's free-text completed
+                                      # list resolved to at THEIR college
+    completed_unrecognized: list = field(default_factory=list) # entries we could not
+                                      # match — surfaced, never silently dropped
+    readiness: dict = field(default_factory=dict)  # {"done","total","percent","done_codes"}
+                                      # completed required courses vs all required
+                                      # (major prep + Cal-GETC; unit-filler
+                                      # electives excluded)
 
     def all_courses(self) -> list:
         out = []
@@ -2261,7 +2325,14 @@ def build_plan(
     completed: set = None,
     ap_credits: str = "",
     _known_key: str = None,
+    completed_raw: str = "",
 ) -> PlanResult:
+    """completed: already-clean (prefix, number) pairs or "PREFIX NUMBER"
+    strings (tests, backtest, API clients that pre-parse).
+    completed_raw: the student's free text exactly as typed ("Calc 1,
+    English 1A\\nEcon 1") — interpreted against THEIR college's catalog once
+    the college is resolved below; what it resolves to is merged into
+    `completed`, and what it couldn't resolve is reported on the result."""
     if completed is None:
         completed = set()
     completed_keys: set = set()
@@ -2326,6 +2397,22 @@ def build_plan(
 
     arts   = shard[best_key]
     result = PlanResult(college=college, uc=uc, major=major)
+
+    # ── Interpret the student's free-text completed courses ──────────────
+    # Must happen HERE — after the college is resolved (best_key) and before
+    # major prep is resolved — because "English 1A" is EWRT 1A at De Anza
+    # but ENGL 1A elsewhere: only this college's own catalog can say.
+    if completed_raw and str(completed_raw).strip():
+        from completed_courses import interpret_completed
+        _college_key_part = best_key.split("__")[0]
+        _catalog = college_catalog(shard, _college_key_part, _college_key_part.replace("_", " "))
+        _interp = interpret_completed(completed_raw, _catalog)
+        for rec in _interp.recognized:
+            completed_keys.add(_norm_completed_key(rec.prefix, rec.number))
+        result.completed_recognized = [
+            {"code": rec.code, "title": rec.title, "source": rec.source} for rec in _interp.recognized
+        ]
+        result.completed_unrecognized = list(_interp.unrecognized)
 
     (major_courses, audit_rows, post_transfer, multi_track,
      loser_cc_codes, not_articulated, stale_notes, recommended_optional,
@@ -2426,6 +2513,7 @@ def build_plan(
     result.total_units   = sum(s.units for s in result.all_courses())
 
     _sanity_check(result)
+    result.readiness = _compute_readiness(result)
 
     if ap_credits and ap_credits.strip():
         result.warnings.append(
@@ -2436,6 +2524,44 @@ def build_plan(
         )
 
     return result
+
+
+_ALREADY_RE = re.compile(r"([A-Z][A-Z .&/]{0,12}?\s?[A-Z]?\d{1,4}[A-Z]{0,2})\s*\(already completed\)")
+
+
+def _compute_readiness(result: PlanResult) -> dict:
+    """How far along the student already is: completed REQUIRED courses over
+    all required courses (the ones the plan actually needs — major prep,
+    injected CC prerequisites, and Cal-GETC). Unit-filler electives are
+    excluded on both sides: they are interchangeable, not requirements.
+
+    done  = distinct CC courses the audit / GE table credited as
+            '(already completed)' — i.e. requirements the student's
+            completed list already satisfied.
+    total = done + the required courses still scheduled in the plan.
+    """
+    done: set = set()
+    for _uc_req, cc_code, _status in result.requirement_audit:
+        for m in _ALREADY_RE.finditer(str(cc_code)):
+            done.add(" ".join(m.group(1).split()).upper())
+    for _area, val in result.ge_completion.items():
+        for m in _ALREADY_RE.finditer(str(val)):
+            done.add(" ".join(m.group(1).split()).upper())
+
+    remaining = 0
+    for s in result.all_courses():
+        if any(t.startswith("Elective") for t in s.tags):
+            continue
+        remaining += 1
+
+    total = len(done) + remaining
+    percent = int(round(100.0 * len(done) / total)) if total else 0
+    return {
+        "done": len(done),
+        "total": total,
+        "percent": percent,
+        "done_codes": sorted(done),
+    }
 
 
 def _sanity_check(result: PlanResult):
@@ -2667,6 +2793,28 @@ def render_plan_text(
     markdown structure documented in advisor._PLAN_SYSTEM_PROMPT's OUTPUT
     FORMAT section, directly from `result` — no LLM involved."""
     lines: list = []
+
+    # ── Readiness (first, so it's the headline; the dashboard lifts this
+    #    section into the hero as a progress stat and strips it from the body) ─
+    rd = result.readiness or {}
+    if rd:
+        lines.append("## Readiness")
+        lines.append(
+            f"- Completed: {rd.get('done', 0)} of {rd.get('total', 0)} required courses "
+            f"({rd.get('percent', 0)}%)"
+        )
+        if result.completed_recognized:
+            lines.append(
+                "- Recognized completed courses: "
+                + ", ".join(r["code"] for r in result.completed_recognized)
+            )
+        if result.completed_unrecognized:
+            lines.append(
+                "- Not recognized: "
+                + ", ".join(f'"{u}"' for u in result.completed_unrecognized)
+                + " — add the exact course code (e.g. MATH 1A) so it can be counted."
+            )
+        lines.append("")
 
     # ── Requirement Audit ────────────────────────────────────────────────────
     lines.append("## Requirement Audit")

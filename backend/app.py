@@ -547,14 +547,17 @@ def plan_v2():
     if mode not in ("competitive", "efficiency"):
         mode = "competitive"
 
-    # completed courses: may be a string ("MATH 1A, ENGL C1000") or list
+    # completed courses: the student's free text exactly as typed (comma-,
+    # semicolon- or NEWLINE-separated; plain language like "Calc 1" or
+    # "English 1A" allowed) — or a pre-split list. It is interpreted against
+    # the student's own college catalog inside build_plan (completed_raw), so
+    # nothing is parsed here: the old comma-only split silently dropped every
+    # entry after the first on a newline-separated list.
     completed_raw = data.get("completedCourses", "")
     if isinstance(completed_raw, list):
-        completed_set = set(completed_raw)
-    elif isinstance(completed_raw, str) and completed_raw.strip():
-        completed_set = set(completed_raw.split(","))
-    else:
-        completed_set = set()
+        completed_raw = "\n".join(str(x) for x in completed_raw)
+    completed_raw = completed_raw if isinstance(completed_raw, str) else ""
+    completed_set: set = set()   # engine-side parsing happens via completed_raw
 
     if not college or not school or not major:
         def _err():
@@ -569,6 +572,7 @@ def plan_v2():
             college=college, uc=school, major=major,
             accept_honors=accept_honors,
             completed=completed_set,
+            completed_raw=completed_raw,
             ap_credits=ap_credits,
         )
     except Exception as e:
@@ -598,7 +602,9 @@ def plan_v2():
     # violates the engine's own rules is logged and flagged to the student
     # instead of shipping silently. Microseconds per plan; never fatal.
     try:
-        _violations = _validate_plan(result, completed=completed_set)
+        _violations = _validate_plan(
+            result, completed={r["code"] for r in result.completed_recognized}
+        )
     except Exception as e:  # a self-check crash must never take down serving
         _violations = []
         app.logger.error("plan_v2_selfcheck_crash college=%r school=%r major=%r err=%.200s",

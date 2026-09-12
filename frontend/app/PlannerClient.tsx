@@ -2507,7 +2507,7 @@ export default function PlannerClient() {
  {readiness.unrecognized.length > 0 && (
  <p className="mt-2 rounded-xl border border-[var(--cb-warning-border)] bg-[var(--cb-warning-bg)] px-3 py-2 text-xs text-[var(--cb-warning)]">
  <span className="font-semibold">Not recognized:</span>{" "}
- {readiness.unrecognized.map((u) => `“${u}”`).join(", ")} — these weren&apos;t matched to a course at your college, so they&apos;re
+ {readiness.unrecognized.map((u) => `“${u}”`).join(", ")}{" — "}these weren&apos;t matched to a course at your college, so they&apos;re
  still in the schedule. Use <span className="font-semibold">Edit my info</span> to enter the exact course code (e.g. MATH 1A).
  </p>
  )}

@@ -1124,6 +1124,43 @@ function categorizeCourse(code: string, tags: string): TimelineCourse["category"
  return "other";
 }
 
+// ── Readiness (emitted first in the plan text by the backend) ─────────────
+// ## Readiness
+// - Completed: 7 of 19 required courses (37%)
+// - Recognized completed courses: MATH 1A, MATH 1B, ...
+// - Not recognized: "Intro to CS", "X" — add the exact course code ...
+type Readiness = { done: number; total: number; percent: number; recognized: string[]; unrecognized: string[] };
+
+// Body runs until the next "## " heading or the end of the text.
+const READINESS_SECTION_RE = /^## Readiness[^\n]*\n([\s\S]*?)(?=^## |(?![\s\S]))/m;
+
+function parseReadiness(text: string): Readiness | null {
+ const m = READINESS_SECTION_RE.exec(text || "");
+ if (!m) return null;
+ const body = m[1];
+ const done = /Completed:\s*(\d+)\s+of\s+(\d+)\s+required courses\s*\((\d+)%\)/i.exec(body);
+ if (!done) return null;
+ const rec = /Recognized completed courses:\s*([^\n]+)/i.exec(body);
+ const unrec = /Not recognized:\s*([^\n]+)/i.exec(body);
+ const recognized = rec ? rec[1].split(",").map((s) => s.trim()).filter(Boolean) : [];
+ const unrecognized = unrec
+ ? Array.from(unrec[1].matchAll(/"([^"]+)"/g)).map((x) => x[1].trim()).filter(Boolean)
+ : [];
+ return {
+ done: parseInt(done[1], 10),
+ total: parseInt(done[2], 10),
+ percent: parseInt(done[3], 10),
+ recognized,
+ unrecognized,
+ };
+}
+
+// The hero owns the readiness display, so drop the section from the body
+// text that PlanTimeline / SimpleMarkdown render (otherwise it shows twice).
+function stripReadiness(text: string): string {
+ return (text || "").replace(READINESS_SECTION_RE, "").replace(/^\s*\n/, "");
+}
+
 function parseTimeline(text: string): TimelineTerm[] {
  const lines = text.split("\n");
  const terms: TimelineTerm[] = [];
@@ -2289,6 +2326,9 @@ export default function PlannerClient() {
  const schoolDisplayName = ucDisplayName(schoolForStats);
  const ucStats = getUcStats(schoolForStats);
  const heroTerms = useMemo(() => parseTimeline(aiPlan), [aiPlan]);
+ // Readiness lives in the hero; the body renderers get the plan without it.
+ const readiness = useMemo(() => parseReadiness(aiPlan), [aiPlan]);
+ const planBody = useMemo(() => stripReadiness(aiPlan), [aiPlan]);
  const ucAppDate = DEADLINES.find((d) => d.label === "UC Application")?.date ?? "Nov 1 to 30";
  const competitivenessLine = ucStats
  ? `${schoolDisplayName} admits about ${ucStats.rate} of transfer applicants, with successful applicants generally in the ${ucStats.gpa} GPA range.${ucStats.tag ? ` TAG is available here with a ${ucStats.tagGPA}+ GPA.` : " TAG isn't offered here, so you'll apply directly during the November filing period."}`
@@ -2411,6 +2451,49 @@ export default function PlannerClient() {
  </>
  )}
  </div>
+ {/* ── Transfer readiness: completed required courses vs. everything the plan needs ── */}
+ {readiness && readiness.total > 0 && (
+ <div className="cb-reveal mt-6 rounded-2xl border border-[var(--cb-border)] bg-white p-4 md:p-5" data-testid="readiness-card">
+ <div className="flex flex-wrap items-baseline justify-between gap-2">
+ <div>
+ <p className="text-sm font-bold text-[var(--cb-text)]">Transfer readiness</p>
+ <p className="text-xs text-[var(--cb-muted)]">
+ {readiness.done} of {readiness.total} required courses completed
+ {readiness.total - readiness.done > 0 ? ` · ${readiness.total - readiness.done} to go` : " · all done"}
+ </p>
+ </div>
+ <p className="text-2xl font-bold leading-none text-[var(--cb-accent)]" style={{ fontFamily: "var(--cb-font-heading)" }}>
+ {readiness.percent}%
+ </p>
+ </div>
+ <div
+ className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-[var(--cb-border)]"
+ role="progressbar"
+ aria-valuenow={readiness.percent}
+ aria-valuemin={0}
+ aria-valuemax={100}
+ aria-label="Transfer readiness"
+ >
+ <div
+ className="h-full rounded-full bg-[var(--cb-accent)] transition-[width] duration-700 ease-out"
+ style={{ width: `${Math.max(0, Math.min(100, readiness.percent))}%` }}
+ />
+ </div>
+ {readiness.recognized.length > 0 && (
+ <p className="mt-3 text-xs text-[var(--cb-muted)]">
+ <span className="font-semibold text-[var(--cb-text)]">Counted as completed:</span>{" "}
+ {readiness.recognized.join(", ")}
+ </p>
+ )}
+ {readiness.unrecognized.length > 0 && (
+ <p className="mt-2 rounded-xl border border-[var(--cb-warning-border)] bg-[var(--cb-warning-bg)] px-3 py-2 text-xs text-[var(--cb-warning)]">
+ <span className="font-semibold">Not recognized:</span>{" "}
+ {readiness.unrecognized.map((u) => `“${u}”`).join(", ")} — these weren&apos;t matched to a course at your college, so they&apos;re
+ still in the schedule. Use <span className="font-semibold">Edit my info</span> to enter the exact course code (e.g. MATH 1A).
+ </p>
+ )}
+ </div>
+ )}
  {competitivenessLine && (
  <p className="mt-4 text-sm italic text-[var(--cb-muted)]">{competitivenessLine}</p>
  )}
@@ -2454,10 +2537,10 @@ export default function PlannerClient() {
  }}
  aria-hidden={!planRevealed}
  >
- <PlanTimeline text={aiPlan} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} college={communityCollege} />
+ <PlanTimeline text={planBody} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} college={communityCollege} />
 
  <div className="cb-pop-in rounded-2xl border border-[var(--cb-border)] bg-white p-4 text-sm text-[var(--cb-text)]">
- <SimpleMarkdown text={aiPlan} />
+ <SimpleMarkdown text={planBody} />
  </div>
 
  {!aiPlanLoading && (

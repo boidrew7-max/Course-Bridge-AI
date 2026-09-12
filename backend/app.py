@@ -8,7 +8,7 @@ from flask import Flask, request, Response, stream_with_context, jsonify, redire
 from advisor import (
     ask_advisor_stream, ask_advisor_stream_fallback, ask_advisor_onboarding_stream,
 )
-from search_professors import recommend_professor
+from search_professors import recommend_professor, explain_no_professor
 from plan_engine import (build_plan as _engine_build_plan,
                          render_plan_text as _engine_render_text,
                          repair_term_headers as _engine_repair_term_headers,
@@ -1211,13 +1211,15 @@ def tag_check():
 def professor_recommendation():
     data    = request.get_json() or {}
     college = (data.get("college") or "").strip()
-    subject = (data.get("subject") or "").strip()
+    subject = (data.get("subject") or "").strip()   # a prefix ("MATH") or full code ("C S 2B")
+    title   = (data.get("title") or "").strip()     # course title: fallback for unknown prefixes
     if not college or not subject:
         return jsonify({"error": "college and subject are required"}), 400
 
-    professor = recommend_professor(college, subject)
+    professor = recommend_professor(college, subject, title=title)
     if not professor:
-        return jsonify({"found": False})
+        # Say WHY, so the panel can show a true message instead of a blank.
+        return jsonify({"found": False, "reason": explain_no_professor(college, subject, title)})
     return jsonify({"found": True, "professor": professor})
 
 

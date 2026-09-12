@@ -1223,32 +1223,43 @@ type ProfessorRecommendation = {
 function PlanTimeline({ text, completedRaw, college }: { text: string; school: string; major: string; completedRaw?: string; college?: string }) {
  const terms = useMemo(() => parseTimeline(text), [text]);
  const [selected, setSelected] = useState<{ course: TimelineCourse; termLabel: string } | null>(null);
- const [profState, setProfState] = useState<{ loading: boolean; found: boolean; professor: ProfessorRecommendation | null }>({
- loading: false, found: false, professor: null,
+ // reason (when nothing is found) comes from the backend so the panel can say
+ // something true: "no_school" (college not in the ratings data), "no_subject"
+ // (couldn't tell the subject), "no_department" (nobody rated in it yet).
+ type ProfReason = "no_school" | "no_subject" | "no_department" | "error" | null;
+ const [profState, setProfState] = useState<{ loading: boolean; found: boolean; professor: ProfessorRecommendation | null; reason: ProfReason }>({
+ loading: false, found: false, professor: null, reason: null,
  });
 
  useEffect(() => {
  if (!selected) return;
- const subject = getSubject(selected.course.code);
  if (!college) {
- setProfState({ loading: false, found: false, professor: null });
+ setProfState({ loading: false, found: false, professor: null, reason: "no_school" });
  return;
  }
  let cancelled = false;
- setProfState({ loading: true, found: false, professor: null });
+ setProfState({ loading: true, found: false, professor: null, reason: null });
  fetch("/api/professor", {
  method: "POST",
  headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ college, subject }),
+ // Send the FULL code (multi-word prefixes like "C S 2B" / "ETH ST 1" were
+ // being truncated to their first token) and the title, which the backend
+ // uses to infer the subject when the prefix is one it has never seen.
+ body: JSON.stringify({ college, subject: selected.course.code, title: selected.course.title }),
  })
  .then((res) => res.json())
  .then((data) => {
  if (cancelled) return;
- setProfState({ loading: false, found: !!data.found, professor: data.professor ?? null });
+ setProfState({
+ loading: false,
+ found: !!data.found,
+ professor: data.professor ?? null,
+ reason: data.found ? null : ((data.reason as ProfReason) ?? "no_department"),
+ });
  })
  .catch(() => {
  if (cancelled) return;
- setProfState({ loading: false, found: false, professor: null });
+ setProfState({ loading: false, found: false, professor: null, reason: "error" });
  });
  return () => { cancelled = true; };
  }, [selected, college]);
@@ -1370,7 +1381,15 @@ function PlanTimeline({ text, completedRaw, college }: { text: string; school: s
  )}
  {!profState.loading && !profState.found && (
  <div className="mt-2 rounded-2xl border border-dashed border-[var(--cb-border)] bg-[var(--cb-surface-alt)] p-4">
- <p className="text-sm text-[var(--cb-muted)]">No professor rating data found for this department at {college || "your college"} yet.</p>
+ <p className="text-sm text-[var(--cb-muted)]">
+ {profState.reason === "no_school"
+ ? `${college || "Your college"} isn't in our professor-ratings data yet, so we can't recommend an instructor here.`
+ : profState.reason === "no_subject"
+ ? `We couldn't tell which department teaches ${selected?.course.code ?? "this course"}, so there's no rating to show.`
+ : profState.reason === "error"
+ ? "Professor ratings are temporarily unavailable — try again in a moment."
+ : `No rated ${selected ? getSubject(selected.course.code) : ""} instructors at ${college || "your college"} yet — check the college's own schedule for who teaches ${selected?.course.code ?? "this course"}.`}
+ </p>
  </div>
  )}
  </div>

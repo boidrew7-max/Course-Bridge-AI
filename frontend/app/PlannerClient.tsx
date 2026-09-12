@@ -1598,6 +1598,12 @@ export default function PlannerClient() {
  const [onboardingDone, setOnboardingDone] = useState(true);
  const [aiPlan, setAiPlan] = useState("");
  const [aiPlanLoading, setAiPlanLoading] = useState(false);
+ // While the branded overlay is up (first-time generation) the plan block is
+ // kept fully invisible (opacity 0) even though it is already mounted, so the
+ // courses can never bleed through the overlay's translucent exit fade. It is
+ // revealed — with a short fade-in — only once hideLoader() has fully
+ // finished. Saved/cached plans never touch this and stay visible.
+ const [planRevealed, setPlanRevealed] = useState(true);
 
  // ── Branded loader: hide only AFTER the plan has actually painted ──────
  // The overlay used to be hidden synchronously right after setAiPlan(...),
@@ -1611,25 +1617,34 @@ export default function PlannerClient() {
  // stuck overlay can never outlive an unexpected empty render.
  const pendingHideRef = useRef(false);
  const hideFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ // Lift the overlay, and only once its exit animation has FULLY completed
+ // (hideLoader resolves) reveal the plan block. Nothing underneath is
+ // visible until the animation is over.
+ const liftOverlayThenReveal = useCallback(() => {
+ Promise.resolve(cbOverlay()?.hideLoader())
+ .catch(() => undefined)
+ .finally(() => setPlanRevealed(true));
+ }, []);
  const hidePlanLoaderAfterPaint = useCallback(() => {
  pendingHideRef.current = true;
  if (hideFallbackRef.current) clearTimeout(hideFallbackRef.current);
  hideFallbackRef.current = setTimeout(() => {
  if (!pendingHideRef.current) return;
  pendingHideRef.current = false;
- void cbOverlay()?.hideLoader();
+ liftOverlayThenReveal();
  }, 6000);
- }, []);
+ }, [liftOverlayThenReveal]);
  useEffect(() => {
  if (!pendingHideRef.current) return;
- // aiPlan is now painted (useEffect runs post-commit). Empty string means
- // "nothing to show yet" — keep waiting for real content (the safety
- // timeout still guarantees the overlay can't stick forever).
+ // aiPlan is now mounted (useEffect runs post-commit) — but still held at
+ // opacity 0 by planRevealed=false. Empty string means "nothing to show
+ // yet" — keep waiting for real content (the safety timeout still
+ // guarantees the overlay can't stick forever).
  if (!aiPlan) return;
  pendingHideRef.current = false;
  if (hideFallbackRef.current) { clearTimeout(hideFallbackRef.current); hideFallbackRef.current = null; }
- void cbOverlay()?.hideLoader();
- }, [aiPlan]);
+ liftOverlayThenReveal();
+ }, [aiPlan, liftOverlayThenReveal]);
 
  // Scroll reveals for checker cards and the hero stat rail; rescans once a
  // plan is showing so content that mounted with it gets observed too.
@@ -1981,9 +1996,12 @@ export default function PlannerClient() {
  async function generateAIPlan(college: string, school: string, major: string, courses: string, acceptHonors = true, apCredits = "", mode = "competitive") {
  setAiPlanLoading(true);
  setAiPlan("");
+ // Keep the plan block invisible for the whole animation — it is revealed
+ // only after the overlay has fully finished exiting (liftOverlayThenReveal).
+ setPlanRevealed(false);
  let accumulated = "";
  // Branded overlay covers the wait. It is lifted only after the finished
- // plan has painted (hidePlanLoaderAfterPaint + the aiPlan effect), never
+ // plan has mounted (hidePlanLoaderAfterPaint + the aiPlan effect), never
  // on the first byte — otherwise the overlay left before the plan was ready.
  cbOverlay()?.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500 });
  try {
@@ -2425,7 +2443,17 @@ export default function PlannerClient() {
  )}
 
  {aiPlan && (
- <div className="flex flex-col gap-4">
+ <div
+ className="flex flex-col gap-4"
+ // Fully invisible while the branded overlay is running (no bleed-through
+ // during its exit fade); fades in only once the overlay is completely gone.
+ style={{
+ opacity: planRevealed ? 1 : 0,
+ visibility: planRevealed ? "visible" : "hidden",
+ transition: "opacity 420ms ease-out",
+ }}
+ aria-hidden={!planRevealed}
+ >
  <PlanTimeline text={aiPlan} school={schoolForStats} major={targetMajor} completedRaw={completedCourses} college={communityCollege} />
 
  <div className="cb-pop-in rounded-2xl border border-[var(--cb-border)] bg-white p-4 text-sm text-[var(--cb-text)]">

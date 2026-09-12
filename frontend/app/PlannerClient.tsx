@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { interpretCompletedCourses } from "../lib/courseInterpreter.js";
 import Navbar from "../components/Navbar";
@@ -31,6 +31,19 @@ function cbOverlay(): CourseBridgeOverlay | undefined {
  if (typeof window === "undefined") return undefined;
  return (window as unknown as { CourseBridge?: CourseBridgeOverlay }).CourseBridge;
 }
+
+// useLayoutEffect on the client (runs before the browser paints, so we can put
+// the loading cover up before the dashboard shell is ever visible); falls back
+// to useEffect during SSR to avoid React's server warning.
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// Exact same background as the branded loader's light theme (see
+// coursebridge-loader.js THEMES.light.bg), so the React entrance cover and the
+// JS overlay are visually identical — the handoff between them is seamless.
+const LOADER_BG =
+  "radial-gradient(110% 80% at 85% -10%, rgba(63,197,211,.13), rgba(63,197,211,0) 60%)," +
+  "radial-gradient(90% 60% at 50% 120%, rgba(158,138,100,.10), rgba(158,138,100,0) 70%)," +
+  "linear-gradient(150deg,#fbfaf7 0%,#f6f3ec 55%,#efe9dd 100%)";
 
 const PLAN_LOADER_MESSAGES = [
  "Reading your courses",
@@ -1660,6 +1673,12 @@ export default function PlannerClient() {
  // revealed — with a short fade-in — only once hideLoader() has fully
  // finished. Saved/cached plans never touch this and stay visible.
  const [planRevealed, setPlanRevealed] = useState(true);
+ // A plain, in-bundle cover (loader-colored) shown the instant a first-time
+ // generation starts — BEFORE the async saved-plan check and BEFORE the
+ // afterInteractive loader script is even ready — so the dashboard behind it
+ // is never visible for a split second. The branded JS overlay (same
+ // background) takes over the moment it's available; both come down together.
+ const [entranceCover, setEntranceCover] = useState(false);
 
  // ── Branded loader: hide only AFTER the plan has actually painted ──────
  // The overlay used to be hidden synchronously right after setAiPlan(...),
@@ -1673,10 +1692,43 @@ export default function PlannerClient() {
  // stuck overlay can never outlive an unexpected empty render.
  const pendingHideRef = useRef(false);
  const hideFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ // Raise the branded overlay as early as possible on a first-time generation,
+ // BEFORE the async saved-plan check runs — otherwise the dashboard behind it
+ // is visible for a split second until generateAIPlan finally shows it. The
+ // loader script is loaded afterInteractive, so at mount it may not be ready
+ // yet; poll briefly (every 40ms, up to ~2s) and show it the instant it is.
+ // Also hides the plan until the overlay finishes (planRevealed=false).
+ const showLoaderPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+ const showPlanLoaderNow = useCallback(() => {
+ setPlanRevealed(false);
+ setEntranceCover(true); // in-bundle cover: up NOW, no async, no script dependency
+ if (showLoaderPollRef.current) clearInterval(showLoaderPollRef.current);
+ // Show the branded JS overlay as soon as its (afterInteractive) script is
+ // ready; hand off from the plain cover to the overlay seamlessly (same bg).
+ const tryShow = () => {
+ const o = cbOverlay();
+ if (!o) return false;
+ o.showLoader({ messages: PLAN_LOADER_MESSAGES, interval: 1500 });
+ setEntranceCover(false); // branded overlay now covers the screen itself
+ return true;
+ };
+ if (tryShow()) return;
+ let tries = 0;
+ showLoaderPollRef.current = setInterval(() => {
+ tries += 1;
+ if (tryShow() || tries > 50) {
+ if (showLoaderPollRef.current) { clearInterval(showLoaderPollRef.current); showLoaderPollRef.current = null; }
+ }
+ }, 40);
+ }, []);
  // Lift the overlay, and only once its exit animation has FULLY completed
  // (hideLoader resolves) reveal the plan block. Nothing underneath is
  // visible until the animation is over.
  const liftOverlayThenReveal = useCallback(() => {
+ // Stop any still-pending "show the loader" poll before we hide/reveal, so
+ // it can't pop the overlay back up after we've decided to reveal the plan.
+ if (showLoaderPollRef.current) { clearInterval(showLoaderPollRef.current); showLoaderPollRef.current = null; }
+ setEntranceCover(false); // drop the plain cover if the branded overlay never showed
  Promise.resolve(cbOverlay()?.hideLoader())
  .catch(() => undefined)
  .finally(() => setPlanRevealed(true));
@@ -1701,6 +1753,24 @@ export default function PlannerClient() {
  if (hideFallbackRef.current) { clearTimeout(hideFallbackRef.current); hideFallbackRef.current = null; }
  liftOverlayThenReveal();
  }, [aiPlan, liftOverlayThenReveal]);
+
+ // Before the browser paints the dashboard, decide whether a first-time
+ // generation is coming (a saved profile with a complete combo but no cached
+ // plan text — e.g. straight from onboarding). If so, raise the loading cover
+ // NOW so the dashboard shell is never visible for a split second before the
+ // branded overlay comes up. A cached plan (planText present) is untouched and
+ // opens instantly. Runs before paint (useLayoutEffect) so there's no flash.
+ useIsoLayoutEffect(() => {
+ try {
+ const raw = localStorage.getItem("cb_profile");
+ if (!raw) return;
+ const p = JSON.parse(raw);
+ if (p && p.college && p.school && p.major && !p.planText) {
+ showPlanLoaderNow();
+ }
+ } catch {}
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, []);
 
  // Scroll reveals for checker cards and the hero stat rail; rescans once a
  // plan is showing so content that mounted with it gets observed too.
@@ -1852,6 +1922,9 @@ export default function PlannerClient() {
  setActiveSchoolTab(profile.school ?? "");
  if (profile.planText) setAiPlan(profile.planText);
  if (profile.college && profile.school && profile.major) {
+ // The loading cover was already raised before paint by the
+ // useLayoutEffect above when this is a first-time generation, so the
+ // dashboard never flashes behind it. Here we just run the load/generate.
  loadOrGeneratePlan(
  profile.college,
  profile.school,
@@ -2131,6 +2204,10 @@ export default function PlannerClient() {
  if (existing?.plan_text) {
  setAiPlan(existing.plan_text);   // saved plan: show it, no animation
  cachePlanText(existing.plan_text);
+ // If the overlay was pre-raised for a suspected first-time
+ // generation (signed in, plan in the account but not cached
+ // locally), lift it now that the saved plan is in hand.
+ hidePlanLoaderAfterPaint();
  return;
  }
  }
@@ -2355,6 +2432,13 @@ export default function PlannerClient() {
 
  return (
  <main className="min-h-screen bg-[var(--cb-surface-alt)] text-[var(--cb-body)]">
+ {/* Entrance cover: an in-bundle, loader-colored screen shown from the very
+     first paint of a first-time generation, so the dashboard is never
+     visible before the branded overlay is ready. Same background as the JS
+     overlay, which layers on top (z 2147483000) and takes over seamlessly. */}
+ {entranceCover && (
+ <div aria-hidden style={{ position: "fixed", inset: 0, zIndex: 2147482999, background: LOADER_BG }} />
+ )}
  <Navbar />
 
  <section className="mx-auto max-w-[980px] px-5 py-8 md:px-8">

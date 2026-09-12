@@ -63,7 +63,13 @@
       'position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;' +
       'align-items:center;justify-content:center;gap:0;' +
       'background:' + T.bg + ';' +
-      'opacity:0;transition:opacity .55s cubic-bezier(.25,.6,.35,1);pointer-events:all;';
+      // Backdrop is OPAQUE from the first frame (opacity:1), so the page
+      // behind it is never visible for even a split second while the loader
+      // comes up. The branded content inside still animates in smoothly (see
+      // the content/logo/message opacity animations), and the exit still
+      // fades out over the transition below — only the see-through ENTRANCE
+      // is removed.
+      'opacity:1;transition:opacity .55s cubic-bezier(.25,.6,.35,1);pointer-events:all;';
 
     // --- lockup svg (viewBox tight on logo, banner coords) ---
     var svg = doc.createElementNS(SVGNS, 'svg');
